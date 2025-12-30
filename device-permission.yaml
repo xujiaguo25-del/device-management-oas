@@ -18,6 +18,202 @@ servers:
 
 components:
   schemas:
+    UserInfo:
+      type: object
+      description: ユーザー基本情報
+      properties:
+        userId:
+          type: string
+          description: ユーザーID（主キー）
+        userName:
+          type: string
+          description: 氏名
+        level:
+          type: string
+          description: アクセスレベル
+        loginName:
+          type: string
+          description: ログインユーザ名
+        jobNumber:
+          type: string
+          description: 社員番号（ユニークキー）
+        deptId:
+          type: string
+          description: 所属部署番号
+        userTypeId:
+          type: integer
+          format: int64
+          description: ユーザータイプID（ディクショナリ項目に関連：USER_TYPE）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済） 
+    DeviceInfo:
+      type: object
+      description: 機器基本情報
+      properties:
+        deviceId:
+          type: string
+          description: 機器番号（主キー）
+        deviceModel:
+          type: string
+          description: ホスト機種
+        computerName:
+          type: string
+          description: コンピュータ名
+        loginUsername:
+          type: string
+          description: ログインユーザ名
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: 所属開発室
+        jobNumber:
+          type: string
+          description: 社員番号（所属ユーザー、外部キー）
+        remark:
+          type: string
+          description: 備考
+        selfConfirmId:
+          type: integer
+          format: int64
+          description: 本人確認ID（ディクショナリ項目に関連：CONFIRM_STATUS）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        osId:
+          type: integer
+          format: int64
+          description: OSタイプID（ディクショナリ項目に関連：OS_TYPE）
+        memoryId:
+          type: integer
+          format: int64
+          description: メモリサイズID（ディクショナリ項目に関連：MEMORY_SIZE）
+        ssdId:
+          type: integer
+          format: int64
+          description: SSDサイズID（ディクショナリ項目に関連：SSD_SIZE）
+        hddId:
+          type: integer
+          format: int64
+          description: HDDサイズID（ディクショナリ項目に関連：HDD_SIZE）
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+    DeviceIp:
+      type: object
+      description: 機器IP情報
+      properties:
+        ipId:
+          type: string
+          description: IP番号（主キー）
+        deviceId:
+          type: string
+          description: 機器番号（外部キー）
+        ipAddress:
+          type: string
+          description: IPアドレス（ユニーク）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+    DevicePermission:
+      type: object
+      description: 機器使用権限情報
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号（主キー）
+        jobNumber:
+          type: string
+          description: 社員番号（外部キー）
+        domainStatusId:
+          type: integer
+          format: int64
+          description: ドメインステータスID（ディクショナリ項目に関連：DOMAIN_STATUS）
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+        noDomainReason:
+          type: string
+          description: ドメイン未加入理由
+        smartitStatusId:
+          type: integer
+          format: int64
+          description: SmartITステータスID（ディクショナリ項目に関連：SMARTIT_STATUS）
+        noSmartitReason:
+          type: string
+          description: SmartIT未インストール理由
+        usbStatusId:
+          type: integer
+          format: int64
+          description: USBステータスID（ディクショナリ項目に関連：USB_STATUS）
+        usbReason:
+          type: string
+          description: USB使用許可理由
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirusStatusId:
+          type: integer
+          format: int64
+          description: ウイルス対策ステータスID（ディクショナリ項目に関連：ANTIVIRUS_STATUS）
+        noSymantecReason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+
     CommonResponse:
       type: object
       properties:
@@ -32,132 +228,7 @@ components:
         data:
           type: object
           description: 业务数据（成功时返回）
-        error:
-          type: object
-          properties:
-            field:
-              type: string
-              description: 错误字段
-              example: pageNum
-            msg:
-              type: string
-              description: 错误详情
-              example: 页码必须为正整数
-    DeviceBasicInfo:
-      type: object
-      properties:
-        deviceNo:
-          type: string
-          description: 设备编号
-          example: HYRON-220914 PC-DC-049
-        computerName:
-          type: string
-          description: 电脑名
-          example: DA04-liuwenfeng
-        ipAddress:
-          type: string
-          description: IP地址（多个用逗号分隔）
-          example: 10.6.1.99,10.6.3.221
-        dept:
-          type: string
-          description: 所属部门
-          example: DA04
-    EmployeeInfo:
-      type: object
-      properties:
-        employeeId:
-          type: string
-          description: 工号
-          example: JS0020
-        employeeName:
-          type: string
-          description: 姓名
-          example: 刘文丰
-        level:
-          type: string
-          description: 权限级别
-          example: DA04
-        loginName:
-          type: string
-          description: 登录用户名
-          example: lfeng
-    DomainConfig:
-      type: object
-      properties:
-        domainName:
-          type: string
-          description: 域名
-          example: MS
-        domainGroupName:
-          type: string
-          description: 域内组名
-          example: DA04-Admin
-        noDomainReason:
-          type: string
-          description: 不加域理由
-          example: 测试专用设备
-    PermissionConfig:
-      type: object
-      properties:
-        usbStatus:
-          type: string
-          description: USB状态
-          enum:
-            - 开启
-            - 关闭
-          example: 关闭
-        usbReason:
-          type: string
-          description: USB开通理由
-          example: 项目需要
-        smartitStatus:
-          type: string
-          description: SmartIT状态
-          enum:
-            - 本地
-            - 未安装
-          example: 本地
-        noSmartitReason:
-          type: string
-          description: 不安装SmartIT理由
-          example: 设备不支持
-        expireDate:
-          type: string
-          format: date
-          description: 使用截止日期
-          example: '2025-12-31'
-    SecurityConfig:
-      type: object
-      properties:
-        antivirusStatus:
-          type: string
-          description: 防病毒状态
-          enum:
-            - 自动
-            - 手动
-            - 未配置
-          example: 自动
-        noSymantecReason:
-          type: string
-          description: 无Symantec理由
-          example: 使用第三方防病毒软件
-    DevicePermissionDetail:
-      allOf:
-        - $ref: '#/components/schemas/DeviceBasicInfo'
-        - type: object
-          properties:
-            employeeInfo:
-              $ref: '#/components/schemas/EmployeeInfo'
-            domainConfig:
-              $ref: '#/components/schemas/DomainConfig'
-            permissionConfig:
-              $ref: '#/components/schemas/PermissionConfig'
-            securityConfig:
-              $ref: '#/components/schemas/SecurityConfig'
-            remark:
-              type: string
-              description: 备注
-              example: 考勤系统服务器
+
     PageResponse:
       type: object
       properties:
@@ -180,214 +251,62 @@ components:
         list:
           type: array
           items:
-            $ref: '#/components/schemas/DevicePermissionDetail'
-    StatisticsData:
-      type: object
-      properties:
-        deptDistribution:
-          type: object
-          description: 部门设备分布
-          example:
-            DA04: 120
-            DA02: 30
-            DA05: 5
-        usbStatusDistribution:
-          type: object
-          description: USB状态分布
-          example:
-            关闭: 135
-            开启: 0
-            未配置: 20
-        smartitDistribution:
-          type: object
-          description: SmartIT状态分布
-          example:
-            本地: 151
-            未安装: 4
-        expireCount:
-          type: object
-          description: 有效期统计
-          example:
-            未过期: 139
-            已过期: 0
-            即将过期（30天内）: 16
-  parameters:
-    PageParam:
-      in: query
-      name: pageParam
-      schema:
-        type: object
-        properties:
-          pageNum:
-            type: integer
-            default: 1
-            description: 页码
-          pageSize:
-            type: integer
-            default: 10
-            description: 每页条数
-    DeviceQueryParam:
-      in: query
-      name: deviceQueryParam
-      schema:
-        type: object
-        properties:
-          dept:
-            type: string
-            description: 部门编码
-          deviceStatus:
-            type: string
-            enum:
-              - 正常
-              - 停用
-            description: 设备状态
-          employeeId:
-            type: string
-            description: 责任人工号
-          expireStatus:
-            type: string
-            enum:
-              - 未过期
-              - 已过期
-              - 即将过期
-            description: 有效期状态
-    DeviceIdParam:
-      in: query
-      name: deviceIdParam
-      schema:
-        type: object
-        properties:
-          deviceNo:
-            type: string
-            description: 设备编号（三选一）
-          computerName:
-            type: string
-            description: 电脑名（三选一）
-          ipAddress:
-            type: string
-            description: IP地址（三选一）
-    EmployeeIdParam:
-      in: query
-      name: employeeIdParam
-      schema:
-        type: object
-        properties:
-          employeeId:
-            type: string
-            description: 工号（三选一）
-          employeeName:
-            type: string
-            description: 姓名（三选一）
-          loginName:
-            type: string
-            description: 登录用户名（三选一）
-  responses:
-    SuccessResponse:
-      description: 操作成功
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CommonResponse'
-          example:
-            code: 200
-            message: 操作成功
-            data: {}
-            error: null
-    BadRequestResponse:
-      description: 参数错误
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CommonResponse'
-          example:
-            code: 400
-            message: 参数错误
-            data: null
-            error:
-              field: pageNum
-              msg: 页码必须为正整数
-    NotFoundResponse:
-      description: 资源不存在
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CommonResponse'
-          example:
-            code: 404
-            message: 设备不存在
-            data: null
-            error:
-              field: deviceNo
-              msg: 未找到编号为HYRON-9999的设备
-    ServerErrorResponse:
-      description: 服务器内部错误
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CommonResponse'
-          example:
-            code: 500
-            message: 服务器内部错误
-            data: null
-            error:
-              msg: 数据库连接异常，请稍后重试
+            type: object
+            properties:
 
+              userInfo:
+                $ref: '#/components/schemas/UserInfo'
+              deviceInfo:
+                $ref: '#/components/schemas/DeviceInfo'
+              deviceIp:
+                $ref: '#/components/schemas/DeviceIp'
+              devicePermission:
+                $ref: '#/components/schemas/DevicePermission'
 
 paths:
-#
+  #列表查询
   /device-permission/query/list:
     get:
-      summary: 设备权限列表查询
-      description: 获取设备权限清单，支持分页、排序和多维度筛选
+      tags:
+        - 権限リスト
+      summary: デバイス権限リスト照会
       parameters:
-        - in: query
-          name: pageNum
-          schema:
-            type: integer
-            default: 1
-          required: false
+        - name: pageNum
+          in: query
           description: 页码
-        - in: query
-          name: pageSize
+          required: false
           schema:
             type: integer
-            default: 10
-          required: false
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
           description: 每页条数
-        - in: query
-          name: dept
-          schema:
-            type: string
           required: false
-          description: 部门编码
-        - in: query
-          name: deviceStatus
           schema:
-            type: string
-            enum:
-              - 正常
-              - 停用
-          required: false
-          description: 设备状态
-        - in: query
-          name: employeeId
-          schema:
-            type: string
-          required: false
-          description: 责任人工号
-        - in: query
-          name: expireStatus
-          schema:
-            type: string
-            enum:
-              - 未过期
-              - 已过期
-              - 即将过期
-          required: false
-          description: 有效期状态
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              properties:
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+
+
       responses:
         '200':
-          description: 查询成功
+          description: クエリに成功しました
           content:
             application/json:
               schema:
@@ -397,65 +316,31 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/PageResponse'
-              example:
-                code: 200
-                message: 查询成功
-                data:
-                  total: 155
-                  pages: 8
-                  pageNum: 1
-                  pageSize: 20
-                  list:
-                    - deviceNo: HYRON-220914 PC-DC-049
-                      computerName: DA04-liuwenfeng
-                      ipAddress: 10.6.1.99,10.6.3.221
-                      dept: DA04
-                      employeeInfo:
-                        employeeId: JS0020
-                        employeeName: 刘文丰
-                        level: DA04
-                        loginName: lfeng
-                      domainConfig:
-                        domainName: ''
-                        domainGroupName: ''
-                        noDomainReason: ''
-                      permissionConfig:
-                        usbStatus: 关闭
-                        usbReason: ''
-                        smartitStatus: 本地
-                        noSmartitReason: ''
-                        expireDate: '2025-12-31'
-                      securityConfig:
-                        antivirusStatus: 自动
-                        noSymantecReason: ''
-                      remark: ''
-                error: null
-  /device-permission/query/detail:
-    get:
-      summary: 单设备权限详情查询
-      description: 查询单个设备的完整权限配置信息（设备编号/电脑名/IP地址三选一）
-      parameters:
-        - in: query
-          name: deviceNo
-          schema:
-            type: string
-          required: false
-          description: 设备编号
-        - in: query
-          name: computerName
-          schema:
-            type: string
-          required: false
-          description: 电脑名
-        - in: query
-          name: ipAddress
-          schema:
-            type: string
-          required: false
-          description: IP地址
+
+  #数据修改
+  /device-permission/update:
+    put:
+      tags:
+        - 権限リスト
+      summary: デバイス権限の変更
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                  
       responses:
         '200':
-          description: 查询成功
+          description: 変更成功
           content:
             application/json:
               schema:
@@ -464,162 +349,55 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/DevicePermissionDetail'
-              example:
-                code: 200
-                message: 查询成功
-                data:
-                  deviceNo: HYRON-220914 PC-DC-049
-                  computerName: DA04-liuwenfeng
-                  ipAddress: 10.6.1.99,10.6.3.221
-                  dept: DA04
-                  employeeInfo:
-                    employeeId: JS0020
-                    employeeName: 刘文丰
-                    level: DA04
-                    loginName: lfeng
-                  domainConfig:
-                    domainName: ''
-                    domainGroupName: ''
-                    noDomainReason: ''
-                  permissionConfig:
-                    usbStatus: 关闭
-                    usbReason: ''
-                    smartitStatus: 本地
-                    noSmartitReason: ''
-                    expireDate: '2025-12-31'
-                  securityConfig:
-                    antivirusStatus: 自动
-                    noSymantecReason: ''
-                  remark: ''
-                error: null
-        '400':
-          $ref: '#/components/responses/BadRequestResponse'
-        '404':
-          $ref: '#/components/responses/NotFoundResponse'
-        '500':
-          $ref: '#/components/responses/ServerErrorResponse'
-  /device-permission/control/usb-toggle:
-    post:
-      summary: USB权限开关控制
-      description: 开启或关闭设备的USB端口权限，支持临时开通（需设置有效期）
+                        $ref: '#/components/schemas/DevicePermission'
+
+  #导出数据返回xlsx
+  /device-permission/export:
+    get: 
+      tags:
+        - 権限リスト
+      summary: デバイス権限リストのエクスポート
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - deviceNo
-                - action
               properties:
-                deviceNo:
-                  type: string
-                  description: 设备编号
-                  example: HYRON-220914 PC-DC-049
-                action:
-                  type: string
-                  enum:
-                    - enable
-                    - disable
-                  description: 操作类型（enable=开启，disable=关闭）
-                  example: enable
-                reason:
-                  type: string
-                  description: 操作理由（开启时必填）
-                  example: 项目数据传输需要
-                expireDate:
-                  type: string
-                  format: date
-                  description: 有效期（开启时必填，格式YYYY-MM-DD）
-                  example: '2025-12-31'
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                  
       responses:
         '200':
-          $ref: '#/components/responses/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestResponse'
-        '404':
-          $ref: '#/components/responses/NotFoundResponse'
-        '500':
-          $ref: '#/components/responses/ServerErrorResponse'
-  /device-permission/create/single:
-    post:
-      summary: 设备权限记录创建
-      description: 新增单条设备权限记录，包含完整的设备信息和权限配置
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DevicePermissionDetail'
-            example:
-              deviceNo: HYRON-241201 PC-DC-060
-              computerName: DA04-zhangshan
-              ipAddress: 10.6.1.100
-              dept: DA04
-              employeeInfo:
-                employeeId: JS0200
-                employeeName: 张三
-                level: DA04
-                loginName: zhangs
-              domainConfig:
-                domainName: MS
-                domainGroupName: DA04-User
-                noDomainReason: ''
-              permissionConfig:
-                usbStatus: 关闭
-                usbReason: ''
-                smartitStatus: 本地
-                noSmartitReason: ''
-                expireDate: '2026-12-31'
-              securityConfig:
-                antivirusStatus: 自动
-                noSymantecReason: ''
-              remark: 新入职员工设备
-      responses:
-        '200':
-          $ref: '#/components/responses/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestResponse'
-        '500':
-          $ref: '#/components/responses/ServerErrorResponse'
-  /device-permission/update/permission-config:
-    put:
-      summary: 权限配置更新
-      description: 修改设备的权限状态（如USB开关、域配置、SmartIT状态等）
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - deviceNo
-              properties:
-                deviceNo:
-                  type: string
-                  description: 设备编号
-                  example: HYRON-220914 PC-DC-049
-                domainConfig:
-                  $ref: '#/components/schemas/DomainConfig'
-                permissionConfig:
-                  $ref: '#/components/schemas/PermissionConfig'
-                securityConfig:
-                  $ref: '#/components/schemas/SecurityConfig'
-                modifyReason:
-                  type: string
-                  description: 修改理由
-                  example: 权限调整需求
-                operator:
-                  type: string
-                  description: 操作人
-                  example: JS0001
-      responses:
-        '200':
-          $ref: '#/components/responses/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestResponse'
-        '404':
-          $ref: '#/components/responses/NotFoundResponse'
-        '500':
-          $ref: '#/components/responses/ServerErrorResponse'
+          description: 成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
