@@ -214,6 +214,79 @@ components:
           format: int32
           description: 論理削除フラグ（0=未削除、1=削除済）  
 
+    dictType:
+        type: object
+        description: ディクショナリタイプ情報
+        properties:
+          dictTypeId:
+            type: integer
+            format: int64
+            description: ディクショナリタイプID（主キー）
+          dictTypeCode:
+            type: string
+            description: ディクショナリタイプコード（ユニーク）
+          dictTypeName:
+            type: string
+            description: ディクショナリタイプ名
+          description:
+            type: string
+            description: ディクショナリタイプの説明
+          isEnabled:
+            type: integer
+            format: int32
+            description: 有効フラグ（0=無効、1=有効）
+          createTime:
+            type: string
+            format: date-time
+            description: 作成時間
+          updateTime:
+            type: string
+            format: date-time
+            description: 更新時間
+          isDeleted:
+            type: integer
+            format: int32
+            description: 論理削除フラグ（0=未削除、1=削除済）
+      
+    dictItem:
+      type: object
+      description: ディクショナリ項目情報
+      properties:
+        dictItemId:
+          type: integer
+          format: int64
+          description: ディクショナリ項目ID（主キー）
+        dictTypeId:
+          type: integer
+          format: int64
+          description: ディクショナリタイプID（外部キー）
+        dictItemCode:
+          type: string
+          description: ディクショナリ項目コード（同一タイプ内ユニーク）
+        dictItemName:
+          type: string
+          description: ディクショナリ項目名
+        sort:
+          type: integer
+          format: int32
+          description: ソート番号
+        isEnabled:
+          type: integer
+          format: int32
+          description: 有効フラグ（0=無効、1=有効）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）
+
     CommonResponse:
       type: object
       properties:
@@ -375,3 +448,35 @@ paths:
               schema:
                 type: string
                 format: binary
+
+  #获取字典
+  /common/dictionary:
+    get:  
+      tags:
+        - 共通
+      summary: 共通項目の取得
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dictType:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/dictType'
+                      - type: object  # 新增dictItem字段
+                      properties:
+                        dictItem:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/dictItem'
+                
+                  
+
+
+
+  
