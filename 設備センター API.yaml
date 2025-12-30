@@ -1,0 +1,424 @@
+openapi: 3.0.0
+info:
+  title: 設備センター API
+  version: 1.0.0
+  description: 設備基本情報・IP・アドレス・モニター
+servers:
+  - url: https://api.example.com/v1
+    description: 本番環境
+  - url: http://localhost:8080/v1
+    description: ローカル開発
+tags:
+  - name: 設備中心
+    description: 設備・IP・モニター保守
+
+paths:
+  /devices:
+    get:
+      tags: [設備中心]
+      summary: 設備一覧取得（ページネーション）
+      operationId: getDevices
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: project
+          in: query
+          schema: { type: string }
+          description: 所属プロジェクト
+        - name: dev_room
+          in: query
+          schema: { type: string }
+          description: 所属開発室
+        - name: os_id
+          in: query
+          schema: { type: integer, format: int64 }
+          description: OS種別辞書ID
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ページネーション情報'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/設備DTO'
+    post:
+      tags: [設備中心]
+      summary: 新規設備登録
+      operationId: createDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/設備登録DTO'
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/設備DTO'
+
+  /devices/{deviceId}:
+    parameters:
+      - $ref: '#/components/parameters/設備IDパス'
+    get:
+      tags: [設備中心]
+      summary: 設備詳細取得
+      operationId: getDeviceById
+      security: []
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/設備DTO'
+    put:
+      tags: [設備中心]
+      summary: 設備情報更新
+      operationId: updateDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/設備更新DTO'
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      tags: [設備中心]
+      summary: 設備削除（論理削除）
+      operationId: deleteDevice
+      responses:
+        '204':
+          description: 削除成功
+
+  /devices/{deviceId}/ips:
+    parameters:
+      - $ref: '#/components/parameters/設備IDパス'
+    get:
+      tags: [設備中心]
+      summary: 設備に紐づくIP一覧取得
+      operationId: listDeviceIps
+      security: []
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/設備IPDTO'
+    post:
+      tags: [設備中心]
+      summary: 設備へIP追加
+      operationId: addDeviceIp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/設備IP登録DTO'
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/設備IPDTO'
+
+  /devices/{deviceId}/monitors:
+    parameters:
+      - $ref: '#/components/parameters/設備IDパス'
+    get:
+      tags: [設備中心]
+      summary: 設備に紐づくモニター一覧取得
+      operationId: listDeviceMonitors
+      security: []
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/モニターDTO'
+    post:
+      tags: [設備中心]
+      summary: モニター新規登録
+      operationId: addMonitor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/モニター登録DTO'
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/モニターDTO'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, default: 1, minimum: 1 }
+      description: ページ番号
+    LimitParam:
+      name: limit
+      in: query
+      schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+      description: 1ページあたり件数
+    設備IDパス:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string }
+      description: 設備番号（主キー）
+
+  schemas:
+    ページネーション情報:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        totalPages:
+          type: integer
+          example: 6
+
+    # -------------- 設備 ----------------
+    設備DTO:
+      type: object
+      properties:
+        device_id:
+          type: string
+          example: DEV001
+        device_model:
+          type: string
+          example: Dell XPS
+        computer_name:
+          type: string
+          example: PC-DELL-001
+        login_username:
+          type: string
+          example: zhangsan
+        project:
+          type: string
+          example: Project A
+        dev_room:
+          type: string
+          example: Room101
+        job_number:
+          type: string
+          example: EMP001
+        remark:
+          type: string
+          description: 備考
+        os_id:
+          type: integer
+          format: int64
+          description: OS種別辞書ID
+          example: 25
+        memory_id:
+          type: integer
+          format: int64
+          description: メモリ容量辞書ID
+          example: 27
+        ssd_id:
+          type: integer
+          format: int64
+          description: SSD容量辞書ID
+          example: 29
+        hdd_id:
+          type: integer
+          format: int64
+          description: HDD容量辞書ID
+          example: 31
+        self_confirm_id:
+          type: integer
+          format: int64
+          description: 本人確認ステータス辞書ID
+          example: 3
+        create_time:
+          type: string
+          format: date-time
+          description: 作成日時
+        update_time:
+          type: string
+          format: date-time
+          description: 更新日時
+        is_deleted:
+          type: integer
+          format: int16
+          example: 0
+          description: 論理削除フラグ（0=未削除、1=削除済）
+
+    設備登録DTO:
+      type: object
+      required: [device_id, job_number]
+      properties:
+        device_id:
+          type: string
+          example: DEV003
+          description: 設備番号（重複不可）
+        device_model:
+          type: string
+          description: ホスト機種
+        computer_name:
+          type: string
+          description: コンピュータ名
+        login_username:
+          type: string
+          description: ログインユーザー名
+        project:
+          type: string
+          description: 所属プロジェクト
+        dev_room:
+          type: string
+          description: 所属開発室
+        job_number:
+          type: string
+          description: 社員番号（使用者）
+        remark:
+          type: string
+          description: 備考
+        os_id:
+          type: integer
+          format: int64
+          description: OS種別辞書ID
+        memory_id:
+          type: integer
+          format: int64
+          description: メモリ容量辞書ID
+        ssd_id:
+          type: integer
+          format: int64
+          description: SSD容量辞書ID
+        hdd_id:
+          type: integer
+          format: int64
+          description: HDD容量辞書ID
+        self_confirm_id:
+          type: integer
+          format: int64
+          description: 本人確認ステータス辞書ID
+
+    設備更新DTO:
+      type: object
+      properties:
+        device_model:
+          type: string
+        computer_name:
+          type: string
+        login_username:
+          type: string
+        project:
+          type: string
+        dev_room:
+          type: string
+        remark:
+          type: string
+        os_id:
+          type: integer
+          format: int64
+        memory_id:
+          type: integer
+          format: int64
+        ssd_id:
+          type: integer
+          format: int64
+        hdd_id:
+          type: integer
+          format: int64
+        self_confirm_id:
+          type: integer
+          format: int64
+
+    # -------------- IP ----------------
+    設備IPDTO:
+      type: object
+      properties:
+        ip_id:
+          type: string
+          example: IP003
+        device_id:
+          type: string
+        ip_address:
+          type: string
+          example: 192.168.1.103
+        create_time:
+          type: string
+          format: date-time
+        update_time:
+          type: string
+          format: date-time
+        is_deleted:
+          type: integer
+          format: int16
+          example: 0
+
+    設備IP登録DTO:
+      type: object
+      required: [ip_address]
+      properties:
+        ip_address:
+          type: string
+          example: 192.168.1.104
+          description: IPアドレス（重複不可）
+
+    # -------------- モニター ----------------
+    モニターDTO:
+      type: object
+      properties:
+        monitor_id:
+          type: string
+          example: MON003
+        device_id:
+          type: string
+        create_time:
+          type: string
+          format: date-time
+        update_time:
+          type: string
+          format: date-time
+        is_deleted:
+          type: integer
+          format: int16
+          example: 0
+
+    モニター登録DTO:
+      type: object
+      required: [monitor_id]
+      properties:
+        monitor_id:
+          type: string
+          example: MON003
+          description: モニター番号（重複不可）
