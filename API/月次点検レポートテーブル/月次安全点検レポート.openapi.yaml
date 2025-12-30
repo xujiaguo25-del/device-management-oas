@@ -1,0 +1,955 @@
+openapi: 3.0.1
+info:
+  title: 月次安全点検レポート
+  description: PostgreSQLデータベースに基づく月次安全点検レポートのクエリ、作成、更新、削除機能を提供するAPIセット
+  version: 1.0.0
+tags:
+  - name: 点検レポート
+  - name: 非サンプリング点検
+  - name: サンプリング点検
+paths:
+  /monthly-report/summary:
+    get:
+      summary: 月次レポート集計をクエリ
+      deprecated: false
+      description: 日付範囲・部署等の条件で月次レポートの集計データを取得
+      tags:
+        - 点検レポート
+      parameters:
+        - name: startDate
+          in: query
+          description: レポート開始日（yyyy-MM-dd）
+          required: true
+          example: '2025-12-01T00:00:00.000Z'
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: レポート終了日（yyyy-MM-dd）
+          required: true
+          example: '2025-12-31T00:00:00.000Z'
+          schema:
+            type: string
+            format: date
+        - name: deptId
+          in: query
+          description: 部署番号（絞り込み条件）
+          required: false
+          example: DEPT001
+          schema:
+            type: string
+        - name: workArea
+          in: query
+          description: 作業エリア（絞り込み条件）
+          required: false
+          example: AreaA
+          schema:
+            type: string
+      responses:
+        '200':
+          description: クエリ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 操作成功
+                data:
+                  totalReports: 2
+                  reportList:
+                    - reportId: REPORT001
+                      reportDate: '2025-12-01T00:00:00.000Z'
+                      workArea: AreaA
+                      deptId: DEPT001
+                      securityPromoter: 王五
+                      securityResponsible: 趙六
+                      nonSamplingCheckCount: 1
+                      domainComplianceRate: 50
+                      antivirusComplianceRate: 50
+                    - reportId: REPORT002
+                      reportDate: '2025-12-02T00:00:00.000Z'
+                      workArea: AreaB
+                      deptId: DEPT002
+                      securityPromoter: 張三
+                      securityResponsible: 李四
+                      nonSamplingCheckCount: 0
+                      domainComplianceRate: 100
+                      antivirusComplianceRate: 80
+                timestamp: 1735564800000
+          headers: {}
+        '400':
+          description: パラメータエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 400
+                message: パラメータエラー：startDateの形式が不正（yyyy-MM-ddで入力してください）
+                data: null
+                timestamp: 1735565100000
+          headers: {}
+      security: []
+  /monthly-report/detail/{reportId}:
+    get:
+      summary: レポート詳細（機器状態含む）をクエリ
+      deprecated: false
+      description: レポート番号で詳細情報と関連機器の状態を取得
+      tags:
+        - 点検レポート
+      parameters:
+        - name: reportId
+          in: path
+          description: レポート番号（プライマリキー）
+          required: true
+          example: REPORT001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: クエリ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 操作成功
+                data:
+                  reportBaseInfo:
+                    reportId: REPORT001
+                    reportDate: '2025-12-01T00:00:00.000Z'
+                    workArea: AreaA
+                    deptId: DEPT001
+                    securityPromoter: 王五
+                    securityResponsible: 趙六
+                    qualityDept: 品質部
+                    checkRemark: null
+                    createTime: '2025-12-30T00:01:57.000Z'
+                  nonSamplingCheck:
+                    nonSamplingId: NSC001
+                    privateMobileDevStatus: 存在する
+                    unrecordedWifiStatus: 存在する
+                    floorAccessClosedStatus: 確認済
+                    disposalMeasures: null
+                  deviceCheckList:
+                    - deviceId: DEV001
+                      deviceModel: Dell XPS
+                      computerName: PC-DELL-001
+                      ipAddress: 192.168.1.101
+                      loginUsername: zhangsan
+                      jobNumber: EMP001
+                      domainStatus: 加入済
+                      antivirusStatus: インストール済
+                      usbStatus: 有効化済
+                      osType: Windows10
+                      memorySize: 16.0G
+                      ssdSize: 256.0G
+                      hddSize: 1024.0G
+                timestamp: 1735564800000
+          headers: {}
+        '404':
+          description: レポートが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: レポート番号REPORT999は存在しません
+                data: null
+                timestamp: 1735565000000
+          headers: {}
+      security: []
+  /monthly-report:
+    post:
+      summary: 月次レポートを作成
+      deprecated: false
+      description: 新規月次安全点検レポートを作成
+      tags:
+        - 点検レポート
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreateRequest'
+            example:
+              reportDate: '2025-12-03T00:00:00.000Z'
+              workArea: AreaC
+              deptId: DEPT003
+              securityPromoter: 劉七
+              securityResponsible: 孫八
+              qualityDept: 品質部
+              checkRemark: 12月第1週安全点検
+              checkDescription: 機器コンプライアンスを重点点検
+              nonSamplingCheck:
+                privateMobileDevId: 5
+                unrecordedWifiId: 6
+                floorAccessClosedId: 3
+                disposalMeasures: 異常なし
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 操作成功
+                data:
+                  reportId: REPORT003
+                  message: レポート作成成功
+                  createTime: '2025-12-30T10:30:00.000Z'
+                timestamp: 1735564800000
+          headers: {}
+      security: []
+  /monthly-report/{reportId}:
+    put:
+      summary: 月次レポートを更新
+      deprecated: false
+      description: レポート番号でレポート情報を更新
+      tags:
+        - 点検レポート
+      parameters:
+        - name: reportId
+          in: path
+          description: レポート番号（プライマリキー）
+          required: true
+          example: REPORT003
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportUpdateRequest'
+            example:
+              securityPromoter: 劉七
+              securityResponsible: 孫八
+              checkRemark: 12月第1週安全点検（更新）
+              nonSamplingCheck:
+                disposalMeasures: 全点検完了、異常なし
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 操作成功
+                data:
+                  reportId: REPORT003
+                  message: レポート更新成功
+                  updateTime: '2025-12-30T11:20:00.000Z'
+                timestamp: 1735564800000
+          headers: {}
+        '404':
+          description: レポートが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: レポート番号REPORT999は存在しません
+                data: null
+                timestamp: 1735565000000
+          headers: {}
+      security: []
+    delete:
+      summary: 月次レポートを削除
+      deprecated: false
+      description: レポート番号でレポートを削除（関連データも同時に削除）
+      tags:
+        - 点検レポート
+      parameters:
+        - name: reportId
+          in: path
+          description: レポート番号（プライマリキー）
+          required: true
+          example: REPORT003
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 操作成功
+                data:
+                  reportId: REPORT003
+                  message: レポート削除成功
+                timestamp: 1735564800000
+          headers: {}
+        '404':
+          description: レポートが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: レポート番号REPORT999は存在しません
+                data: null
+                timestamp: 1735565000000
+          headers: {}
+      security: []
+  /non-sampling-check:
+    post:
+      summary: 非サンプリング点検を作成
+      deprecated: false
+      description: 新規非サンプリング点検レコードを作成し、レポートに紐付け
+      tags:
+        - 非サンプリング点検
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonSamplingCheckCreateRequest'
+            example:
+              reportId: REPORT001
+              privateMobileDevId: 5
+              unrecordedWifiId: 6
+              floorAccessClosedId: 3
+              disposalMeasures: 異常なし
+              checkUser: 王五
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 非サンプリング点検作成成功
+                data:
+                  nonSamplingId: NSC001
+                  createTime: '2025-12-30T14:00:00.000Z'
+                timestamp: 1735574400000
+          headers: {}
+      security: []
+  /non-sampling-check/list:
+    get:
+      summary: 非サンプリング点検一覧を取得
+      deprecated: false
+      description: レポート番号等の条件で非サンプリング点検一覧を取得（論理削除済は含まない）
+      tags:
+        - 非サンプリング点検
+      parameters:
+        - name: reportId
+          in: query
+          description: 紐付くレポート番号
+          required: false
+          example: REPORT001
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: 点検日開始
+          required: false
+          example: '2025-12-01T00:00:00.000Z'
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 1
+                  checkList:
+                    - nonSamplingId: NSC001
+                      reportId: REPORT001
+                      privateMobileDevStatus: 存在する
+                      unrecordedWifiStatus: 存在する
+                      floorAccessClosedStatus: 確認済
+                      disposalMeasures: 異常なし
+                      checkUser: 王五
+                      createTime: '2025-12-30T14:00:00.000Z'
+                timestamp: 1735574400000
+          headers: {}
+      security: []
+  /non-sampling-check/{nonSamplingId}:
+    get:
+      summary: 非サンプリング点検詳細を取得
+      deprecated: false
+      description: 非サンプリング点検IDで詳細情報を取得
+      tags:
+        - 非サンプリング点検
+      parameters:
+        - name: nonSamplingId
+          in: path
+          description: 非サンプリング点検ID
+          required: true
+          example: NSC001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  nonSamplingId: NSC001
+                  reportId: REPORT001
+                  privateMobileDevId: 5
+                  privateMobileDevStatus: 存在する
+                  unrecordedWifiId: 6
+                  unrecordedWifiStatus: 存在する
+                  floorAccessClosedId: 3
+                  floorAccessClosedStatus: 確認済
+                  disposalMeasures: 異常なし
+                  checkUser: 王五
+                  createTime: '2025-12-30T14:00:00.000Z'
+                timestamp: 1735574400000
+          headers: {}
+      security: []
+    put:
+      summary: 非サンプリング点検を更新
+      deprecated: false
+      description: 非サンプリング点検IDで情報を更新
+      tags:
+        - 非サンプリング点検
+      parameters:
+        - name: nonSamplingId
+          in: path
+          description: ''
+          required: true
+          example: NSC001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonSamplingCheckUpdateRequest'
+            example:
+              disposalMeasures: 再確認済、異常なし
+              checkUser: 趙六
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 更新成功
+                data:
+                  nonSamplingId: NSC001
+                  updateTime: '2025-12-30T14:30:00.000Z'
+                timestamp: 1735576200000
+          headers: {}
+      security: []
+    delete:
+      summary: 非サンプリング点検を論理削除
+      deprecated: false
+      description: 非サンプリング点検IDで論理削除（is_deletedフラグをtrueに設定）
+      tags:
+        - 非サンプリング点検
+      parameters:
+        - name: nonSamplingId
+          in: path
+          description: ''
+          required: true
+          example: NSC001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 論理削除成功
+                data:
+                  nonSamplingId: NSC001
+                  isDeleted: true
+                timestamp: 1735576800000
+          headers: {}
+      security: []
+  /sampling-check:
+    post:
+      summary: サンプリング点検を作成
+      deprecated: false
+      description: 新規サンプリング点検レコードを作成（機器ごとの点検）
+      tags:
+        - サンプリング点検
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SamplingCheckCreateRequest'
+            example:
+              reportId: REPORT001
+              deviceId: DEV001
+              osVersionCheck: 適合
+              patchUpdateStatus: 最新
+              checkUser: 张三
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: サンプリング点検作成成功
+                data:
+                  samplingId: SC001
+                  createTime: '2025-12-30T15:00:00.000Z'
+                timestamp: 1735578000000
+          headers: {}
+      security: []
+  /sampling-check/list:
+    get:
+      summary: サンプリング点検一覧を取得
+      deprecated: false
+      description: レポート/機器番号でサンプリング点検一覧を取得（論理削除済は含まない）
+      tags:
+        - サンプリング点検
+      parameters:
+        - name: reportId
+          in: query
+          description: ''
+          required: false
+          example: REPORT001
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          description: ''
+          required: false
+          example: DEV001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 1
+                  checkList:
+                    - samplingId: SC001
+                      reportId: REPORT001
+                      deviceId: DEV001
+                      deviceModel: Dell XPS
+                      osVersionCheck: 適合
+                      patchUpdateStatus: 最新
+                      checkUser: 张三
+                      createTime: '2025-12-30T15:00:00.000Z'
+                timestamp: 1735578000000
+          headers: {}
+      security: []
+  /sampling-check/{samplingId}:
+    get:
+      summary: サンプリング点検詳細を取得
+      deprecated: false
+      description: サンプリング点検IDで詳細情報を取得
+      tags:
+        - サンプリング点検
+      parameters:
+        - name: samplingId
+          in: path
+          description: ''
+          required: true
+          example: SC001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  samplingId: SC001
+                  reportId: REPORT001
+                  deviceId: DEV001
+                  osVersionCheck: 適合
+                  patchUpdateStatus: 最新
+                  checkUser: 张三
+                  createTime: '2025-12-30T15:00:00.000Z'
+                timestamp: 1735578000000
+          headers: {}
+      security: []
+    put:
+      summary: サンプリング点検を更新
+      deprecated: false
+      description: サンプリング点検IDで情報を更新
+      tags:
+        - サンプリング点検
+      parameters:
+        - name: samplingId
+          in: path
+          description: ''
+          required: true
+          example: SC001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SamplingCheckUpdateRequest'
+            example:
+              patchUpdateStatus: 一部未適用
+              checkUser: 李四
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 更新成功
+                data:
+                  samplingId: SC001
+                  updateTime: '2025-12-30T15:30:00.000Z'
+                timestamp: 1735579800000
+          headers: {}
+      security: []
+    delete:
+      summary: サンプリング点検を論理削除
+      deprecated: false
+      description: サンプリング点検IDで論理削除（is_deletedフラグをtrueに設定）
+      tags:
+        - サンプリング点検
+      parameters:
+        - name: samplingId
+          in: path
+          description: ''
+          required: true
+          example: SC001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 論理削除成功
+                data:
+                  samplingId: SC001
+                  isDeleted: true
+                timestamp: 1735580400000
+          headers: {}
+      security: []
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 操作成功
+        data:
+          type: object
+          properties: {}
+        timestamp:
+          type: integer
+          example: 1735564800000
+    ReportSummaryItem:
+      type: object
+      properties:
+        reportId:
+          type: string
+          example: REPORT001
+        reportDate:
+          type: string
+          format: date
+          example: '2025-12-01T00:00:00.000Z'
+        workArea:
+          type: string
+          example: AreaA
+        deptId:
+          type: string
+          example: DEPT001
+        securityPromoter:
+          type: string
+          example: 王五
+        securityResponsible:
+          type: string
+          example: 趙六
+        nonSamplingCheckCount:
+          type: integer
+          example: 1
+        domainComplianceRate:
+          type: number
+          format: float
+          example: 50
+        antivirusComplianceRate:
+          type: number
+          format: float
+          example: 50
+    DeviceCheckItem:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          example: DEV001
+        deviceModel:
+          type: string
+          example: Dell XPS
+        computerName:
+          type: string
+          example: PC-DELL-001
+        ipAddress:
+          type: string
+          example: 192.168.1.101
+        loginUsername:
+          type: string
+          example: zhangsan
+        jobNumber:
+          type: string
+          example: EMP001
+        domainStatus:
+          type: string
+          example: 加入済
+        antivirusStatus:
+          type: string
+          example: インストール済
+        usbStatus:
+          type: string
+          example: 有効化済
+        osType:
+          type: string
+          example: Windows10
+        memorySize:
+          type: string
+          example: 16.0G
+        ssdSize:
+          type: string
+          example: 256.0G
+        hddSize:
+          type: string
+          example: 1024.0G
+    ReportCreateRequest:
+      type: object
+      properties:
+        reportDate:
+          type: string
+          format: date
+          example: '2025-12-03T00:00:00.000Z'
+        workArea:
+          type: string
+          example: AreaC
+        deptId:
+          type: string
+          example: DEPT003
+        securityPromoter:
+          type: string
+          example: 劉七
+        securityResponsible:
+          type: string
+          example: 孫八
+        qualityDept:
+          type: string
+          example: 品質部
+        checkRemark:
+          type: string
+          example: 12月第1週安全点検
+        checkDescription:
+          type: string
+          example: 機器コンプライアンスを重点点検
+        nonSamplingCheck:
+          type: object
+          properties:
+            privateMobileDevId:
+              type: integer
+              example: 5
+            unrecordedWifiId:
+              type: integer
+              example: 6
+            floorAccessClosedId:
+              type: integer
+              example: 3
+            disposalMeasures:
+              type: string
+              example: 異常なし
+    ReportUpdateRequest:
+      type: object
+      properties:
+        securityPromoter:
+          type: string
+          example: 劉七
+        securityResponsible:
+          type: string
+          example: 孫八
+        checkRemark:
+          type: string
+          example: 12月第1週安全点検（更新）
+        nonSamplingCheck:
+          type: object
+          properties:
+            disposalMeasures:
+              type: string
+              example: 全点検完了、異常なし
+    NonSamplingCheckCreateRequest:
+      type: object
+      properties:
+        reportId:
+          type: string
+          description: 紐付くレポート番号
+          example: REPORT001
+        privateMobileDevId:
+          type: integer
+          description: 個人携帯端末状態ID
+          example: 5
+        unrecordedWifiId:
+          type: integer
+          description: 未登録WiFi状態ID
+          example: 6
+        floorAccessClosedId:
+          type: integer
+          description: フロア出入管理状態ID
+          example: 3
+        disposalMeasures:
+          type: string
+          description: 処置措置
+          example: 異常なし
+        checkUser:
+          type: string
+          description: 点検者
+          example: 王五
+    NonSamplingCheckUpdateRequest:
+      type: object
+      properties:
+        disposalMeasures:
+          type: string
+          example: 再確認済、異常なし
+        checkUser:
+          type: string
+          example: 趙六
+    SamplingCheckCreateRequest:
+      type: object
+      properties:
+        reportId:
+          type: string
+          description: 紐付くレポート番号
+          example: REPORT001
+        deviceId:
+          type: string
+          description: 点検対象機器ID
+          example: DEV001
+        osVersionCheck:
+          type: string
+          description: OSバージョン適合性
+          example: 適合
+        patchUpdateStatus:
+          type: string
+          description: パッチ更新状態
+          example: 最新
+        checkUser:
+          type: string
+          description: 点検者
+          example: 张三
+    SamplingCheckUpdateRequest:
+      type: object
+      properties:
+        osVersionCheck:
+          type: string
+          example: 適合
+        patchUpdateStatus:
+          type: string
+          example: 一部未適用
+        checkUser:
+          type: string
+          example: 李四
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: 用户不存在
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-20T10:30:00.000Z'
+  responses:
+    UnauthorizedError:
+      description: 认证失败或令牌无效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            成功示例:
+              summary: 成功示例
+              value:
+                code: 401
+                message: 无效的访问令牌
+                timestamp: '2024-01-20T10:30:00Z'
+    NotFoundError:
+      description: 请求的资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            成功示例:
+              summary: 成功示例
+              value:
+                code: 404
+                message: 资源不存在
+                timestamp: '2024-01-20T10:30:00Z'
+  securitySchemes: {}
+servers: []
+security: []
