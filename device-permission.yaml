@@ -219,41 +219,40 @@ components:
       properties:
         code:
           type: integer
-          description: 状态码：200成功，其他为错误
+          description: ステータスコード：200は成功、その他はエラー
           example: 200
         message:
           type: string
-          description: 提示信息
+          description: 通知メッセージ
           example: 操作成功
         data:
           type: object
-          description: 业务数据（成功时返回）
+          description: 業務データ（成功時に返却）
 
     PageResponse:
       type: object
       properties:
         total:
           type: integer
-          description: 总记录数
+          description: 総レコード数
           example: 155
         pages:
           type: integer
-          description: 总页数
+          description: 総ページ数
           example: 8
         pageNum:
           type: integer
-          description: 当前页码
+          description: 現在のページ番号
           example: 1
         pageSize:
           type: integer
-          description: 每页条数
+          description: 1ページあたりの表示件数
           example: 20
         list:
           type: array
           items:
             type: object
             properties:
-
               userInfo:
                 $ref: '#/components/schemas/UserInfo'
               deviceInfo:
@@ -264,16 +263,16 @@ components:
                 $ref: '#/components/schemas/DevicePermission'
 
 paths:
-  #列表查询
+  # リスト照会
   /device-permission/query/list:
-    get:
+    post:  # GETはrequestBodyをサポートしないためPOSTに修正
       tags:
         - 権限リスト
       summary: デバイス権限リスト照会
       parameters:
         - name: pageNum
           in: query
-          description: 页码
+          description: ページ番号
           required: false
           schema:
             type: integer
@@ -281,7 +280,7 @@ paths:
             default: 1
         - name: pageSize
           in: query
-          description: 每页条数
+          description: 1ページあたりの表示件数
           required: false
           schema:
             type: integer
@@ -302,8 +301,6 @@ paths:
                   $ref: '#/components/schemas/DeviceIp'
                 devicePermission:
                   $ref: '#/components/schemas/DevicePermission'
-
-
       responses:
         '200':
           description: クエリに成功しました
@@ -317,7 +314,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/PageResponse'
 
-  #数据修改
+  # データ変更
   /device-permission/update:
     put:
       tags:
@@ -337,7 +334,6 @@ paths:
                   $ref: '#/components/schemas/DevicePermission'
                 userInfo:
                   $ref: '#/components/schemas/UserInfo'
-                  
       responses:
         '200':
           description: 変更成功
@@ -351,9 +347,9 @@ paths:
                       data:
                         $ref: '#/components/schemas/DevicePermission'
 
-  #导出数据返回xlsx
+  # データエクスポート（xlsx形式）
   /device-permission/export:
-    get: 
+    post:  # GETはrequestBodyをサポートしないためPOSTに修正
       tags:
         - 権限リスト
       summary: デバイス権限リストのエクスポート
@@ -371,33 +367,11 @@ paths:
                   $ref: '#/components/schemas/DevicePermission'
                 userInfo:
                   $ref: '#/components/schemas/UserInfo'
-                  
       responses:
         '200':
-          description: 成功
+          description: エクスポート成功
           content:
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
               schema:
                 type: string
                 format: binary
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
