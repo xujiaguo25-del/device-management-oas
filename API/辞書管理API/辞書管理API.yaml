@@ -1,0 +1,726 @@
+openapi: 3.0.0
+info:
+  title: デバイス管理システム API - 辞書管理モジュール
+  description: 辞書タイプと辞書項目の管理API
+  version: 4.0.0
+
+tags:
+  - name: 辞書タイプ管理
+    description: 辞書タイプ（分類）の管理
+  - name: 辞書項目管理
+    description: 辞書項目（具体的な値）の管理
+
+paths:
+  # ==================== 辞書タイプ管理 ====================
+  /dict/types:
+    get:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプ一覧の取得
+      description: ページネーションによる辞書タイプ情報の検索
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: ページ番号
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: ページあたりの件数
+        - in: query
+          name: dict_type_code
+          schema:
+            type: string
+          description: 辞書タイプコードによるフィルタ
+        - in: query
+          name: dict_type_name
+          schema:
+            type: string
+          description: 辞書タイプ名によるフィルタ
+        - in: query
+          name: is_enabled
+          schema:
+            type: integer
+            enum: [0, 1]
+          description: 有効フラグによるフィルタ（0=無効、1=有効）
+      responses:
+        '200':
+          description: 辞書タイプ一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page_info:
+                    $ref: '#/components/schemas/PageInfo'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DictTypeListDTO'
+
+    post:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプの作成
+      description: 新しい辞書タイプの作成
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDictTypeDTO'
+      responses:
+        '201':
+          description: 辞書タイプ作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictTypeDetailDTO'
+
+  /dict/types/all:
+    get:
+      tags:
+        - 辞書タイプ管理
+      summary: 全ての辞書タイプの取得
+      description: ページネーションなしで全ての有効な辞書タイプを取得（選択肢用）
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 辞書タイプ一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DictTypeSimpleDTO'
+
+  /dict/types/{dict_type_id}:
+    get:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプ詳細の取得
+      description: 辞書タイプIDによる詳細情報の取得
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_type_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書タイプID
+      responses:
+        '200':
+          description: 辞書タイプ詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictTypeDetailDTO'
+
+    put:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプ情報の更新
+      description: 辞書タイプ基本情報の更新
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_type_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書タイプID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDictTypeDTO'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictTypeDetailDTO'
+
+    delete:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプの削除（論理削除）
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_type_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書タイプID
+      responses:
+        '204':
+          description: 削除成功
+
+  /dict/types/{dict_type_id}/enable:
+    put:
+      tags:
+        - 辞書タイプ管理
+      summary: 辞書タイプの有効化/無効化
+      description: 辞書タイプの有効状態を切り替え
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_type_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書タイプID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_enabled
+              properties:
+                is_enabled:
+                  type: integer
+                  enum: [0, 1]
+                  description: 有効フラグ（0=無効、1=有効）
+      responses:
+        '200':
+          description: 状態更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictTypeDetailDTO'
+
+  # ==================== 辞書項目管理 ====================
+  /dict/items:
+    get:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目一覧の取得
+      description: ページネーションによる辞書項目情報の検索
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: ページ番号
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: ページあたりの件数
+        - in: query
+          name: dict_type_id
+          schema:
+            type: integer
+            format: int64
+          description: 辞書タイプIDによるフィルタ
+        - in: query
+          name: dict_type_code
+          schema:
+            type: string
+          description: 辞書タイプコードによるフィルタ
+        - in: query
+          name: dict_item_code
+          schema:
+            type: string
+          description: 辞書項目コードによるフィルタ
+        - in: query
+          name: dict_item_name
+          schema:
+            type: string
+          description: 辞書項目名によるフィルタ
+        - in: query
+          name: is_enabled
+          schema:
+            type: integer
+            enum: [0, 1]
+          description: 有効フラグによるフィルタ（0=無効、1=有効）
+      responses:
+        '200':
+          description: 辞書項目一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page_info:
+                    $ref: '#/components/schemas/PageInfo'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DictItemListDTO'
+
+    post:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目の作成
+      description: 新しい辞書項目の作成
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDictItemDTO'
+      responses:
+        '201':
+          description: 辞書項目作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemDetailDTO'
+
+  /dict/items/by-type/{dict_type_code}:
+    get:
+      tags:
+        - 辞書項目管理
+      summary: 辞書タイプコードによる辞書項目一覧の取得
+      description: 辞書タイプコードに基づいて有効な辞書項目を全て取得（選択肢用）
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_type_code
+          required: true
+          schema:
+            type: string
+          description: 辞書タイプコード
+      responses:
+        '200':
+          description: 辞書項目一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DictItemSimpleDTO'
+
+  /dict/items/{dict_item_id}:
+    get:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目詳細の取得
+      description: 辞書項目IDによる詳細情報の取得
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_item_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書項目ID
+      responses:
+        '200':
+          description: 辞書項目詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemDetailDTO'
+
+    put:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目情報の更新
+      description: 辞書項目基本情報の更新
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_item_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書項目ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDictItemDTO'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemDetailDTO'
+
+    delete:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目の削除（論理削除）
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_item_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書項目ID
+      responses:
+        '204':
+          description: 削除成功
+
+  /dict/items/{dict_item_id}/enable:
+    put:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目の有効化/無効化
+      description: 辞書項目の有効状態を切り替え
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_item_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書項目ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_enabled
+              properties:
+                is_enabled:
+                  type: integer
+                  enum: [0, 1]
+                  description: 有効フラグ（0=無効、1=有効）
+      responses:
+        '200':
+          description: 状態更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemDetailDTO'
+
+  /dict/items/{dict_item_id}/sort:
+    put:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目のソート順更新
+      description: 辞書項目の表示順序を更新
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: dict_item_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 辞書項目ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sort
+              properties:
+                sort:
+                  type: integer
+                  description: ソート番号
+      responses:
+        '200':
+          description: ソート順更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemDetailDTO'
+
+  # ==================== バッチ操作 ====================
+  /dict/items/batch/enable:
+    put:
+      tags:
+        - 辞書項目管理
+      summary: 辞書項目の一括有効化/無効化
+      description: 複数の辞書項目の有効状態を一括切り替え
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dict_item_ids
+                - is_enabled
+              properties:
+                dict_item_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+                  description: 辞書項目ID一覧
+                is_enabled:
+                  type: integer
+                  enum: [0, 1]
+                  description: 有効フラグ（0=無効、1=有効）
+      responses:
+        '200':
+          description: 一括状態更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success_count:
+                    type: integer
+                  fail_count:
+                    type: integer
+
+components:
+  schemas:
+    # ==================== 辞書タイプモデル ====================
+    DictTypeSimpleDTO:
+      type: object
+      properties:
+        dict_type_id:
+          type: integer
+          format: int64
+          example: 1
+        dict_type_code:
+          type: string
+          example: "USER_TYPE"
+        dict_type_name:
+          type: string
+          example: "ユーザータイプ"
+
+    DictTypeListDTO:
+      allOf:
+        - $ref: '#/components/schemas/DictTypeSimpleDTO'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+              example: "異なるタイプのユーザーを区別"
+            is_enabled:
+              type: integer
+              example: 1
+            create_time:
+              type: string
+              format: date-time
+            update_time:
+              type: string
+              format: date-time
+
+    DictTypeDetailDTO:
+      allOf:
+        - $ref: '#/components/schemas/DictTypeListDTO'
+        - type: object
+          properties:
+            is_deleted:
+              type: integer
+              example: 0
+            # 関連する辞書項目数
+            item_count:
+              type: integer
+              example: 2
+
+    CreateDictTypeDTO:
+      type: object
+      required:
+        - dict_type_code
+        - dict_type_name
+      properties:
+        dict_type_code:
+          type: string
+          example: "USER_TYPE"
+          description: 辞書タイプコード（ユニーク）
+        dict_type_name:
+          type: string
+          example: "ユーザータイプ"
+          description: 辞書タイプ名
+        description:
+          type: string
+          nullable: true
+          example: "異なるタイプのユーザーを区別"
+          description: 辞書タイプの説明
+        is_enabled:
+          type: integer
+          enum: [0, 1]
+          default: 1
+          description: 有効フラグ（0=無効、1=有効）
+
+    UpdateDictTypeDTO:
+      type: object
+      properties:
+        dict_type_name:
+          type: string
+          example: "ユーザータイプ"
+          description: 辞書タイプ名
+        description:
+          type: string
+          nullable: true
+          example: "異なるタイプのユーザーを区別"
+          description: 辞書タイプの説明
+
+    # ==================== 辞書項目モデル ====================
+    DictItemSimpleDTO:
+      type: object
+      properties:
+        dict_item_id:
+          type: integer
+          format: int64
+          example: 1
+        dict_item_code:
+          type: string
+          example: "ADMIN"
+        dict_item_name:
+          type: string
+          example: "管理者"
+        sort:
+          type: integer
+          example: 1
+
+    DictItemListDTO:
+      allOf:
+        - $ref: '#/components/schemas/DictItemSimpleDTO'
+        - type: object
+          properties:
+            dict_type_id:
+              type: integer
+              format: int64
+              example: 1
+            dict_type_code:
+              type: string
+              example: "USER_TYPE"
+            dict_type_name:
+              type: string
+              example: "ユーザータイプ"
+            is_enabled:
+              type: integer
+              example: 1
+            create_time:
+              type: string
+              format: date-time
+            update_time:
+              type: string
+              format: date-time
+
+    DictItemDetailDTO:
+      allOf:
+        - $ref: '#/components/schemas/DictItemListDTO'
+        - type: object
+          properties:
+            is_deleted:
+              type: integer
+              example: 0
+
+    CreateDictItemDTO:
+      type: object
+      required:
+        - dict_type_id
+        - dict_item_code
+        - dict_item_name
+      properties:
+        dict_type_id:
+          type: integer
+          format: int64
+          example: 1
+          description: 辞書タイプID
+        dict_item_code:
+          type: string
+          example: "ADMIN"
+          description: 辞書項目コード（同一タイプ内ユニーク）
+        dict_item_name:
+          type: string
+          example: "管理者"
+          description: 辞書項目名
+        sort:
+          type: integer
+          default: 0
+          description: ソート番号
+        is_enabled:
+          type: integer
+          enum: [0, 1]
+          default: 1
+          description: 有効フラグ（0=無効、1=有効）
+
+    UpdateDictItemDTO:
+      type: object
+      properties:
+        dict_item_name:
+          type: string
+          example: "管理者"
+          description: 辞書項目名
+        sort:
+          type: integer
+          description: ソート番号
+
+    # ==================== 共通モデル ====================
+    PageInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

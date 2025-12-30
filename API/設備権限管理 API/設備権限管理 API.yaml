@@ -1,0 +1,1280 @@
+openapi: 3.0.3
+info:
+  title: 設備権限管理システム API
+  description: 更新されたデータベース構造に基づく設備権限管理APIインターフェースドキュメント
+  version: 2.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: 開発環境
+  - url: https://api.example.com/api/v1
+    description: 本番環境
+
+tags:
+  - name: DevicePermissions
+    description: 設備権限管理（device_permissionテーブル）
+  - name: PermissionIPs
+    description: 権限IP管理（permission_ipテーブル）
+  - name: PermissionDevices
+    description: 権限設備情報管理（permission_device_infoテーブル）
+
+paths:
+  # ==================== 設備権限管理 API ====================
+  /device-permissions:
+    get:
+      tags: [DevicePermissions]
+      summary: 設備権限リストを取得
+      description: 設備権限のページングリストを取得、複数の検索条件をサポート
+      operationId: getDevicePermissions
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: job_number
+          in: query
+          description: 社員番号（あいまい検索）
+          schema:
+            type: string
+        - name: computer_name
+          in: query
+          description: コンピュータ名（あいまい検索）
+          schema:
+            type: string
+        - name: login_username
+          in: query
+          description: ログインユーザ名（あいまい検索）
+          schema:
+            type: string
+        - name: domain_status_id
+          in: query
+          description: ドメインステータスID
+          schema:
+            type: integer
+        - name: usb_status_id
+          in: query
+          description: USBステータスID
+          schema:
+            type: integer
+        - name: smartit_status_id
+          in: query
+          description: SmartITステータスID
+          schema:
+            type: integer
+        - name: antivirus_status_id
+          in: query
+          description: ウイルス対策ステータスID
+          schema:
+            type: integer
+        - name: is_deleted
+          in: query
+          description: 論理削除フラグ（0=未削除、1=削除済）
+          schema:
+            type: integer
+            default: 0
+            enum: [0, 1]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePermissionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [DevicePermissions]
+      summary: 設備権限を作成
+      description: 新しい設備権限レコードを作成
+      operationId: createDevicePermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDevicePermissionRequest'
+            examples:
+              basic:
+                summary: 基本権限作成
+                value:
+                  permission_id: "PERM_DEV003"
+                  job_number: "EMP003"
+                  computer_name: "PC-LENOVO-003"
+                  login_username: "wangwu"
+                  domain_status_id: 7
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePermissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 権限IDが既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /device-permissions/{permission_id}:
+    get:
+      tags: [DevicePermissions]
+      summary: 設備権限詳細を取得
+      description: 権限IDに基づいて設備権限詳細を取得、関連するIPと設備情報を含む
+      operationId: getDevicePermissionById
+      parameters:
+        - name: permission_id
+          in: path
+          required: true
+          description: 権限番号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePermissionDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags: [DevicePermissions]
+      summary: 設備権限を更新
+      description: 設備権限情報を更新
+      operationId: updateDevicePermission
+      parameters:
+        - name: permission_id
+          in: path
+          required: true
+          description: 権限番号
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDevicePermissionRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePermissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags: [DevicePermissions]
+      summary: 設備権限を削除
+      description: 設備権限を論理削除（is_deleted=1を設定）
+      operationId: deleteDevicePermission
+      parameters:
+        - name: permission_id
+          in: path
+          required: true
+          description: 権限番号
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== 権限IP管理 API ====================
+  /permission-ips:
+    get:
+      tags: [PermissionIPs]
+      summary: 権限IPリストを取得
+      description: 権限IPのページングリストを取得、複数の検索条件をサポート
+      operationId: getPermissionIPs
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: permission_id
+          in: query
+          description: 権限番号
+          schema:
+            type: string
+        - name: ip_address
+          in: query
+          description: IPアドレス（あいまい検索）
+          schema:
+            type: string
+        - name: is_deleted
+          in: query
+          description: 論理削除フラグ
+          schema:
+            type: integer
+            default: 0
+            enum: [0, 1]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionIPListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [PermissionIPs]
+      summary: 権限IPを作成
+      description: 権限に新しいIPレコードを作成
+      operationId: createPermissionIP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionIPRequest'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionIPResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: IPアドレスが既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /permission-ips/{ip_id}:
+    get:
+      tags: [PermissionIPs]
+      summary: 権限IP詳細を取得
+      description: IP IDに基づいて権限IP詳細を取得
+      operationId: getPermissionIPById
+      parameters:
+        - name: ip_id
+          in: path
+          required: true
+          description: IP番号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionIPDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags: [PermissionIPs]
+      summary: 権限IPを更新
+      description: 権限IP情報を更新
+      operationId: updatePermissionIP
+      parameters:
+        - name: ip_id
+          in: path
+          required: true
+          description: IP番号
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionIPRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionIPResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags: [PermissionIPs]
+      summary: 権限IPを削除
+      description: 権限IPを論理削除（is_deleted=1を設定）
+      operationId: deletePermissionIP
+      parameters:
+        - name: ip_id
+          in: path
+          required: true
+          description: IP番号
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== 権限設備情報管理 API ====================
+  /permission-devices:
+    get:
+      tags: [PermissionDevices]
+      summary: 権限設備情報リストを取得
+      description: 権限設備情報のページングリストを取得（注意：device_idはdevice_infoテーブルと無関係）
+      operationId: getPermissionDevices
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: permission_id
+          in: query
+          description: 権限番号（外部キー）
+          schema:
+            type: string
+        - name: device_id
+          in: query
+          description: 設備番号（主キー、permission_device_infoテーブル）
+          schema:
+            type: string
+        - name: is_deleted
+          in: query
+          description: 論理削除フラグ
+          schema:
+            type: integer
+            default: 0
+            enum: [0, 1]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeviceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [PermissionDevices]
+      summary: 設備情報権限関連を作成
+      description: 設備情報と権限の関連レコードを作成（注意：device_idはdevice_infoテーブルと無関係）
+      operationId: createPermissionDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionDeviceRequest'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 設備IDが既に関連付けられています
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /permission-devices/{device_id}:
+    get:
+      tags: [PermissionDevices]
+      summary: 権限設備情報詳細を取得
+      description: 設備IDに基づいて権限設備関連詳細を取得（注意：device_idはdevice_infoテーブルと無関係）
+      operationId: getPermissionDeviceById
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          description: 設備番号（主キー、permission_device_infoテーブル）
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeviceDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags: [PermissionDevices]
+      summary: 権限設備情報を更新
+      description: 設備と権限の関連情報を更新
+      operationId: updatePermissionDevice
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          description: 設備番号（主キー、permission_device_infoテーブル）
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionDeviceRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags: [PermissionDevices]
+      summary: 権限設備情報を削除
+      description: 権限設備関連を論理削除（is_deleted=1を設定）
+      operationId: deletePermissionDevice
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          description: 設備番号（主キー、permission_device_infoテーブル）
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== バッチ操作と関連検索 API ====================
+  /device-permissions/batch-delete:
+    post:
+      tags: [DevicePermissions]
+      summary: 設備権限を一括削除
+      description: 設備権限を一括論理削除
+      operationId: batchDeleteDevicePermissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permission_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: 権限IDリスト
+              required: [permission_ids]
+      responses:
+        '200':
+          description: 一括削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success_count:
+                    type: integer
+                    description: 削除成功数
+                  fail_count:
+                    type: integer
+                    description: 削除失敗数
+                  failed_items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        permission_id:
+                          type: string
+                        reason:
+                          type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # 権限下のすべてのIPを取得 - 設備権限下で関連IPを検索
+  /device-permissions/{permission_id}/ips:
+    get:
+      tags: [DevicePermissions]
+      summary: 設備権限のすべてのIPを取得
+      description: 指定された設備権限下のすべてのIPアドレスを取得
+      operationId: getPermissionIPsByPermissionId
+      parameters:
+        - name: permission_id
+          in: path
+          required: true
+          description: 権限番号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permission_id:
+                    type: string
+                    description: 権限ID
+                  computer_name:
+                    type: string
+                    description: コンピュータ名
+                  login_username:
+                    type: string
+                    description: ログインユーザ名
+                  ips:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionIP'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # 権限下のすべての設備情報を取得
+  /device-permissions/{permission_id}/devices:
+    get:
+      tags: [DevicePermissions]
+      summary: 設備権限のすべての設備情報を取得
+      description: 指定された設備権限下のすべての設備情報を取得
+      operationId: getPermissionDevicesByPermissionId
+      parameters:
+        - name: permission_id
+          in: path
+          required: true
+          description: 権限番号
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permission_id:
+                    type: string
+                    description: 権限ID
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionDevice'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /permission-devices/batch-link:
+    post:
+      tags: [PermissionDevices]
+      summary: 設備権限関連を一括作成
+      description: 設備と権限の関連を一括作成
+      operationId: batchCreatePermissionDevices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permission_id:
+                  type: string
+                  description: 権限ID
+                device_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: 設備IDリスト
+              required: [permission_id, device_ids]
+      responses:
+        '200':
+          description: 一括作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success_count:
+                    type: integer
+                  fail_count:
+                    type: integer
+                  failed_items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        device_id:
+                          type: string
+                        reason:
+                          type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  # ==================== パラメータ定義 ====================
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: ページ番号、1から開始
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    SizeParam:
+      name: size
+      in: query
+      description: ページあたりの数
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+  # ==================== リクエストボディモデル ====================
+  schemas:
+    # 設備権限関連モデル
+    CreateDevicePermissionRequest:
+      type: object
+      required:
+        - permission_id
+        - job_number
+      properties:
+        permission_id:
+          type: string
+          description: 権限番号（主キー）
+          maxLength: 50
+        job_number:
+          type: string
+          description: 社員番号（外部キー）
+          maxLength: 50
+        computer_name:
+          type: string
+          description: コンピュータ名
+          maxLength: 100
+        login_username:
+          type: string
+          description: ログインユーザ名
+          maxLength: 100
+        domain_status_id:
+          type: integer
+          description: ドメインステータスID
+        domain_group:
+          type: string
+          description: ドメイン内グループ名
+          maxLength: 100
+        no_domain_reason:
+          type: string
+          description: ドメイン未加入理由
+        smartit_status_id:
+          type: integer
+          description: SmartITステータスID
+        no_smartit_reason:
+          type: string
+          description: SmartIT未インストール理由
+        usb_status_id:
+          type: integer
+          description: USBステータスID
+        usb_reason:
+          type: string
+          description: USB使用許可理由
+        usb_expire_date:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirus_status_id:
+          type: integer
+          description: ウイルス対策ステータスID
+        no_symantec_reason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+
+    UpdateDevicePermissionRequest:
+      type: object
+      properties:
+        computer_name:
+          type: string
+          description: コンピュータ名
+          maxLength: 100
+        login_username:
+          type: string
+          description: ログインユーザ名
+          maxLength: 100
+        domain_status_id:
+          type: integer
+          description: ドメインステータスID
+        domain_group:
+          type: string
+          description: ドメイン内グループ名
+          maxLength: 100
+        no_domain_reason:
+          type: string
+          description: ドメイン未加入理由
+        smartit_status_id:
+          type: integer
+          description: SmartITステータスID
+        no_smartit_reason:
+          type: string
+          description: SmartIT未インストール理由
+        usb_status_id:
+          type: integer
+          description: USBステータスID
+        usb_reason:
+          type: string
+          description: USB使用許可理由
+        usb_expire_date:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirus_status_id:
+          type: integer
+          description: ウイルス対策ステータスID
+        no_symantec_reason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        updater:
+          type: string
+          description: 更新者
+          maxLength: 100
+
+    DevicePermission:
+      type: object
+      properties:
+        permission_id:
+          type: string
+          description: 権限番号
+        job_number:
+          type: string
+          description: 社員番号
+        computer_name:
+          type: string
+          description: コンピュータ名
+        login_username:
+          type: string
+          description: ログインユーザ名
+        domain_status_id:
+          type: integer
+          description: ドメインステータスID
+        domain_status_name:
+          type: string
+          description: ドメインステータス名（辞書テーブルから取得）
+        domain_group:
+          type: string
+          description: ドメイン内グループ名
+        no_domain_reason:
+          type: string
+          description: ドメイン未加入理由
+        smartit_status_id:
+          type: integer
+          description: SmartITステータスID
+        smartit_status_name:
+          type: string
+          description: SmartITステータス名（辞書テーブルから取得）
+        no_smartit_reason:
+          type: string
+          description: SmartIT未インストール理由
+        usb_status_id:
+          type: integer
+          description: USBステータスID
+        usb_status_name:
+          type: string
+          description: USBステータス名（辞書テーブルから取得）
+        usb_reason:
+          type: string
+          description: USB使用許可理由
+        usb_expire_date:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirus_status_id:
+          type: integer
+          description: ウイルス対策ステータスID
+        antivirus_status_name:
+          type: string
+          description: ウイルス対策ステータス名（辞書テーブルから取得）
+        no_symantec_reason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          enum: [0, 1]
+          description: 論理削除フラグ
+
+    DevicePermissionListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: 総レコード数
+            page:
+              type: integer
+              description: 現在のページ番号
+            size:
+              type: integer
+              description: ページあたりの数
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/DevicePermission'
+
+    DevicePermissionResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          $ref: '#/components/schemas/DevicePermission'
+
+    DevicePermissionDetailResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            permission_info:
+              $ref: '#/components/schemas/DevicePermission'
+            user_info:
+              type: object
+              description: ユーザー情報（userテーブルから取得）
+              properties:
+                name:
+                  type: string
+                  description: 氏名
+                dept_id:
+                  type: string
+                  description: 部署番号
+            ip_list:
+              type: array
+              description: 関連するIPリスト
+              items:
+                $ref: '#/components/schemas/PermissionIP'
+            device_list:
+              type: array
+              description: 関連する設備情報リスト
+              items:
+                $ref: '#/components/schemas/PermissionDevice'
+
+    # 権限IP関連モデル
+    CreatePermissionIPRequest:
+      type: object
+      required:
+        - ip_id
+        - permission_id
+        - ip_address
+      properties:
+        ip_id:
+          type: string
+          description: IP番号（主キー）
+          maxLength: 50
+        permission_id:
+          type: string
+          description: 権限番号（外部キー）
+          maxLength: 50
+        ip_address:
+          type: string
+          description: IPアドレス
+          maxLength: 50
+        updater:
+          type: string
+          description: 更新者
+          maxLength: 100
+
+    UpdatePermissionIPRequest:
+      type: object
+      properties:
+        ip_address:
+          type: string
+          description: IPアドレス
+          maxLength: 50
+        updater:
+          type: string
+          description: 更新者
+          maxLength: 100
+
+    PermissionIP:
+      type: object
+      properties:
+        ip_id:
+          type: string
+          description: IP番号
+        ip_address:
+          type: string
+          description: IPアドレス
+
+    PermissionIPListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: 総レコード数
+            page:
+              type: integer
+              description: 現在のページ番号
+            size:
+              type: integer
+              description: ページあたりの数
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/PermissionIP'
+
+    PermissionIPResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          $ref: '#/components/schemas/PermissionIP'
+
+    PermissionIPDetailResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            ip_info:
+              $ref: '#/components/schemas/PermissionIP'
+
+    # 権限設備情報関連モデル
+    CreatePermissionDeviceRequest:
+      type: object
+      required:
+        - device_id
+        - permission_id
+      properties:
+        device_id:
+          type: string
+          description: 設備番号（主キー、permission_device_infoテーブル）
+          maxLength: 50
+        permission_id:
+          type: string
+          description: 権限番号（外部キー）
+          maxLength: 50
+        updater:
+          type: string
+          description: 更新者
+          maxLength: 100
+
+    UpdatePermissionDeviceRequest:
+      type: object
+      properties:
+        permission_id:
+          type: string
+          description: 権限番号
+          maxLength: 50
+        updater:
+          type: string
+          description: 更新者
+          maxLength: 100
+
+    PermissionDevice:
+      type: object
+      properties:
+        device_id:
+          type: string
+          description: 設備番号（主キー、permission_device_infoテーブル）
+    PermissionDeviceListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: 総レコード数
+            page:
+              type: integer
+              description: 現在のページ番号
+            size:
+              type: integer
+              description: ページあたりの数
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/PermissionDevice'
+
+    PermissionDeviceResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          $ref: '#/components/schemas/PermissionDevice'
+
+    PermissionDeviceDetailResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "成功"
+        data:
+          type: object
+          properties:
+            device_info:
+              $ref: '#/components/schemas/PermissionDevice'
+
+  # ==================== レスポンスモデル ====================
+  responses:
+    BadRequest:
+      description: リクエストパラメータエラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 400
+              message:
+                type: string
+                example: "リクエストパラメータエラー"
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
+
+    Unauthorized:
+      description: 未認証アクセス
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 401
+              message:
+                type: string
+                example: "未認証アクセス"
+
+    Forbidden:
+      description: アクセス禁止
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 403
+              message:
+                type: string
+                example: "アクセス禁止"
+
+    NotFound:
+      description: リソースが存在しません
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 404
+              message:
+                type: string
+                example: "リソースが存在しません"
+
+    Conflict:
+      description: リソース競合
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 409
+              message:
+                type: string
+                example: "リソースが既に存在します"
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 500
+              message:
+                type: string
+                example: "サーバー内部エラー"
+
+  # ==================== セキュリティスキーム ====================
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
