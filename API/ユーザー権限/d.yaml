@@ -1,0 +1,803 @@
+openapi: 3.0.3
+info:
+  title: 権限管理
+  description: 権限管理、ロール-権限関連、ユーザー-ロール関連、ユーザー-権限関連のCRUD機能を含むAPI
+  version: 4.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: ローカル開発環境
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: ログイン後取得したアクセストークンを指定（形式：Bearer {token}）
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 操作成功
+        data:
+          type: object
+        timestamp:
+          type: integer
+          example: 1735564800000
+
+    # 1. 権限管理関連スキーマ
+    PermissionCreateRequest:
+      type: object
+      required: [permissionName, permissionCode, resourceType, resourceKey]
+      properties:
+        permissionName:
+          type: string
+          description: 権限名（表示用）
+          example: レポート承認
+        permissionCode:
+          type: string
+          description: 権限コード（ユニーク）
+          example: PERM_APPROVE_REPORT
+        resourceType:
+          type: string
+          description: リソースタイプ（メニュー/ボタン/インターフェース）
+          example: ボタン
+        resourceKey:
+          type: string
+          description: リソース識別子（URL/ボタンID等）
+          example: /report/approve
+        description:
+          type: string
+          description: 権限の説明
+          example: 月次点検レポートの承認権限
+
+    PermissionUpdateRequest:
+      type: object
+      properties:
+        permissionName:
+          type: string
+          example: レポート最終承認
+        description:
+          type: string
+          example: 月次点検レポートの最終承認権限
+        isEnabled:
+          type: boolean
+          description: 有効フラグ（true=有効、false=無効）
+          example: true
+
+    PermissionItem:
+      type: object
+      properties:
+        permissionId:
+          type: integer
+          example: 4
+        permissionName:
+          type: string
+          example: レポート承認
+        permissionCode:
+          type: string
+          example: PERM_APPROVE_REPORT
+        resourceType:
+          type: string
+          example: ボタン
+        resourceKey:
+          type: string
+          example: /report/approve
+        description:
+          type: string
+          example: 月次点検レポートの承認権限
+        isEnabled:
+          type: boolean
+          example: true
+        isDeleted:
+          type: boolean
+          example: false
+        createTime:
+          type: string
+          format: date-time
+          example: 2025-12-30 18:00:00
+
+    # 2. ロール管理関連スキーマ
+    RoleCreateRequest:
+      type: object
+      required: [roleName, roleCode]
+      properties:
+        roleName:
+          type: string
+          description: ロール名（ユニーク）
+          example: 点検管理者
+        roleCode:
+          type: string
+          description: ロールコード（ユニーク）
+          example: ROLE_INSPECTION_ADMIN
+        description:
+          type: string
+          description: ロールの説明
+          example: 点検レポートの全権限を保有
+        isEnabled:
+          type: boolean
+          description: 有効フラグ
+          example: true
+
+    RoleUpdateRequest:
+      type: object
+      properties:
+        roleName:
+          type: string
+          example: 点検管理責任者
+        description:
+          type: string
+          example: 点検レポートの作成・承認権限を保有
+        isEnabled:
+          type: boolean
+          example: true
+
+    RoleItem:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        roleCode:
+          type: string
+          example: ROLE_INSPECTION_ADMIN
+        description:
+          type: string
+          example: 点検レポートの全権限を保有
+        isEnabled:
+          type: boolean
+          example: true
+        isDeleted:
+          type: boolean
+          example: false
+        createTime:
+          type: string
+          format: date-time
+          example: 2025-12-30 18:30:00
+
+    # 3. ロール-権限関連スキーマ
+    RolePermissionBindRequest:
+      type: object
+      required: [roleId, permissionIds]
+      properties:
+        roleId:
+          type: integer
+          description: ロールID
+          example: 3
+        permissionIds:
+          type: array
+          items:
+            type: integer
+          description: 紐付ける権限IDリスト（既存紐付けは上書き）
+          example: [3, 4, 5]
+
+    RolePermissionItem:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        permissionList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionItem'
+
+    # 4. ユーザー-ロール関連スキーマ
+    UserRoleBindRequest:
+      type: object
+      required: [userId, roleId]
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 2
+        roleId:
+          type: integer
+          description: ロールID（1ユーザー1ロール）
+          example: 3
+
+    UserRoleItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 2
+        jobNumber:
+          type: string
+          example: EMP002
+        userName:
+          type: string
+          example: 李四
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        roleCode:
+          type: string
+          example: ROLE_INSPECTION_ADMIN
+
+    # 5. ユーザー-権限関連スキーマ（個別権限上書き用）
+    UserPermissionBindRequest:
+      type: object
+      required: [userId, permissionId, grantType]
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 2
+        permissionId:
+          type: integer
+          description: 権限ID
+          example: 6
+        grantType:
+          type: string
+          description: 付与タイプ（APPROVE=許可、DENY=拒否）
+          example: APPROVE
+        expireDate:
+          type: string
+          format: date
+          description: 有効期限（未指定の場合は永続）
+          example: 2026-12-31
+
+    UserPermissionItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 2
+        userName:
+          type: string
+          example: 李四
+        permissionId:
+          type: integer
+          example: 6
+        permissionName:
+          type: string
+          example: 緊急点検作成
+        permissionCode:
+          type: string
+          example: PERM_EMERGENCY_CHECK
+        grantType:
+          type: string
+          example: APPROVE
+        expireDate:
+          type: string
+          format: date
+          example: 2026-12-31
+        createTime:
+          type: string
+          format: date-time
+          example: 2025-12-30 19:00:00
+paths:
+  # ==============================
+  # 1. 権限管理（Permission Management）
+  # ==============================
+  /permission:
+    post:
+      summary: 権限作成
+      description: 新規システム権限を作成（システム管理者権限 required）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCreateRequest'
+            example:
+              permissionName: レポート承認
+              permissionCode: PERM_APPROVE_REPORT
+              resourceType: ボタン
+              resourceKey: /report/approve
+              description: 月次点検レポートの承認権限
+      responses:
+        '200':
+          description: 権限作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限作成成功
+                data:
+                  permissionId: 4
+                  permissionCode: PERM_APPROVE_REPORT
+                timestamp: 1735596000000
+
+  /permission/list:
+    get:
+      summary: 権限一覧取得
+      description: 全てのシステム権限を取得（論理削除済は含まない）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: リソースタイプで絞り込み
+          example: ボタン
+        - name: isEnabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: 有効状態で絞り込み
+          example: true
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 4
+                  permissionList:
+                    - permissionId: 1
+                      permissionName: ユーザー参照
+                      permissionCode: PERM_VIEW_USER
+                      resourceType: メニュー
+                      resourceKey: /user/list
+                      description: ユーザー一覧の参照権限
+                      isEnabled: true
+                      isDeleted: false
+                      createTime: 2025-12-30 00:01:57
+                    - permissionId: 4
+                      permissionName: レポート承認
+                      permissionCode: PERM_APPROVE_REPORT
+                      resourceType: ボタン
+                      resourceKey: /report/approve
+                      description: 月次点検レポートの承認権限
+                      isEnabled: true
+                      isDeleted: false
+                      createTime: 2025-12-30 18:00:00
+                timestamp: 1735596600000
+
+  /permission/{permissionId}:
+    get:
+      summary: 権限詳細取得
+      description: 権限IDで詳細情報を取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 4
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  permissionId: 4
+                  permissionName: レポート承認
+                  permissionCode: PERM_APPROVE_REPORT
+                  resourceType: ボタン
+                  resourceKey: /report/approve
+                  description: 月次点検レポートの承認権限
+                  isEnabled: true
+                  isDeleted: false
+                  createTime: 2025-12-30 18:00:00
+                timestamp: 1735596600000
+
+    put:
+      summary: 権限情報更新
+      description: 権限IDで情報を更新
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdateRequest'
+            example:
+              permissionName: レポート最終承認
+              description: 月次点検レポートの最終承認権限
+              isEnabled: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限更新成功
+                data:
+                  permissionId: 4
+                  updateTime: 2025-12-30 18:10:00
+                timestamp: 1735597200000
+
+    delete:
+      summary: 権限論理削除
+      description: 権限IDで論理削除（is_deleted=true）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 4
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限論理削除成功
+                data:
+                  permissionId: 4
+                  isDeleted: true
+                timestamp: 1735597800000
+
+  # ==============================
+  # 2. ロール-権限関連（Role-Permission Binding）
+  # ==============================
+  /role/permission/bind:
+    post:
+      summary: ロール-権限紐付け
+      description: ロールに複数の権限を紐付け（既存紐付けは上書き）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionBindRequest'
+            example:
+              roleId: 3
+              permissionIds: [3, 4, 5]
+      responses:
+        '200':
+          description: 紐付け成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール-権限紐付け成功
+                data:
+                  roleId: 3
+                  permissionIds: [3, 4, 5]
+                  bindCount: 3
+                timestamp: 1735598400000
+
+  /role/permission/list:
+    get:
+      summary: ロール-権限紐付け一覧取得
+      description: 全てのロールと紐付く権限を取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roleId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ロールIDで絞り込み（未指定の場合は全ロール）
+          example: 3
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  rolePermissionList:
+                    - roleId: 3
+                      roleName: 点検管理者
+                      roleCode: ROLE_INSPECTION_ADMIN
+                      permissionList:
+                        - permissionId: 3
+                          permissionName: 機器参照
+                          permissionCode: PERM_VIEW_DEVICE
+                        - permissionId: 4
+                          permissionName: レポート最終承認
+                          permissionCode: PERM_APPROVE_REPORT
+                    - roleId: 1
+                      roleName: システム管理者
+                      roleCode: ROLE_ADMIN
+                      permissionList:
+                        - permissionId: 1
+                          permissionName: ユーザー参照
+                          permissionCode: PERM_VIEW_USER
+                timestamp: 1735599000000
+
+  /role/permission/unbind:
+    post:
+      summary: ロール-権限紐付け解除
+      description: ロールから指定した権限を解除
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionBindRequest'
+            example:
+              roleId: 3
+              permissionIds: [5]
+      responses:
+        '200':
+          description: 紐付け解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール-権限紐付け解除成功
+                data:
+                  roleId: 3
+                  unbindPermissionIds: [5]
+                timestamp: 1735599600000
+
+  # ==============================
+  # 3. ユーザー-ロール関連（User-Role Binding）
+  # ==============================
+  /user/role/bind:
+    post:
+      summary: ユーザー-ロール紐付け
+      description: ユーザーに1つのロールを紐付け（既存ロールは置き換え）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleBindRequest'
+            example:
+              userId: 2
+              roleId: 3
+      responses:
+        '200':
+          description: 紐付け成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー-ロール紐付け成功
+                data:
+                  userId: 2
+                  userName: 李四
+                  roleId: 3
+                  roleName: 点検管理者
+                timestamp: 1735600200000
+
+  /user/role/list:
+    get:
+      summary: ユーザー-ロール紐付け一覧取得
+      description: 全てのユーザーと紐付くロールを取得
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ユーザーIDで絞り込み
+          example: 2
+        - name: roleId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ロールIDで絞り込み
+          example: 3
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  userRoleList:
+                    - userId: 1
+                      jobNumber: EMP001
+                      userName: 张三
+                      roleId: 1
+                      roleName: システム管理者
+                      roleCode: ROLE_ADMIN
+                    - userId: 2
+                      jobNumber: EMP002
+                      userName: 李四
+                      roleId: 3
+                      roleName: 点検管理者
+                      roleCode: ROLE_INSPECTION_ADMIN
+                timestamp: 1735600800000
+
+  /user/role/unbind:
+    post:
+      summary: ユーザー-ロール紐付け解除
+      description: ユーザーからロールを解除（解除後はデフォルトロールに設定）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: integer
+                  example: 2
+      responses:
+        '200':
+          description: 紐付け解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー-ロール紐付け解除成功
+                data:
+                  userId: 2
+                  currentRoleId: 2  # デフォルトロールID
+                  currentRoleName: 一般ユーザー
+                timestamp: 1735601400000
+
+  # ==============================
+  # 4. ユーザー-権限関連（User-Permission Binding）
+  # ==============================
+  /user/permission/bind:
+    post:
+      summary: ユーザー-個別権限付与
+      description: ロール権限以外に、ユーザーに個別権限を付与（上書き効果）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermissionBindRequest'
+            example:
+              userId: 2
+              permissionId: 6
+              grantType: APPROVE
+              expireDate: 2026-12-31
+      responses:
+        '200':
+          description: 個別権限付与成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー個別権限付与成功
+                data:
+                  userId: 2
+                  permissionId: 6
+                  permissionName: 緊急点検作成
+                  grantType: APPROVE
+                  expireDate: 2026-12-31
+                timestamp: 1735602000000
+
+  /user/permission/list:
+    get:
+      summary: ユーザー-個別権限一覧取得
+      description: ユーザーに付与された個別権限を取得（ロール権限は含まない）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 2
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  userId: 2
+                  userName: 李四
+                  permissionList:
+                    - permissionId: 6
+                      permissionName: 緊急点検作成
+                      permissionCode: PERM_EMERGENCY_CHECK
+                      grantType: APPROVE
+                      expireDate: 2026-12-31
+                      createTime: 2025-12-30 19:00:00
+                timestamp: 1735602600000
+
+  /user/permission/unbind:
+    post:
+      summary: ユーザー-個別権限解除
+      description: ユーザーの個別権限を解除
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, permissionId]
+              properties:
+                userId:
+                  type: integer
+                  example: 2
+                permissionId:
+                  type: integer
+                  example: 6
+      responses:
+        '200':
+          description: 個別権限解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー個別権限解除成功
+                data:
+                  userId: 2
+                  permissionId: 6
+                timestamp: 1735603200000
