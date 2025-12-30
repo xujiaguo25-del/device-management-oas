@@ -1,0 +1,2630 @@
+openapi: 3.0.1
+info:
+  title: ユーザー権限
+  description: ユーザーログイン、アクセストークン管理、ロール・権限管理のCRUD機能を含むAPI
+  version: 1.0.0
+tags:
+  - name: ログイン
+  - name: ' ユーザー管理'
+  - name: ロール管理
+  - name: 権限管理
+  - name: アクセス権管理
+  - name: ロール-アクセス権連携管理
+  - name: ユーザー-ロール連携管理
+  - name: ユーザー-アクセス権連携管理
+paths:
+  /auth/login:
+    post:
+      summary: ユーザーログイン
+      deprecated: false
+      description: 社員番号とパスワードでログインし、トークンを取得
+      tags:
+        - ログイン
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              jobNumber: EMP001
+              password: password123
+              rememberMe: true
+        required: true
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ログイン成功
+                data:
+                  accessToken: >-
+                    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImpvYk51bWJlciI6IkVNUDgwMSIsIm5hbWUiOiLnlLXopoHvvIgifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  refreshToken: >-
+                    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImpvYk51bWJlciI6IkVNUDgwMSIsIm5hbWUiOiLnlLXopoHvvIgifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  tokenType: Bearer
+                  expiresIn: 7200
+                  userInfo:
+                    userId: 1
+                    jobNumber: EMP001
+                    name: 张三
+                    deptId: DEPT001
+                    roleName: システム管理者
+                    permissions:
+                      - PERM_VIEW_USER
+                      - PERM_EDIT_USER
+                      - PERM_VIEW_DEVICE
+                timestamp: 1735584000000
+          headers: {}
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 401
+                message: 社員番号またはパスワードが不正です
+                data: null
+                timestamp: 1735584000000
+          headers: {}
+      security: []
+  /auth/logout:
+    post:
+      summary: ユーザーログアウト
+      deprecated: false
+      description: トークンを無効化し、ログイン状態を解除
+      tags:
+        - ログイン
+      parameters: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ログアウト成功
+                data: null
+                timestamp: 1735587600000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /auth/refresh-token:
+    post:
+      summary: トークンリフレッシュ
+      deprecated: false
+      description: リフレッシュトークンで新しいアクセストークンを取得
+      tags:
+        - ログイン
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  example: >-
+                    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImpvYk51bWJlciI6IkVNUDgwMSIsIm5hbWUiOiLnlLXopoHvvIgifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        required: true
+      responses:
+        '200':
+          description: トークンリフレッシュ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: トークンリフレッシュ成功
+                data:
+                  accessToken: >-
+                    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImpvYk51bWJlciI6IkVNUDgwMSIsIm5hbWUiOiLnlLXopoHvvIgifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  tokenType: Bearer
+                  expiresIn: 7200
+                timestamp: 1735587600000
+          headers: {}
+      security: []
+  /user:
+    post:
+      summary: ユーザー作成
+      deprecated: false
+      description: 新規ユーザーを作成（システム管理者権限 required）
+      tags:
+        - ' ユーザー管理'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+            example:
+              jobNumber: EMP003
+              name: 劉七
+              deptId: DEPT003
+              password: P@ssw0rd
+              roleId: 2
+              userTypeId: 2
+        required: true
+      responses:
+        '200':
+          description: ユーザー作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー作成成功
+                data:
+                  userId: 3
+                  jobNumber: EMP003
+                  name: 劉七
+                timestamp: 1735588800000
+          headers: {}
+        '403':
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 403
+                message: ユーザー作成権限がありません
+                data: null
+                timestamp: 1735588800000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /user/list:
+    get:
+      summary: ユーザー一覧取得
+      deprecated: false
+      description: ユーザー一覧を取得（論理削除済は含まない）
+      tags:
+        - ' ユーザー管理'
+      parameters:
+        - name: deptId
+          in: query
+          description: 部署番号で絞り込み
+          required: false
+          example: DEPT001
+          schema:
+            type: string
+        - name: roleId
+          in: query
+          description: ロールIDで絞り込み
+          required: false
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 2
+                  userList:
+                    - userId: 1
+                      jobNumber: EMP001
+                      name: 张三
+                      deptId: DEPT001
+                      roleName: システム管理者
+                      userTypeName: 管理者
+                      isDeleted: false
+                      createTime: '2025-12-30T00:01:57.000Z'
+                      updateTime: '2025-12-30T00:01:57.000Z'
+                    - userId: 2
+                      jobNumber: EMP002
+                      name: 李四
+                      deptId: DEPT002
+                      roleName: 一般ユーザー
+                      userTypeName: 一般ユーザー
+                      isDeleted: false
+                      createTime: '2025-12-30T00:01:57.000Z'
+                      updateTime: '2025-12-30T00:01:57.000Z'
+                timestamp: 1735589400000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /user/{userId}:
+    get:
+      summary: ユーザー詳細取得
+      deprecated: false
+      description: ユーザーIDで詳細情報を取得
+      tags:
+        - ' ユーザー管理'
+      parameters:
+        - name: userId
+          in: path
+          description: ''
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  userId: 1
+                  jobNumber: EMP001
+                  name: 张三
+                  deptId: DEPT001
+                  roleName: システム管理者
+                  userTypeName: 管理者
+                  permissions:
+                    - PERM_VIEW_USER
+                    - PERM_EDIT_USER
+                    - PERM_VIEW_DEVICE
+                  isDeleted: false
+                  createTime: '2025-12-30T00:01:57.000Z'
+                  updateTime: '2025-12-30T00:01:57.000Z'
+                timestamp: 1735589400000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    put:
+      summary: ユーザー情報更新
+      deprecated: false
+      description: ユーザーIDで情報を更新
+      tags:
+        - ' ユーザー管理'
+      parameters:
+        - name: userId
+          in: path
+          description: ''
+          required: true
+          example: 2
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+            example:
+              name: 李四郎
+              deptId: DEPT002
+              roleId: 1
+              userTypeId: 1
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 更新成功
+                data:
+                  userId: 2
+                  updateTime: '2025-12-30T17:00:00.000Z'
+                timestamp: 1735590000000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    delete:
+      summary: ユーザー論理削除
+      deprecated: false
+      description: ユーザーIDで論理削除（is_deleted=true）
+      tags:
+        - ' ユーザー管理'
+      parameters:
+        - name: userId
+          in: path
+          description: ''
+          required: true
+          example: 3
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ユーザー論理削除成功
+                data:
+                  userId: 3
+                  isDeleted: true
+                timestamp: 1735590600000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /role:
+    post:
+      summary: ロール作成
+      deprecated: false
+      description: 新規ロールを作成（システム管理者権限 required）
+      tags:
+        - ロール管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+            example:
+              roleName: 点検管理者
+              roleCode: ROLE_INSPECTION_ADMIN
+              description: 点検レポートの全権限を保有
+        required: true
+      responses:
+        '200':
+          description: ロール作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール作成成功
+                data:
+                  roleId: 3
+                  roleName: 点検管理者
+                  roleCode: ROLE_INSPECTION_ADMIN
+                timestamp: 1735591200000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /role/list:
+    get:
+      summary: ロール一覧取得
+      deprecated: false
+      description: ロール一覧を取得（論理削除済は含まない）
+      tags:
+        - ロール管理
+      parameters: []
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 3
+                  roleList:
+                    - roleId: 1
+                      roleName: システム管理者
+                      roleCode: ROLE_ADMIN
+                      description: システムの全権限を保有
+                      isDeleted: false
+                      createTime: '2025-12-30T00:01:57.000Z'
+                    - roleId: 2
+                      roleName: 一般ユーザー
+                      roleCode: ROLE_USER
+                      description: 一般ユーザーの権限を保有
+                      isDeleted: false
+                      createTime: '2025-12-30T00:01:57.000Z'
+                    - roleId: 3
+                      roleName: 点検管理者
+                      roleCode: ROLE_INSPECTION_ADMIN
+                      description: 点検レポートの全権限を保有
+                      isDeleted: false
+                      createTime: '2025-12-30T17:20:00.000Z'
+                timestamp: 1735591800000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /role/{roleId}:
+    get:
+      summary: ロール詳細取得
+      deprecated: false
+      description: ロールIDで詳細情報と紐付く権限を取得
+      tags:
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ''
+          required: true
+          example: 3
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  roleId: 3
+                  roleName: 点検管理者
+                  roleCode: ROLE_INSPECTION_ADMIN
+                  description: 点検レポートの全権限を保有
+                  permissions:
+                    - permissionId: 3
+                      permissionName: 機器参照
+                      permissionCode: PERM_VIEW_DEVICE
+                    - permissionId: 4
+                      permissionName: レポート承認
+                      permissionCode: PERM_APPROVE_REPORT
+                isDeleted: false
+                createTime: '2025-12-30T17:20:00.000Z'
+                timestamp: 1735591800000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    put:
+      summary: ロール情報更新
+      deprecated: false
+      description: ロールIDで情報を更新
+      tags:
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ''
+          required: true
+          example: 3
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+            example:
+              roleName: 点検管理責任者
+              description: 点検レポートの作成・承認権限を保有
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール更新成功
+                data:
+                  roleId: 3
+                  updateTime: '2025-12-30T17:30:00.000Z'
+                timestamp: 1735592400000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    delete:
+      summary: ロール論理削除
+      deprecated: false
+      description: ロールIDで論理削除（is_deleted=true）
+      tags:
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ''
+          required: true
+          example: 3
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール論理削除成功
+                data:
+                  roleId: 3
+                  isDeleted: true
+                timestamp: 1735593000000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /role/permission/bind:
+    post:
+      summary: ロール-権限紐付け
+      deprecated: false
+      description: ロールに権限を紐付け（既存紐付けは上書き）
+      tags:
+        - ロール管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionBindRequest'
+            example:
+              roleId: 3
+              permissionIds:
+                - 3
+                - 4
+                - 5
+        required: true
+      responses:
+        '200':
+          description: 紐付け成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: ロール-権限紐付け成功
+                data:
+                  roleId: 3
+                  permissionIds:
+                    - 3
+                    - 4
+                    - 5
+                timestamp: 1735593600000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /roles:
+    get:
+      summary: ロール一覧取得
+      deprecated: false
+      description: ロールの一覧をページング検索します
+      tags:
+        - ロール管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: 総件数
+                          list:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Role'
+                    type: object
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    post:
+      summary: ロール新規作成
+      deprecated: false
+      description: 新しいロールを作成します
+      tags:
+        - ロール管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+              required:
+                - roleName
+                - roleCode
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '409':
+          description: ロールコード重複
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /roles/{id}:
+    get:
+      summary: ロール詳細取得
+      deprecated: false
+      description: 指定したIDのロール詳細情報を取得します
+      tags:
+        - ロール管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Role'
+                    type: object
+          headers: {}
+        '404':
+          description: ロール不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    put:
+      summary: ロール更新
+      deprecated: false
+      description: 指定したIDのロール情報を更新します
+      tags:
+        - ロール管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '404':
+          description: ロール不存在
+          headers: {}
+        '409':
+          description: ロールコード重複
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    delete:
+      summary: ロール論理削除
+      deprecated: false
+      description: 指定したIDのロールを論理削除します
+      tags:
+        - ロール管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '404':
+          description: ロール不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /roles/batch-delete:
+    post:
+      summary: ロール一括論理削除
+      deprecated: false
+      description: 指定したIDリストのロールを一括で論理削除します
+      tags:
+        - ロール管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /permission:
+    post:
+      summary: 権限作成
+      deprecated: false
+      description: 新規システム権限を作成（システム管理者権限 required）
+      tags:
+        - 権限管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCreateRequest'
+            example:
+              permissionName: レポート承認
+              permissionCode: PERM_APPROVE_REPORT
+              resourceType: ボタン
+              resourceKey: /report/approve
+              description: 月次点検レポートの承認権限
+        required: true
+      responses:
+        '200':
+          description: 権限作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限作成成功
+                data:
+                  permissionId: 4
+                  permissionCode: PERM_APPROVE_REPORT
+                timestamp: 1735596000000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /permission/list:
+    get:
+      summary: 権限一覧取得
+      deprecated: false
+      description: 全てのシステム権限を取得（論理削除済は含まない）
+      tags:
+        - 権限管理
+      parameters:
+        - name: resourceType
+          in: query
+          description: リソースタイプで絞り込み
+          required: false
+          example: ボタン
+          schema:
+            type: string
+        - name: isEnabled
+          in: query
+          description: 有効状態で絞り込み
+          required: false
+          example: 'true'
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  totalCount: 4
+                  permissionList:
+                    - permissionId: 1
+                      permissionName: ユーザー参照
+                      permissionCode: PERM_VIEW_USER
+                      resourceType: メニュー
+                      resourceKey: /user/list
+                      description: ユーザー一覧の参照権限
+                      isEnabled: true
+                      isDeleted: false
+                      createTime: '2025-12-30T00:01:57.000Z'
+                    - permissionId: 4
+                      permissionName: レポート承認
+                      permissionCode: PERM_APPROVE_REPORT
+                      resourceType: ボタン
+                      resourceKey: /report/approve
+                      description: 月次点検レポートの承認権限
+                      isEnabled: true
+                      isDeleted: false
+                      createTime: '2025-12-30T18:00:00.000Z'
+                timestamp: 1735596600000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /permission/{permissionId}:
+    get:
+      summary: 権限詳細取得
+      deprecated: false
+      description: 権限IDで詳細情報を取得
+      tags:
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: ''
+          required: true
+          example: 4
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 取得成功
+                data:
+                  permissionId: 4
+                  permissionName: レポート承認
+                  permissionCode: PERM_APPROVE_REPORT
+                  resourceType: ボタン
+                  resourceKey: /report/approve
+                  description: 月次点検レポートの承認権限
+                  isEnabled: true
+                  isDeleted: false
+                  createTime: '2025-12-30T18:00:00.000Z'
+                timestamp: 1735596600000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    put:
+      summary: 権限情報更新
+      deprecated: false
+      description: 権限IDで情報を更新
+      tags:
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: ''
+          required: true
+          example: 4
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdateRequest'
+            example:
+              permissionName: レポート最終承認
+              description: 月次点検レポートの最終承認権限
+              isEnabled: true
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限更新成功
+                data:
+                  permissionId: 4
+                  updateTime: '2025-12-30T18:10:00.000Z'
+                timestamp: 1735597200000
+          headers: {}
+      security:
+        - bearerAuth1: []
+    delete:
+      summary: 権限論理削除
+      deprecated: false
+      description: 権限IDで論理削除（is_deleted=true）
+      tags:
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: ''
+          required: true
+          example: 4
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 論理削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                message: 権限論理削除成功
+                data:
+                  permissionId: 4
+                  isDeleted: true
+                timestamp: 1735597800000
+          headers: {}
+      security:
+        - bearerAuth1: []
+  /permissions:
+    get:
+      summary: アクセス権一覧取得
+      deprecated: false
+      description: アクセス権の一覧をページング検索します
+      tags:
+        - アクセス権管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: 総件数
+                          list:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Permission'
+                    type: object
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    post:
+      summary: アクセス権新規作成
+      deprecated: false
+      description: 新しいアクセス権を作成します
+      tags:
+        - アクセス権管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+              required:
+                - permissionName
+                - permissionCode
+                - resourceType
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '409':
+          description: アクセス権コード重複
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /permissions/{id}:
+    get:
+      summary: アクセス権詳細取得
+      deprecated: false
+      description: 指定したIDのアクセス権詳細情報を取得します
+      tags:
+        - アクセス権管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Permission'
+                    type: object
+          headers: {}
+        '404':
+          description: アクセス権不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    put:
+      summary: アクセス権更新
+      deprecated: false
+      description: 指定したIDのアクセス権情報を更新します
+      tags:
+        - アクセス権管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '404':
+          description: アクセス権不存在
+          headers: {}
+        '409':
+          description: アクセス権コード重複
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    delete:
+      summary: アクセス権論理削除
+      deprecated: false
+      description: 指定したIDのアクセス権を論理削除します
+      tags:
+        - アクセス権管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '404':
+          description: アクセス権不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /permissions/batch-delete:
+    post:
+      summary: アクセス権一括論理削除
+      deprecated: false
+      description: 指定したIDリストのアクセス権を一括で論理削除します
+      tags:
+        - アクセス権管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /role-permissions:
+    get:
+      summary: ロール-アクセス権連携一覧取得
+      deprecated: false
+      description: ロール-アクセス権連携情報の一覧を検索します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: roleId
+          in: query
+          description: ロールID
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: permissionId
+          in: query
+          description: アクセス権ID
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: 総件数
+                          list:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/RolePermission'
+                    type: object
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    post:
+      summary: ロール-アクセス権連携作成
+      deprecated: false
+      description: 新しいロール-アクセス権連携を作成します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermission'
+              required:
+                - roleId
+                - permissionId
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '409':
+          description: 連携関係既に存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /role-permissions/{id}:
+    get:
+      summary: ロール-アクセス権連携詳細取得
+      deprecated: false
+      description: 指定したIDのロール-アクセス権連携詳細を取得します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/RolePermission'
+                    type: object
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    delete:
+      summary: ロール-アクセス権連携論理削除
+      deprecated: false
+      description: 指定したIDのロール-アクセス権連携を論理削除します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /role-permissions/batch:
+    post:
+      summary: ロール-アクセス権一括連携
+      deprecated: false
+      description: ロールに対して複数のアクセス権を一括で連携します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionBatchRequest'
+        required: true
+      responses:
+        '200':
+          description: 連携成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /role-permissions/batch-delete:
+    post:
+      summary: ロール-アクセス権一括論理削除
+      deprecated: false
+      description: 指定したIDリストのロール-アクセス権連携を一括で論理削除します
+      tags:
+        - ロール-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-roles:
+    get:
+      summary: ユーザー-ロール連携一覧取得
+      deprecated: false
+      description: ユーザー-ロール連携情報の一覧を検索します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: userId
+          in: query
+          description: ユーザーID
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: roleId
+          in: query
+          description: ロールID
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: 総件数
+                          list:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/UserRole'
+                    type: object
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    post:
+      summary: ユーザー-ロール連携作成
+      deprecated: false
+      description: 新しいユーザー-ロール連携を作成します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRole'
+              required:
+                - userId
+                - roleId
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '409':
+          description: 連携関係既に存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-roles/{id}:
+    get:
+      summary: ユーザー-ロール連携詳細取得
+      deprecated: false
+      description: 指定したIDのユーザー-ロール連携詳細を取得します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UserRole'
+                    type: object
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    delete:
+      summary: ユーザー-ロール連携論理削除
+      deprecated: false
+      description: 指定したIDのユーザー-ロール連携を論理削除します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-roles/batch:
+    post:
+      summary: ユーザー-ロール一括連携
+      deprecated: false
+      description: ユーザーに対して複数のロールを一括で連携します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleBatchRequest'
+        required: true
+      responses:
+        '200':
+          description: 連携成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-roles/batch-delete:
+    post:
+      summary: ユーザー-ロール一括論理削除
+      deprecated: false
+      description: 指定したIDリストのユーザー-ロール連携を一括で論理削除します
+      tags:
+        - ユーザー-ロール連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-permissions:
+    get:
+      summary: ユーザー-アクセス権連携一覧取得
+      deprecated: false
+      description: ユーザー-アクセス権連携情報の一覧を検索します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: userId
+          in: query
+          description: ユーザーID
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: permissionId
+          in: query
+          description: アクセス権ID
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: 総件数
+                          list:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/UserPermission'
+                    type: object
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    post:
+      summary: ユーザー-アクセス権連携作成
+      deprecated: false
+      description: 新しいユーザー-アクセス権連携を作成します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermission'
+              required:
+                - userId
+                - permissionId
+                - grantType
+        required: true
+      responses:
+        '200':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '409':
+          description: 連携関係既に存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-permissions/{id}:
+    get:
+      summary: ユーザー-アクセス権連携詳細取得
+      deprecated: false
+      description: 指定したIDのユーザー-アクセス権連携詳細を取得します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UserPermission'
+                    type: object
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    put:
+      summary: ユーザー-アクセス権連携更新
+      deprecated: false
+      description: 指定したIDのユーザー-アクセス権連携情報を更新します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermission'
+              required:
+                - grantType
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+    delete:
+      summary: ユーザー-アクセス権連携論理削除
+      deprecated: false
+      description: 指定したIDのユーザー-アクセス権連携を論理削除します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters:
+        - name: id
+          in: path
+          description: リソースID
+          required: true
+          example: 0
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '404':
+          description: 連携関係不存在
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-permissions/batch:
+    post:
+      summary: ユーザー-アクセス権一括連携
+      deprecated: false
+      description: ユーザーに対して複数のアクセス権を一括で連携します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermissionBatchRequest'
+        required: true
+      responses:
+        '200':
+          description: 連携成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+  /user-permissions/batch-delete:
+    post:
+      summary: ユーザー-アクセス権一括論理削除
+      deprecated: false
+      description: 指定したIDリストのユーザー-アクセス権連携を一括で論理削除します
+      tags:
+        - ユーザー-アクセス権連携管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: リクエストパラメータ不正
+          headers: {}
+        '500':
+          description: サーバーエラー
+          headers: {}
+      security: []
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: レスポンスコード（200：成功）
+        message:
+          type: string
+          description: レスポンスメッセージ
+        data:
+          type: object
+          description: レスポンスデータ
+          properties: {}
+    LoginRequest:
+      type: object
+      required:
+        - jobNumber
+        - password
+      properties:
+        jobNumber:
+          type: string
+          description: 社員番号（ログインID）
+          example: EMP001
+        password:
+          type: string
+          format: password
+          description: パスワード（暗号化送信推奨）
+          example: password123
+        rememberMe:
+          type: boolean
+          description: ログイン状態保持フラグ
+          example: true
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: アクセストークン（有効期間2時間）
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: リフレッシュトークン（有効期間7日）
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: アクセストークン有効期間（秒）
+          example: 7200
+        userInfo:
+          type: object
+          properties:
+            userId:
+              type: integer
+              example: 1
+            jobNumber:
+              type: string
+              example: EMP001
+            name:
+              type: string
+              example: 张三
+            deptId:
+              type: string
+              example: DEPT001
+            roleName:
+              type: string
+              example: システム管理者
+            permissions:
+              type: array
+              items:
+                type: string
+              example:
+                - PERM_VIEW_USER
+                - PERM_EDIT_USER
+                - PERM_VIEW_DEVICE
+    UserCreateRequest:
+      type: object
+      required:
+        - jobNumber
+        - name
+        - deptId
+        - password
+        - roleId
+      properties:
+        jobNumber:
+          type: string
+          description: 社員番号（ユニーク）
+          example: EMP003
+        name:
+          type: string
+          description: 氏名
+          example: 劉七
+        deptId:
+          type: string
+          description: 部署番号
+          example: DEPT003
+        password:
+          type: string
+          format: password
+          description: 初期パスワード
+          example: P@ssw0rd
+        roleId:
+          type: integer
+          description: ロールID（ロールテーブル参照）
+          example: 2
+        userTypeId:
+          type: integer
+          description: ユーザータイプID（管理者/一般ユーザー）
+          example: 2
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 劉七郎
+        deptId:
+          type: string
+          example: DEPT003
+        roleId:
+          type: integer
+          example: 1
+        userTypeId:
+          type: integer
+          example: 1
+    UserItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 3
+        jobNumber:
+          type: string
+          example: EMP003
+        name:
+          type: string
+          example: 劉七
+        deptId:
+          type: string
+          example: DEPT003
+        roleName:
+          type: string
+          example: 一般ユーザー
+        userTypeName:
+          type: string
+          example: 一般ユーザー
+        isDeleted:
+          type: boolean
+          example: false
+        createTime:
+          type: string
+          format: date-time
+          example: '2025-12-30T16:00:00.000Z'
+        updateTime:
+          type: string
+          format: date-time
+          example: '2025-12-30T16:00:00.000Z'
+    RoleCreateRequest:
+      type: object
+      required:
+        - roleName
+        - roleCode
+      properties:
+        roleName:
+          type: string
+          description: ロール名（ユニーク）
+          example: 点検管理者
+        roleCode:
+          type: string
+          description: ロールコード（ユニーク）
+          example: ROLE_INSPECTION_ADMIN
+        description:
+          type: string
+          description: ロールの説明
+          example: 点検レポートの全権限を保有
+        isEnabled:
+          type: boolean
+          description: 有効フラグ
+          example: true
+    RoleUpdateRequest:
+      type: object
+      properties:
+        roleName:
+          type: string
+          example: 点検管理責任者
+        description:
+          type: string
+          example: 点検レポートの作成・承認権限を保有
+        isEnabled:
+          type: boolean
+          example: true
+    RoleItem:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        roleCode:
+          type: string
+          example: ROLE_INSPECTION_ADMIN
+        description:
+          type: string
+          example: 点検レポートの全権限を保有
+        isEnabled:
+          type: boolean
+          example: true
+        isDeleted:
+          type: boolean
+          example: false
+        createTime:
+          type: string
+          format: date-time
+          example: '2025-12-30T18:30:00.000Z'
+    PermissionItem:
+      type: object
+      properties:
+        permissionId:
+          type: integer
+          example: 4
+        permissionName:
+          type: string
+          example: レポート承認
+        permissionCode:
+          type: string
+          example: PERM_APPROVE_REPORT
+        resourceType:
+          type: string
+          example: ボタン
+        resourceKey:
+          type: string
+          example: /report/approve
+        description:
+          type: string
+          example: 月次点検レポートの承認権限
+        isEnabled:
+          type: boolean
+          example: true
+        isDeleted:
+          type: boolean
+          example: false
+        createTime:
+          type: string
+          format: date-time
+          example: '2025-12-30T18:00:00.000Z'
+    RolePermissionBindRequest:
+      type: object
+      required:
+        - roleId
+        - permissionIds
+      properties:
+        roleId:
+          type: integer
+          description: ロールID
+          example: 3
+        permissionIds:
+          type: array
+          items:
+            type: integer
+          description: 紐付ける権限IDリスト（既存紐付けは上書き）
+          example:
+            - 3
+            - 4
+            - 5
+    PermissionCreateRequest:
+      type: object
+      required:
+        - permissionName
+        - permissionCode
+        - resourceType
+        - resourceKey
+      properties:
+        permissionName:
+          type: string
+          description: 権限名（表示用）
+          example: レポート承認
+        permissionCode:
+          type: string
+          description: 権限コード（ユニーク）
+          example: PERM_APPROVE_REPORT
+        resourceType:
+          type: string
+          description: リソースタイプ（メニュー/ボタン/インターフェース）
+          example: ボタン
+        resourceKey:
+          type: string
+          description: リソース識別子（URL/ボタンID等）
+          example: /report/approve
+        description:
+          type: string
+          description: 権限の説明
+          example: 月次点検レポートの承認権限
+    PermissionUpdateRequest:
+      type: object
+      properties:
+        permissionName:
+          type: string
+          example: レポート最終承認
+        description:
+          type: string
+          example: 月次点検レポートの最終承認権限
+        isEnabled:
+          type: boolean
+          description: 有効フラグ（true=有効、false=無効）
+          example: true
+    RolePermissionItem:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        permissionList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionItem'
+    UserRoleBindRequest:
+      type: object
+      required:
+        - userId
+        - roleId
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 2
+        roleId:
+          type: integer
+          description: ロールID（1ユーザー1ロール）
+          example: 3
+    UserRoleItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 2
+        jobNumber:
+          type: string
+          example: EMP002
+        userName:
+          type: string
+          example: 李四
+        roleId:
+          type: integer
+          example: 3
+        roleName:
+          type: string
+          example: 点検管理者
+        roleCode:
+          type: string
+          example: ROLE_INSPECTION_ADMIN
+    UserPermissionBindRequest:
+      type: object
+      required:
+        - userId
+        - permissionId
+        - grantType
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 2
+        permissionId:
+          type: integer
+          description: 権限ID
+          example: 6
+        grantType:
+          type: string
+          description: 付与タイプ（APPROVE=許可、DENY=拒否）
+          example: APPROVE
+        expireDate:
+          type: string
+          format: date
+          description: 有効期限（未指定の場合は永続）
+          example: '2026-12-31T00:00:00.000Z'
+    UserPermissionItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 2
+        userName:
+          type: string
+          example: 李四
+        permissionId:
+          type: integer
+          example: 6
+        permissionName:
+          type: string
+          example: 緊急点検作成
+        permissionCode:
+          type: string
+          example: PERM_EMERGENCY_CHECK
+        grantType:
+          type: string
+          example: APPROVE
+        expireDate:
+          type: string
+          format: date
+          example: '2026-12-31T00:00:00.000Z'
+        createTime:
+          type: string
+          format: date-time
+          example: '2025-12-30T19:00:00.000Z'
+    Permission:
+      type: object
+      properties:
+        permissionId:
+          type: integer
+          format: int64
+          description: アクセス権ID（主キー）
+        permissionName:
+          type: string
+          description: アクセス権名
+        permissionCode:
+          type: string
+          description: アクセス権コード（ユニーク）
+        resourceType:
+          type: string
+          description: リソースタイプ（メニュー/ボタン/インターフェース）
+        resourceKey:
+          type: string
+          description: リソース識別子（URL等）
+        description:
+          type: string
+          description: アクセス権の説明
+        isDeleted:
+          type: boolean
+          default: false
+          description: 論理削除フラグ（false：未削除、true：削除済）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+    Role:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          format: int64
+          description: ロールID（主キー）
+        roleName:
+          type: string
+          description: ロール名
+        roleCode:
+          type: string
+          description: ロールコード（ユニーク）
+        description:
+          type: string
+          description: ロールの説明
+        isDeleted:
+          type: boolean
+          default: false
+          description: 論理削除フラグ（false：未削除、true：削除済）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+    RolePermission:
+      type: object
+      properties:
+        rolePermissionId:
+          type: integer
+          format: int64
+          description: 連携ID（主キー）
+        roleId:
+          type: integer
+          format: int64
+          description: ロールID（外部キー）
+        permissionId:
+          type: integer
+          format: int64
+          description: アクセス権ID（外部キー）
+        isDeleted:
+          type: boolean
+          default: false
+          description: 論理削除フラグ（false：未削除、true：削除済）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+    UserRole:
+      type: object
+      properties:
+        userRoleId:
+          type: integer
+          format: int64
+          description: 連携ID（主キー）
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID（外部キー）
+        roleId:
+          type: integer
+          format: int64
+          description: ロールID（外部キー）
+        isDeleted:
+          type: boolean
+          default: false
+          description: 論理削除フラグ（false：未削除、true：削除済）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+    UserPermission:
+      type: object
+      properties:
+        userPermissionId:
+          type: integer
+          format: int64
+          description: 連携ID（主キー）
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID（外部キー）
+        permissionId:
+          type: integer
+          format: int64
+          description: アクセス権ID（外部キー）
+        grantType:
+          type: string
+          description: 付与タイプ（許可/拒否）
+        isDeleted:
+          type: boolean
+          default: false
+          description: 論理削除フラグ（false：未削除、true：削除済）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+    BatchOperationRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 一括操作対象のIDリスト
+      required:
+        - ids
+    RolePermissionBatchRequest:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          format: int64
+          description: ロールID
+        permissionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: アクセス権IDリスト
+      required:
+        - roleId
+        - permissionIds
+    UserRoleBatchRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        roleIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: ロールIDリスト
+      required:
+        - userId
+        - roleIds
+    UserPermissionBatchRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        permissionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: アクセス権IDリスト
+        grantType:
+          type: string
+          description: 付与タイプ（許可/拒否）
+      required:
+        - userId
+        - permissionIds
+        - grantType
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: 用户不存在
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-20T10:30:00.000Z'
+  responses:
+    UnauthorizedError:
+      description: 认证失败或令牌无效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            成功示例:
+              summary: 成功示例
+              value:
+                code: 401
+                message: 无效的访问令牌
+                timestamp: '2024-01-20T10:30:00Z'
+    NotFoundError:
+      description: 请求的资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            成功示例:
+              summary: 成功示例
+              value:
+                code: 404
+                message: 资源不存在
+                timestamp: '2024-01-20T10:30:00Z'
+  securitySchemes:
+    bearerAuth1:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: ログイン後取得したアクセストークンを指定（形式：Bearer {token}）
+servers: []
+security: []
