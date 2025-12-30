@@ -1,0 +1,403 @@
+openapi: 3.0.0
+info:
+  title: DA04部門設備管理システム API
+  description: DA04部門内機器管理システムのOpenAPI仕様
+  version: 1.1.0
+  contact:
+    name: 設備管理APIサポート
+    email: equip-support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com/v1
+    description: 本番サーバー
+  - url: https://staging-api.example.com/v1
+    description: ステージングサーバー
+
+components:
+  schemas:
+    UserInfo:
+      type: object
+      description: ユーザー基本情報
+      properties:
+        userId:
+          type: string
+          description: ユーザーID（主キー）
+        userName:
+          type: string
+          description: 氏名
+        level:
+          type: string
+          description: アクセスレベル
+        loginName:
+          type: string
+          description: ログインユーザ名
+        jobNumber:
+          type: string
+          description: 社員番号（ユニークキー）
+        deptId:
+          type: string
+          description: 所属部署番号
+        userTypeId:
+          type: integer
+          format: int64
+          description: ユーザータイプID（ディクショナリ項目に関連：USER_TYPE）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済） 
+    DeviceInfo:
+      type: object
+      description: 機器基本情報
+      properties:
+        deviceId:
+          type: string
+          description: 機器番号（主キー）
+        deviceModel:
+          type: string
+          description: ホスト機種
+        computerName:
+          type: string
+          description: コンピュータ名
+        loginUsername:
+          type: string
+          description: ログインユーザ名
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: 所属開発室
+        jobNumber:
+          type: string
+          description: 社員番号（所属ユーザー、外部キー）
+        remark:
+          type: string
+          description: 備考
+        selfConfirmId:
+          type: integer
+          format: int64
+          description: 本人確認ID（ディクショナリ項目に関連：CONFIRM_STATUS）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        osId:
+          type: integer
+          format: int64
+          description: OSタイプID（ディクショナリ項目に関連：OS_TYPE）
+        memoryId:
+          type: integer
+          format: int64
+          description: メモリサイズID（ディクショナリ項目に関連：MEMORY_SIZE）
+        ssdId:
+          type: integer
+          format: int64
+          description: SSDサイズID（ディクショナリ項目に関連：SSD_SIZE）
+        hddId:
+          type: integer
+          format: int64
+          description: HDDサイズID（ディクショナリ項目に関連：HDD_SIZE）
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+    DeviceIp:
+      type: object
+      description: 機器IP情報
+      properties:
+        ipId:
+          type: string
+          description: IP番号（主キー）
+        deviceId:
+          type: string
+          description: 機器番号（外部キー）
+        ipAddress:
+          type: string
+          description: IPアドレス（ユニーク）
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+    DevicePermission:
+      type: object
+      description: 機器使用権限情報
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号（主キー）
+        jobNumber:
+          type: string
+          description: 社員番号（外部キー）
+        domainStatusId:
+          type: integer
+          format: int64
+          description: ドメインステータスID（ディクショナリ項目に関連：DOMAIN_STATUS）
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+        noDomainReason:
+          type: string
+          description: ドメイン未加入理由
+        smartitStatusId:
+          type: integer
+          format: int64
+          description: SmartITステータスID（ディクショナリ項目に関連：SMARTIT_STATUS）
+        noSmartitReason:
+          type: string
+          description: SmartIT未インストール理由
+        usbStatusId:
+          type: integer
+          format: int64
+          description: USBステータスID（ディクショナリ項目に関連：USB_STATUS）
+        usbReason:
+          type: string
+          description: USB使用許可理由
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirusStatusId:
+          type: integer
+          format: int64
+          description: ウイルス対策ステータスID（ディクショナリ項目に関連：ANTIVIRUS_STATUS）
+        noSymantecReason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          format: int32
+          description: 論理削除フラグ（0=未削除、1=削除済）  
+
+    CommonResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：200成功，其他为错误
+          example: 200
+        message:
+          type: string
+          description: 提示信息
+          example: 操作成功
+        data:
+          type: object
+          description: 业务数据（成功时返回）
+
+    PageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 总记录数
+          example: 155
+        pages:
+          type: integer
+          description: 总页数
+          example: 8
+        pageNum:
+          type: integer
+          description: 当前页码
+          example: 1
+        pageSize:
+          type: integer
+          description: 每页条数
+          example: 20
+        list:
+          type: array
+          items:
+            type: object
+            properties:
+
+              userInfo:
+                $ref: '#/components/schemas/UserInfo'
+              deviceInfo:
+                $ref: '#/components/schemas/DeviceInfo'
+              deviceIp:
+                $ref: '#/components/schemas/DeviceIp'
+              devicePermission:
+                $ref: '#/components/schemas/DevicePermission'
+
+paths:
+  #列表查询
+  /device-permission/query/list:
+    get:
+      tags:
+        - 権限リスト
+      summary: デバイス権限リスト照会
+      parameters:
+        - name: pageNum
+          in: query
+          description: 页码
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: 每页条数
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              properties:
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+
+
+      responses:
+        '200':
+          description: クエリに成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageResponse'
+
+  #数据修改
+  /device-permission/update:
+    put:
+      tags:
+        - 権限リスト
+      summary: デバイス権限の変更
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                  
+      responses:
+        '200':
+          description: 変更成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DevicePermission'
+
+  #导出数据返回xlsx
+  /device-permission/export:
+    get: 
+      tags:
+        - 権限リスト
+      summary: デバイス権限リストのエクスポート
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                deviceInfo:
+                  $ref: '#/components/schemas/DeviceInfo'
+                deviceIp:
+                  $ref: '#/components/schemas/DeviceIp'
+                devicePermission:
+                  $ref: '#/components/schemas/DevicePermission'
+                userInfo:
+                  $ref: '#/components/schemas/UserInfo'
+                  
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
