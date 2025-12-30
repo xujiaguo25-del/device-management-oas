@@ -1,0 +1,1901 @@
+openapi: 3.0.0
+info:
+  title: 設備管理システム API
+  description: 部門内設備管理システムのAPIドキュメント、設備管理、権限管理、検査表管理などの機能を含む
+  version: 1.0.0
+  contact:
+    name: システム管理者
+    email: admin@company.com
+
+servers:
+  - url: http://localhost:8080/api
+    description: ローカル開発環境
+  - url: https://api.equipment.company.com/api
+    description: 本番環境
+
+tags:
+  - name: 認証管理
+    description: ユーザーログイン認証、ログアウト、パスワード管理
+  - name: 管理者管理
+    description: 管理者の追加・削除・編集・検索操作
+  - name: ユーザー管理
+    description: 設備利用ユーザー管理
+  - name: 設備管理
+    description: 設備情報管理
+  - name: ファイル管理
+    description: Excelファイルのアップロード・ダウンロード
+  - name: 設備権限管理
+    description: 設備利用権限管理
+  - name: 検査表管理
+    description: 設備検査表管理
+  - name: 抜き取り検査
+    description: 抜き取り検査管理
+  - name: 非抜き取り検査
+    description: 非抜き取り検査管理
+  - name: 月次検査報告
+    description: 月次検査報告管理
+  - name: 辞書管理
+    description: システム辞書データ管理
+
+paths:
+  # 認証管理
+  /auth/login:
+    post:
+      tags:
+        - 認証管理
+      summary: ユーザーログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                password:
+                  type: string
+                  description: パスワード
+      responses:
+        "200":
+          description: ログイン成功、JWTトークンを返す
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWTトークン
+        "401":
+          description: ログイン失敗、ユーザー名またはパスワードが間違っています
+  /auth/logout:
+    post:
+      tags:
+        - 認証管理
+      summary: ユーザーログアウト
+      responses:
+        "200":
+          description: ログアウト成功
+        "401":
+          description: 未ログインまたはトークン無効
+  /auth/change-password:
+    post:
+      tags:
+        - 認証管理
+      summary: パスワード変更
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  description: 旧パスワード
+                newPassword:
+                  type: string
+                  description: 新パスワード
+      responses:
+        "200":
+          description: パスワード変更成功
+        "400":
+          description: 旧パスワードが間違っているか、新パスワードが要件を満たしていません
+        "401":
+          description: 未ログインまたはトークン無効
+  # 管理者管理
+  /admins:
+    get:
+      tags:
+        - 管理者管理
+      summary: 管理者リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 管理者リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 管理者総数
+                  admins:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 管理者ID
+                        username:
+                          type: string
+                          description: 管理者ユーザー名
+                        email:
+                          type: string
+                          description: 管理者メールアドレス
+    post:
+      tags:
+        - 管理者管理
+      summary: 新規管理者作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: 管理者ユーザー名
+                password:
+                  type: string
+                  description: 管理者パスワード
+                email:
+                  type: string
+                  description: 管理者メールアドレス
+      responses:
+        "201":
+          description: 管理者作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /admins/{adminId}:
+    put:
+      tags:
+        - 管理者管理
+      summary: 管理者情報更新
+      parameters:
+        - in: path
+          name: adminId
+          required: true
+          schema:
+            type: integer
+          description: 管理者ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 管理者メールアドレス
+      responses:
+        "200":
+          description: 管理者情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 管理者が見つかりません
+    delete:
+      tags:
+        - 管理者管理
+      summary: 管理者削除
+      parameters:
+        - in: path
+          name: adminId
+          required: true
+          schema:
+            type: integer
+          description: 管理者ID
+      responses:
+        "200":
+          description: 管理者削除成功
+        "404":
+          description: 管理者が見つかりません
+  # ユーザー管理
+  /users:
+    get:
+      tags:
+        - ユーザー管理
+      summary: ユーザーリスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: ユーザーリスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: ユーザー総数
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ユーザーID
+                        username:
+                          type: string
+                          description: ユーザー名
+                        email:
+                          type: string
+                          description: ユーザーメールアドレス
+    post:
+      tags:
+        - ユーザー管理
+      summary: 新規ユーザー作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                password:
+                  type: string
+                  description: ユーザーパスワード
+                email:
+                  type: string
+                  description: ユーザーメールアドレス
+      responses:
+        "201":
+          description: ユーザー作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /users/{userId}:
+    put:
+      tags:
+        - ユーザー管理
+      summary: ユーザー情報更新
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: ユーザーID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: ユーザーメールアドレス
+      responses:
+        "200":
+          description: ユーザー情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: ユーザーが見つかりません
+    delete:
+      tags:
+        - ユーザー管理
+      summary: ユーザー削除
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: ユーザーID
+      responses:
+        "200":
+          description: ユーザー削除成功
+        "404":
+          description: ユーザーが見つかりません
+  # 設備管理
+  /devices:
+    get:
+      tags:
+        - 設備管理
+      summary: 設備リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 設備リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 設備総数
+                  devices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 設備ID
+                        name:
+                          type: string
+                          description: 設備名
+                        model:
+                          type: string
+                          description: 設備モデル
+                        serialNumber:
+                          type: string
+                          description: 設備シリアル番号
+    post:
+      tags:
+        - 設備管理
+      summary: 新規設備作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 設備名
+                model:
+                  type: string
+                  description: 設備モデル
+                serialNumber:
+                  type: string
+                  description: 設備シリアル番号
+      responses:
+        "201":
+          description: 設備作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /devices/{deviceId}:
+    put:
+      tags:
+        - 設備管理
+      summary: 設備情報更新
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: integer
+          description: 設備ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 設備名
+                model:
+                  type: string
+                  description: 設備モデル
+                serialNumber:
+                  type: string
+                  description: 設備シリアル番号
+      responses:
+        "200":
+          description: 設備情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 設備が見つかりません
+    delete:
+      tags:
+        - 設備管理
+      summary: 設備削除
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: integer
+          description: 設備ID
+      responses:
+        "200":
+          description: 設備削除成功
+        "404":
+          description: 設備が見つかりません
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: エラーメッセージ
+                  code:
+                    type: integer
+                    description: エラーコード
+  # ファイル管理
+  /files/upload:
+    post:
+      tags:
+        - ファイル管理
+      summary: Excelファイルアップロード
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+      responses:
+        "200":
+          description: ファイルアップロード成功
+        "400":
+          description: ファイル形式エラーまたはアップロード失敗
+  /files/download/{fileId}:
+    get:
+      tags:
+        - ファイル管理
+      summary: Excelファイルダウンロード
+      parameters:
+        - in: path
+          name: fileId
+          required: true
+          schema:
+            type: string
+          description: ファイルID
+      responses:
+        "200":
+          description: ファイルダウンロード成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: ファイルが見つかりません
+  # 設備権限管理
+  /device-permissions:
+    get:
+      tags:
+        - 設備権限管理
+      summary: 設備権限リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 設備権限リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 設備権限総数
+                  permissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 権限ID
+                        deviceId:
+                          type: integer
+                          description: 設備ID
+                        userId:
+                          type: integer
+                          description: ユーザーID
+                        accessLevel:
+                          type: string
+                          description: アクセスレベル
+    post:
+      tags:
+        - 設備権限管理
+      summary: 設備権限作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: integer
+                  description: 設備ID
+                userId:
+                  type: integer
+                  description: ユーザーID
+                accessLevel:
+                  type: string
+                  description: アクセスレベル
+      responses:
+        "201":
+          description: 設備権限作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /device-permissions/{permissionId}:
+    put:
+      tags:
+        - 設備権限管理
+      summary: 設備権限更新
+      parameters:
+        - in: path
+          name: permissionId
+          required: true
+          schema:
+            type: integer
+          description: 権限ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accessLevel:
+                  type: string
+                  description: アクセスレベル
+      responses:
+        "200":
+          description: 設備権限更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 設備権限が見つかりません
+    delete:
+      tags:
+        - 設備権限管理
+      summary: 設備権限削除
+      parameters:
+        - in: path
+          name: permissionId
+          required: true
+          schema:
+            type: integer
+          description: 権限ID
+      responses:
+        "200":
+          description: 設備権限削除成功
+        "404":
+          description: 設備権限が見つかりません
+  # 検査表管理
+  /checklists:
+    get:
+      tags:
+        - 検査表管理
+      summary: 検査表リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 検査表リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 検査表総数
+                  checklists:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 検査表ID
+                        name:
+                          type: string
+                          description: 検査表名
+                        description:
+                          type: string
+                          description: 検査表説明
+    post:
+      tags:
+        - 検査表管理
+      summary: 新規検査表作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 検査表名
+                description:
+                  type: string
+                  description: 検査表説明
+      responses:
+        "201":
+          description: 検査表作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /checklists/{checklistId}:
+    put:
+      tags:
+        - 検査表管理
+      summary: 検査表情報更新
+      parameters:
+        - in: path
+          name: checklistId
+          required: true
+          schema:
+            type: integer
+          description: 検査表ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 検査表名
+                description:
+                  type: string
+                  description: 検査表説明
+      responses:
+        "200":
+          description: 検査表情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 検査表が見つかりません
+    delete:
+      tags:
+        - 検査表管理
+      summary: 検査表削除
+      parameters:
+        - in: path
+          name: checklistId
+          required: true
+          schema:
+            type: integer
+          description: 検査表ID
+      responses:
+        "200":
+          description: 検査表削除成功
+        "404":
+          description: 検査表が見つかりません
+  # 抜き取り検査
+  /pull-checks:
+    get:
+      tags:
+        - 抜き取り検査
+      summary: 抜き取り検査リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 抜き取り検査リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 抜き取り検査総数
+                  pullChecks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 抜き取り検査ID
+                        deviceId:
+                          type: integer
+                          description: 設備ID
+                        checklistId:
+                          type: integer
+                          description: 検査表ID
+                        status:
+                          type: string
+                          description: 検査ステータス
+    post:
+      tags:
+        - 抜き取り検査
+      summary: 新規抜き取り検査作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: integer
+                  description: 設備ID
+                checklistId:
+                  type: integer
+                  description: 検査表ID
+                status:
+                  type: string
+                  description: 検査ステータス
+      responses:
+        "201":
+          description: 抜き取り検査作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /pull-checks/{pullCheckId}:
+    put:
+      tags:
+        - 抜き取り検査
+      summary: 抜き取り検査情報更新
+      parameters:
+        - in: path
+          name: pullCheckId
+          required: true
+          schema:
+            type: integer
+          description: 抜き取り検査ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: 検査ステータス
+      responses:
+        "200":
+          description: 抜き取り検査情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 抜き取り検査が見つかりません
+    delete:
+      tags:
+        - 抜き取り検査
+      summary: 抜き取り検査削除
+      parameters:
+        - in: path
+          name: pullCheckId
+          required: true
+          schema:
+            type: integer
+          description: 抜き取り検査ID
+      responses:
+        "200":
+          description: 抜き取り検査削除成功
+        "404":
+          description: 抜き取り検査が見つかりません
+  # 非抜き取り検査
+  /non-pull-checks:
+    get:
+      tags:
+        - 非抜き取り検査
+      summary: 非抜き取り検査リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 非抜き取り検査リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 非抜き取り検査総数
+                  nonPullChecks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 非抜き取り検査ID
+                        deviceId:
+                          type: integer
+                          description: 設備ID
+                        checklistId:
+                          type: integer
+                          description: 検査表ID
+                        status:
+                          type: string
+                          description: 検査ステータス
+    post:
+      tags:
+        - 非抜き取り検査
+      summary: 新規非抜き取り検査作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: integer
+                  description: 設備ID
+                checklistId:
+                  type: integer
+                  description: 検査表ID
+                status:
+                  type: string
+                  description: 検査ステータス
+      responses:
+        "201":
+          description: 非抜き取り検査作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /non-pull-checks/{nonPullCheckId}:
+    put:
+      tags:
+        - 非抜き取り検査
+      summary: 非抜き取り検査情報更新
+      parameters:
+        - in: path
+          name: nonPullCheckId
+          required: true
+          schema:
+            type: integer
+          description: 非抜き取り検査ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: 検査ステータス
+      responses:
+        "200":
+          description: 非抜き取り検査情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 非抜き取り検査が見つかりません
+    delete:
+      tags:
+        - 非抜き取り検査
+      summary: 非抜き取り検査削除
+      parameters:
+        - in: path
+          name: nonPullCheckId
+          required: true
+          schema:
+            type: integer
+          description: 非抜き取り検査ID
+      responses:
+        "200":
+          description: 非抜き取り検査削除成功
+        "404":
+          description: 非抜き取り検査が見つかりません
+  # 月次検査報告
+  /monthly-reports:
+    get:
+      tags:
+        - 月次検査報告
+      summary: 月次検査報告リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 月次検査報告リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 月次検査報告総数
+                  reports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 報告ID
+                        month:
+                          type: string
+                          description: 報告月
+                        createdBy:
+                          type: integer
+                          description: 作成者ユーザーID
+    post:
+      tags:
+        - 月次検査報告
+      summary: 新規月次検査報告作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                month:
+                  type: string
+                  description: 報告月
+                createdBy:
+                  type: integer
+                  description: 作成者ユーザーID
+      responses:
+        "201":
+          description: 月次検査報告作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /monthly-reports/{reportId}:
+    put:
+      tags:
+        - 月次検査報告
+      summary: 月次検査報告情報更新
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: integer
+          description: 報告ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                month:
+                  type: string
+                  description: 報告月
+      responses:
+        "200":
+          description: 月次検査報告情報更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 月次検査報告が見つかりません
+    delete:
+      tags:
+        - 月次検査報告
+      summary: 月次検査報告削除
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: integer
+          description: 報告ID
+      responses:
+        "200":
+          description: 月次検査報告削除成功
+        "404":
+          description: 月次検査報告が見つかりません
+  # 辞書管理
+  /dictionaries:
+    get:
+      tags:
+        - 辞書管理
+      summary: 辞書リスト取得
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          description: ページあたりの件数
+      responses:
+        "200":
+          description: 辞書リスト取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 辞書総数
+                  dictionaries:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: 辞書ID
+                        key:
+                          type: string
+                          description: 辞書キー
+                        value:
+                          type: string
+                          description: 辞書値
+    post:
+      tags:
+        - 辞書管理
+      summary: 新規辞書項目作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: 辞書キー
+                value:
+                  type: string
+                  description: 辞書値
+      responses:
+        "201":
+          description: 辞書項目作成成功
+        "400":
+          description: リクエストパラメータエラー
+  /dictionaries/{dictionaryId}:
+    put:
+      tags:
+        - 辞書管理
+      summary: 辞書項目更新
+      parameters:
+        - in: path
+          name: dictionaryId
+          required: true
+          schema:
+            type: integer
+          description: 辞書ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: string
+                  description: 辞書値
+      responses:
+        "200":
+          description: 辞書項目更新成功
+        "400":
+          description: リクエストパラメータエラー
+        "404":
+          description: 辞書項目が見つかりません
+    delete:
+      tags:
+        - 辞書管理
+      summary: 辞書項目削除
+      parameters:
+        - in: path
+          name: dictionaryId
+          required: true
+          schema:
+            type: integer
+          description: 辞書ID
+      responses:
+        "200":
+          description: 辞書項目削除成功
+        "404":
+          description: 辞書項目が見つかりません
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    # 用户相关模型
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+          description: ユーザーID(主キー)
+        dept_id:
+          type: string
+          description: 部署番号
+        name:
+          type: string
+          description: 氏名
+        job_number:
+          type: string
+          description: 社員番号(ユニーク、機器/権限に関連)
+        user_type_id:
+          type: integer
+          format: int64
+          description: ユーザータイプID(ディクショナリ項目に関連：USER_TYPE)
+        password:
+          type: string
+          description: パスワード(暗号化保存)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - dept_id
+        - name
+        - job_number
+        - password
+
+    Role:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          format: int64
+          description: ロールID(主キー)
+        role_name:
+          type: string
+          description: ロール名
+        role_code:
+          type: string
+          description: ロールコード(ユニーク)
+        description:
+          type: string
+          description: ロールの説明
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - role_name
+        - role_code
+
+    Permission:
+      type: object
+      properties:
+        permission_id:
+          type: integer
+          format: int64
+          description: 権限ID(主キー)
+        permission_name:
+          type: string
+          description: 権限名
+        permission_code:
+          type: string
+          description: 権限コード(ユニーク)
+        resource_type:
+          type: string
+          description: リソースタイプ(メニュー/ボタン/インターフェース)
+        resource_key:
+          type: string
+          description: リソース識別子(メニューURL等)
+        description:
+          type: string
+          description: 権限の説明
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - permission_name
+        - permission_code
+
+    UserRole:
+      type: object
+      properties:
+        user_role_id:
+          type: integer
+          format: int64
+          description: ユーザーロール紐づけID(主キー)
+        user_id:
+          type: integer
+          format: int64
+          description: ユーザーID(外部キー)
+        role_id:
+          type: integer
+          format: int64
+          description: ロールID(外部キー)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+      required:
+        - user_id
+        - role_id
+
+    RolePermission:
+      type: object
+      properties:
+        role_permission_id:
+          type: integer
+          format: int64
+          description: ロール権限紐づけID(主キー)
+        role_id:
+          type: integer
+          format: int64
+          description: ロールID(外部キー)
+        permission_id:
+          type: integer
+          format: int64
+          description: 権限ID(外部キー)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - role_id
+        - permission_id
+
+    # 设备相关模型
+    DeviceInfo:
+      type: object
+      properties:
+        device_id:
+          type: string
+          description: 機器番号(主キー)
+        device_model:
+          type: string
+          description: ホスト機種
+        computer_name:
+          type: string
+          description: コンピュータ名
+        login_username:
+          type: string
+          description: ログインユーザ名
+        project:
+          type: string
+          description: 所属プロジェクト
+        dev_room:
+          type: string
+          description: 所属開発室
+        job_number:
+          type: string
+          description: 社員番号(所属ユーザー、外部キー)
+        remark:
+          type: string
+          description: 備考
+        self_confirm_id:
+          type: integer
+          format: int64
+          description: 本人確認ID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        os_id:
+          type: integer
+          format: int64
+          description: 操作系统ID
+        memory_id:
+          type: integer
+          format: int64
+          description: 内存ID
+        ssd_id:
+          type: integer
+          format: int64
+          description: SSD ID
+        hdd_id:
+          type: integer
+          format: int64
+          description: HDD ID
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - device_id
+        - job_number
+
+    DeviceIP:
+      type: object
+      properties:
+        ip_id:
+          type: string
+          description: IP番号(主キー)
+        device_id:
+          type: string
+          description: 機器番号(外部キー)
+        ip_address:
+          type: string
+          description: IPアドレス(ユニーク)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - ip_id
+        - device_id
+
+    DevicePermission:
+      type: object
+      properties:
+        permission_id:
+          type: string
+          description: 権限番号(主キー)
+        job_number:
+          type: string
+          description: 社員番号(外部キー)
+        domain_status_id:
+          type: integer
+          format: int64
+          description: ドメインステータスID(ディクショナリ項目に関連：DOMAIN_STATUS)
+        domain_group:
+          type: string
+          description: ドメイン内グループ名
+        no_domain_reason:
+          type: string
+          description: ドメイン未加入理由
+        smartit_status_id:
+          type: integer
+          format: int64
+          description: SmartITステータスID(ディクショナリ項目に関連：SMARTIT_STATUS)
+        no_smartit_reason:
+          type: string
+          description: SmartIT未インストール理由
+        usb_status_id:
+          type: integer
+          format: int64
+          description: USBステータスID(ディクショナリ項目に関連：USB_STATUS)
+        usb_reason:
+          type: string
+          description: USB使用許可理由
+        usb_expire_date:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirus_status_id:
+          type: integer
+          format: int64
+          description: ウイルス対策ステータスID(ディクショナリ項目に関連：ANTIVIRUS_STATUS)
+        no_symantec_reason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - permission_id
+        - job_number
+
+    # 字典相关模型
+    DictType:
+      type: object
+      properties:
+        dict_type_id:
+          type: integer
+          format: int64
+          description: ディクショナリタイプID(主キー)
+        dict_type_code:
+          type: string
+          description: ディクショナリタイプコード(ユニーク)
+        dict_type_name:
+          type: string
+          description: ディクショナリタイプ名
+        description:
+          type: string
+          description: ディクショナリタイプの説明
+        is_enabled:
+          type: integer
+          format: int16
+          description: 有効フラグ(0=無効、1=有効)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - dict_type_code
+        - dict_type_name
+
+    DictItem:
+      type: object
+      properties:
+        dict_item_id:
+          type: integer
+          format: int64
+          description: ディクショナリ項目ID(主キー)
+        dict_type_id:
+          type: integer
+          format: int64
+          description: ディクショナリタイプID(外部キー)
+        dict_item_code:
+          type: string
+          description: ディクショナリ項目コード(同一タイプ内ユニーク)
+        dict_item_name:
+          type: string
+          description: ディクショナリ項目名
+        sort:
+          type: integer
+          description: ソート番号
+        is_enabled:
+          type: integer
+          format: int16
+          description: 有効フラグ(0=無効、1=有効)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - dict_type_id
+        - dict_item_code
+        - dict_item_name
+
+    # 检查相关模型
+    MonthlyCheckReport:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: レポート番号(主キー)
+        update_date:
+          type: string
+          format: date
+          description: 更新日付
+        security_promoter:
+          type: string
+          description: 情報セキュリティ推進者
+        security_responsible:
+          type: string
+          description: 情報セキュリティ責任者
+        quality_dept:
+          type: string
+          description: 品質管理部
+        check_remark:
+          type: string
+          description: 点検備考
+        check_description:
+          type: string
+          description: 点検説明
+        work_area:
+          type: string
+          description: 作業区域
+        dept_id:
+          type: string
+          description: 部署番号(外部キー)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - report_id
+        - update_date
+
+    SamplingCheck:
+      type: object
+      properties:
+        sampling_id:
+          type: string
+          description: 抜取り点検番号(主キー)
+        job_number:
+          type: string
+          description: 社員番号(外部キー)
+        device_id:
+          type: string
+          description: 機器番号(外部キー)
+        screen_saver_pwd_id:
+          type: integer
+          format: int64
+          description: スクリーンセーバーパスワードステータスID(ディクショナリ項目に関連：CHECK_RESULT)
+        installed_software:
+          type: string
+          description: インストール済ソフトウェア
+        disposal_measures:
+          type: string
+          description: 処置措置
+        usb_interface_id:
+          type: integer
+          format: int64
+          description: USBインターフェースステータスID(ディクショナリ項目に関連：USB_SEAL_STATUS)
+        security_patch_id:
+          type: integer
+          format: int64
+          description: セキュリティパッチステータスID(ディクショナリ項目に関連：PATCH_STATUS)
+        antivirus_protection_id:
+          type: integer
+          format: int64
+          description: ウイルス防御ステータスID(ディクショナリ項目に関連：ANTIVIRUS_PROTECTION_STATUS)
+        boot_authentication_id:
+          type: integer
+          format: int64
+          description: 起動認証ステータスID(ディクショナリ項目に関連：BOOT_AUTH_STATUS)
+        name:
+          type: string
+          description: 氏名(ユーザーテーブルに関連)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - sampling_id
+        - job_number
+        - device_id
+        - name
+
+    NonSamplingCheck:
+      type: object
+      properties:
+        non_sampling_id:
+          type: string
+          description: 非抜取り点検番号(主キー)
+        report_id:
+          type: string
+          description: レポート番号(外部キー)
+        private_mobile_dev_id:
+          type: integer
+          format: int64
+          description: 個人モバイル機器ステータスID(ディクショナリ項目に関連：EXIST_STATUS)
+        unrecorded_wifi_id:
+          type: integer
+          format: int64
+          description: 未登録WiFiステータスID(ディクショナリ項目に関連：EXIST_STATUS)
+        floor_access_closed_id:
+          type: integer
+          format: int64
+          description: フロア入退管理ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        public_mobile_dev_out_id:
+          type: integer
+          format: int64
+          description: 共有モバイル機器持出しステータスID(ディクショナリ項目に関連：EXIST_STATUS)
+        ic_card_worn_id:
+          type: integer
+          format: int64
+          description: ICカード着用ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        copier_no_doc_id:
+          type: integer
+          format: int64
+          description: コピー機文書遺留ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        printer_no_doc_id:
+          type: integer
+          format: int64
+          description: プリンタ文書遺留ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        no_idle_device_id:
+          type: integer
+          format: int64
+          description: 未使用機器ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        desk_no_doc_id:
+          type: integer
+          format: int64
+          description: 机上文書遺留ステータスID(ディクショナリ項目に関連：CONFIRM_STATUS)
+        disposal_measures:
+          type: string
+          description: 処置措置
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - non_sampling_id
+        - report_id
+
+    # 其他辅助模型
+    MonitorInfo:
+      type: object
+      properties:
+        monitor_id:
+          type: string
+          description: モニター番号(主キー)
+        device_id:
+          type: string
+          description: 機器番号(外部キー)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - monitor_id
+        - device_id
+
+    PermissionDeviceInfo:
+      type: object
+      properties:
+        permission_id:
+          type: string
+          description: 権限番号(外部キー、device_permission.permission_idに関連)
+        device_id:
+          type: string
+          description: 機器番号(主キー)
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - device_id
+
+    PermissionIP:
+      type: object
+      properties:
+        ip_id:
+          type: string
+          description: IP番号(主キー、device_ip.ip_idに関連)
+        device_id:
+          type: string
+          description: 機器番号(外部キー)
+        ip_address:
+          type: string
+          description: IPアドレス(device_ip.ip_addressに関連)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+        update_time:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        is_deleted:
+          type: integer
+          format: int16
+          description: 論理削除フラグ(0=未削除、1=削除済)
+      required:
+        - ip_id
+        - device_id
+
+    UserPermission:
+      type: object
+      properties:
+        user_permission_id:
+          type: integer
+          format: int64
+          description: ユーザー権限上書きID(主キー)
+        user_id:
+          type: integer
+          format: int64
+          description: ユーザーID(外部キー)
+        permission_id:
+          type: integer
+          format: int64
+          description: 権限ID(外部キー)
+        grant_type:
+          type: string
+          description: 付与タイプ(許可/拒否)
+        create_time:
+          type: string
+          format: date-time
+          description: 作成時間
+      required:
+        - user_id
+        - permission_id
+security:
+  - BearerAuth: []
