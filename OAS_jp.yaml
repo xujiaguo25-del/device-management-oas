@@ -1,0 +1,1476 @@
+openapi: 3.0.0
+info:
+  title: DA04部門機器管理システム API
+  description: DA04部門機器管理システムのOpenAPI仕様。機器リスト管理、権限管理、日常レビュー・チェックに使用
+  version: 1.0.0
+  contact:
+    name: システムサポート
+    email: support@example.com
+
+servers:
+  - url: https://api.da04-equipment.com/v1
+    description: 本番サーバー
+  - url: https://test-api.da04-equipment.com/v1
+    description: テストサーバー
+
+tags:
+  - name: 認証
+    description: 管理者認証関連操作
+  - name: 管理者
+    description: 管理者管理操作
+  - name: ファイル
+    description: Excelファイルのアップロード・ダウンロード操作
+  - name: 機器ユーザー
+    description: 機器利用ユーザー管理
+  - name: 機器
+    description: 機器情報管理
+  - name: 日常レビュー・チェック
+    description: 日常レビュー・チェック表管理
+  - name: 機器権限
+    description: 機器使用権限リスト管理
+  - name: 操作ログ
+    description: システム操作ログ
+
+paths:
+  # 認証関連エンドポイント
+  /auth/login:
+    post:
+      tags:
+        - 認証
+      summary: 管理者ログイン
+      description: 社員番号またはメールアドレスとパスワードでシステムにログイン
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      tags:
+        - 認証
+      summary: 管理者ログアウト
+      description: システムからログアウト
+      operationId: adminLogout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: ログアウト成功
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - 認証
+      summary: パスワードを忘れた場合
+      description: 勤務メールアドレスへ確認コードを送信し、パスワードをリセット
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - adminMail
+              properties:
+                adminMail:
+                  type: string
+                  format: email
+                  example: admin@example.com
+      responses:
+        "200":
+          description: 確認コード送信済み
+        "404":
+          description: メールアドレスが存在しない
+
+  /auth/reset-password:
+    post:
+      tags:
+        - 認証
+      summary: パスワードリセット
+      description: 確認コードを使用してパスワードをリセット
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: パスワードリセット成功
+        "400":
+          description: 確認コードが無効または期限切れ
+
+  # 管理者管理エンドポイント
+  /admins:
+    get:
+      tags:
+        - 管理者
+      summary: 管理者リストを取得
+      description: すべての管理者情報を検索
+      operationId: selectAllAdmins
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 管理者リスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Admin"
+
+  /admins/page:
+    get:
+      tags:
+        - 管理者
+      summary: 管理者をページネーション検索
+      description: 管理者情報をページネーションで検索
+      operationId: selectAdminPage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: 管理者ページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPageResponse"
+
+    post:
+      tags:
+        - 管理者
+      summary: 新規管理者を招待
+      description: 社員番号とメールアドレスに基づき、新規管理者として招待
+      operationId: createAdmin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdminRequest"
+      responses:
+        "201":
+          description: 管理者招待成功
+        "400":
+          description: 無効なリクエストデータ
+
+  /admins/{adminId}:
+    get:
+      tags:
+        - 管理者
+      summary: 管理者詳細を取得
+      description: IDに基づき管理者情報を検索
+      operationId: getAdminById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: adminId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 管理者詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Admin"
+        "404":
+          description: 管理者が存在しない
+
+    delete:
+      tags:
+        - 管理者
+      summary: 管理者を削除
+      description: 管理者権限を抹消
+      operationId: deleteAdmin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: adminId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 管理者が存在しない
+
+  /admins/password:
+    post:
+      tags:
+        - 管理者
+      summary: パスワード変更
+      description: ログイン後、個人情報ページでパスワードを変更
+      operationId: updatePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePasswordRequest"
+      responses:
+        "200":
+          description: パスワード変更成功
+        "400":
+          description: 旧パスワードが誤っている
+
+  # ファイル処理エンドポイント
+  /files/equipment-import:
+    post:
+      tags:
+        - ファイル
+      summary: 部門機器リストをアップロード
+      description: DA04部門機器リスト.xlsxファイルをアップロードし、データをデータベースにインポート
+      operationId: importEquipmentList
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: DA04部門機器リストExcelファイル
+      responses:
+        "200":
+          description: インポート成功
+        "400":
+          description: ファイル形式エラーまたは無効なデータ
+
+  /files/permission-export:
+    get:
+      tags:
+        - ファイル
+      summary: 機器使用権限リストをダウンロード
+      description: ISMSFM0502-1機器使用権限リスト.xlsファイルをダウンロード
+      operationId: exportPermissionList
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: ダウンロード成功
+          content:
+            application/vnd.ms-excel:
+              schema:
+                type: string
+                format: binary
+
+  /files/inspection-export:
+    get:
+      tags:
+        - ファイル
+      summary: 日常レビュー・チェック表をダウンロード
+      description: ISMSFM1601-1日常レビュー--作業現場チェック.xlsファイルをダウンロード
+      operationId: exportInspectionList
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: ダウンロード成功
+          content:
+            application/vnd.ms-excel:
+              schema:
+                type: string
+                format: binary
+
+  # 機器ユーザー管理エンドポイント
+  /device-users:
+    get:
+      tags:
+        - 機器ユーザー
+      summary: すべての機器ユーザーを検索
+      description: すべての機器ユーザーとその使用機器情報を検索
+      operationId: selectAllDeviceUsers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 機器ユーザーリスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceUser"
+
+  /device-users/page:
+    get:
+      tags:
+        - 機器ユーザー
+      summary: 機器ユーザーをページネーション検索
+      description: 社員番号または氏名に基づき、ユーザーとその使用機器情報をページネーションで検索
+      operationId: selectDeviceUserPage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ユーザー社員番号
+        - name: userName
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ユーザー氏名
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: 機器ユーザーページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceUserPageResponse"
+
+  /device-users/{userId}:
+    get:
+      tags:
+        - 機器ユーザー
+      summary: ユーザー詳細を取得
+      description: 社員番号に基づきユーザー詳細とその使用機器を検索
+      operationId: getDeviceUserById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ユーザー詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceUser"
+        "404":
+          description: ユーザーが存在しない
+
+    delete:
+      tags:
+        - 機器ユーザー
+      summary: 機器ユーザーを削除
+      description: 社員番号に基づき機器ユーザーを削除
+      operationId: deleteDeviceUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: ユーザーが存在しない
+
+  # 機器管理エンドポイント
+  /devices:
+    get:
+      tags:
+        - 機器
+      summary: すべての機器を検索
+      description: すべての機器とその使用ユーザー情報を検索
+      operationId: selectAllDevices
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 機器リスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+
+  /devices/page:
+    get:
+      tags:
+        - 機器
+      summary: 機器をページネーション検索
+      description: ホスト機器番号などの情報に基づき、機器とその使用ユーザー情報をページネーションで検索
+      operationId: selectDevicePage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: hostNum
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ホスト機器番号
+        - name: monitorNum
+          in: query
+          required: false
+          schema:
+            type: string
+            description: モニター番号
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: 機器ページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DevicePageResponse"
+
+  /devices/{deviceId}:
+    get:
+      tags:
+        - 機器
+      summary: 機器詳細を取得
+      description: 機器IDに基づき機器詳細とその使用ユーザーを検索
+      operationId: getDeviceById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 機器詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        "404":
+          description: 機器が存在しない
+
+    delete:
+      tags:
+        - 機器
+      summary: 機器を削除
+      description: 機器IDに基づき機器を削除
+      operationId: deleteDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 機器が存在しない
+
+  # 日常レビュー・チェック管理エンドポイント
+  /inspection-records:
+    get:
+      tags:
+        - 日常レビュー・チェック
+      summary: すべてのチェック記録を取得
+      description: すべてのチェック記録を検索
+      operationId: selectAllInspectionRecords
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: チェック記録リスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspectionRecord"
+
+    post:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録を追加
+      description: 新しいチェック記録を追加
+      operationId: createInspectionRecord
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInspectionRecordRequest"
+      responses:
+        "201":
+          description: 追加成功
+
+    delete:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録を全削除
+      description: すべてのチェック記録を削除
+      operationId: deleteAllInspectionRecords
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: 全削除成功
+
+  /inspection-records/page:
+    get:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録をページネーション検索
+      description: チェック記録をページネーションで検索
+      operationId: selectInspectionRecordPage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: チェック記録ページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionRecordPageResponse"
+
+  /inspection-records/{recordId}:
+    get:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録詳細を取得
+      description: IDに基づきチェック記録詳細を検索
+      operationId: getInspectionRecordById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: チェック記録詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionRecord"
+        "404":
+          description: 記録が存在しない
+
+    post:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録を更新
+      description: チェック項目と処置措置を修正
+      operationId: updateInspectionRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInspectionRecordRequest"
+      responses:
+        "200":
+          description: 更新成功
+        "404":
+          description: 記録が存在しない
+
+    delete:
+      tags:
+        - 日常レビュー・チェック
+      summary: チェック記録を削除
+      description: IDに基づきチェック記録を削除
+      operationId: deleteInspectionRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 記録が存在しない
+
+  # 機器権限管理エンドポイント
+  /device-permissions:
+    get:
+      tags:
+        - 機器権限
+      summary: すべての機器権限を取得
+      description: すべての機器権限情報を検索
+      operationId: selectAllDevicePermissions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 機器権限リスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DevicePermission"
+
+    post:
+      tags:
+        - 機器権限
+      summary: 機器権限を追加
+      description: 新しい機器権限記録を追加
+      operationId: createDevicePermission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDevicePermissionRequest"
+      responses:
+        "201":
+          description: 追加成功
+
+    delete:
+      tags:
+        - 機器権限
+      summary: 機器権限を全削除
+      description: すべての機器権限記録を削除
+      operationId: deleteAllDevicePermissions
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: 全削除成功
+
+  /device-permissions/page:
+    get:
+      tags:
+        - 機器権限
+      summary: 機器権限をページネーション検索
+      description: 機器権限情報をページネーションで検索
+      operationId: selectDevicePermissionPage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: 機器権限ページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DevicePermissionPageResponse"
+
+  /device-permissions/{permissionId}:
+    get:
+      tags:
+        - 機器権限
+      summary: 機器権限詳細を取得
+      description: IDに基づき機器権限詳細を検索
+      operationId: getDevicePermissionById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 機器権限詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DevicePermission"
+        "404":
+          description: 権限記録が存在しない
+
+    post:
+      tags:
+        - 機器権限
+      summary: 機器権限を更新
+      description: 機器権限情報を修正
+      operationId: updateDevicePermission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDevicePermissionRequest"
+      responses:
+        "200":
+          description: 更新成功
+        "404":
+          description: 権限記録が存在しない
+
+    delete:
+      tags:
+        - 機器権限
+      summary: 機器権限を削除
+      description: IDに基づき機器権限記録を削除
+      operationId: deleteDevicePermission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 権限記録が存在しない
+
+  # 操作ログエンドポイント
+  /operation-logs:
+    get:
+      tags:
+        - 操作ログ
+      summary: すべての操作ログを取得
+      description: すべてのシステム操作ログを検索
+      operationId: selectAllOperationLogs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 操作ログリスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OperationLog"
+
+  /operation-logs/page:
+    get:
+      tags:
+        - 操作ログ
+      summary: 操作ログをページネーション検索
+      description: システム操作ログをページネーションで検索
+      operationId: selectOperationLogPage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: adminId
+          in: query
+          required: false
+          schema:
+            type: string
+            description: 管理者ID
+        - name: startTime
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            description: 開始時間
+        - name: endTime
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            description: 終了時間
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: 操作ログページネーションリスト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationLogPageResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        description: 現在のページ番号
+    LimitParam:
+      name: limit
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        description: 1ページあたりのデータ数
+
+  schemas:
+    # リクエストモデル
+    LoginRequest:
+      type: object
+      properties:
+        adminId:
+          type: string
+          example: "ADM001"
+        adminMail:
+          type: string
+          format: email
+          example: admin@example.com
+        password:
+          type: string
+          format: password
+          example: "securePass123"
+      oneOf:
+        - required: [adminId, password]
+        - required: [adminMail, password]
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - adminMail
+        - verificationCode
+        - newPassword
+      properties:
+        adminMail:
+          type: string
+          format: email
+          example: admin@example.com
+        verificationCode:
+          type: string
+          example: "123456"
+        newPassword:
+          type: string
+          format: password
+          minLength: 6
+          example: "newSecurePass456"
+
+    UpdatePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          example: "oldPass123"
+        newPassword:
+          type: string
+          format: password
+          minLength: 6
+          example: "newPass456"
+
+    CreateAdminRequest:
+      type: object
+      required:
+        - adminId
+        - adminMail
+        - name
+      properties:
+        adminId:
+          type: string
+          example: "ADM002"
+        adminMail:
+          type: string
+          format: email
+          example: newadmin@example.com
+        name:
+          type: string
+          example: "新管理者"
+
+    CreateInspectionRecordRequest:
+      type: object
+      required:
+        - userId
+        - userName
+        - deviceNum
+      properties:
+        userId:
+          type: string
+          description: ユーザー社員番号
+          example: "USR001"
+        userName:
+          type: string
+          description: ユーザー氏名
+          example: "張三"
+        deviceNum:
+          type: string
+          description: 機器番号（ホスト番号+モニター番号）
+          example: "HOST001-MON001"
+        powerOnAuth:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 電源オン認証チェック結果
+        passwordScreenSaver:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: パスワードスクリーンセーバーチェック結果
+        antivirusSoftware:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: アンチウイルスソフトウェアチェック結果
+        systemUpdate:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: システム更新チェック結果
+        physicalSecurity:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 物理セキュリティチェック結果
+        disposalMeasures:
+          type: string
+          description: 処置措置
+          example: "ユーザーにパスワードスクリーンセーバー設定をリマインド済み"
+
+    UpdateInspectionRecordRequest:
+      type: object
+      properties:
+        powerOnAuth:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 電源オン認証チェック結果
+        passwordScreenSaver:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: パスワードスクリーンセーバーチェック結果
+        antivirusSoftware:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: アンチウイルスソフトウェアチェック結果
+        systemUpdate:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: システム更新チェック結果
+        physicalSecurity:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 物理セキュリティチェック結果
+        disposalMeasures:
+          type: string
+          description: 処置措置
+          example: "ユーザーにパスワードスクリーンセーバー設定をリマインド済み"
+
+    CreateDevicePermissionRequest:
+      type: object
+      required:
+        - deviceId
+        - userId
+        - userName
+        - hostNum
+        - monitorNum
+      properties:
+        deviceId:
+          type: string
+          description: 機器ID
+          example: "DEV001"
+        userId:
+          type: string
+          description: ユーザー社員番号
+          example: "USR001"
+        userName:
+          type: string
+          description: ユーザー氏名
+          example: "張三"
+        hostNum:
+          type: string
+          description: ホスト機器番号
+          example: "HOST001"
+        monitorNum:
+          type: string
+          description: モニター番号
+          example: "MON001"
+        domain:
+          type: string
+          description: ドメイン
+          example: "DA04-DOMAIN"
+        smartITInstalled:
+          type: string
+          enum: ["はい", "いいえ"]
+          description: SmartITインストール状況
+        usbDevice:
+          type: string
+          description: USB機器状況
+          example: "無効化済み"
+        antivirus:
+          type: string
+          description: アンチウイルス状況
+          example: "最新版をインストール済み"
+
+    UpdateDevicePermissionRequest:
+      type: object
+      properties:
+        domain:
+          type: string
+          description: ドメイン
+          example: "DA04-DOMAIN"
+        smartITInstalled:
+          type: string
+          enum: ["はい", "いいえ"]
+          description: SmartITインストール状況
+        usbDevice:
+          type: string
+          description: USB機器状況
+          example: "無効化済み"
+        antivirus:
+          type: string
+          description: アンチウイルス状況
+          example: "最新版をインストール済み"
+
+    # レスポンスモデル
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWTトークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        admin:
+          $ref: "#/components/schemas/Admin"
+
+    Admin:
+      type: object
+      properties:
+        adminId:
+          type: string
+          example: "ADM001"
+        adminMail:
+          type: string
+          format: email
+          example: admin@example.com
+        name:
+          type: string
+          example: "管理者"
+        createTime:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        lastLoginTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T08:30:00Z"
+
+    AdminPageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 100
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/Admin"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 10
+
+    DeviceUser:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "USR001"
+        userName:
+          type: string
+          example: "張三"
+        department:
+          type: string
+          example: "DA04部門"
+        position:
+          type: string
+          example: "エンジニア"
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
+        createTime:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T00:00:00Z"
+
+    DeviceUserPageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 100
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeviceUser"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 10
+
+    Device:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          example: "DEV001"
+        hostNum:
+          type: string
+          example: "HOST001"
+        monitorNum:
+          type: string
+          example: "MON001"
+        deviceType:
+          type: string
+          example: "デスクトップPC"
+        brand:
+          type: string
+          example: "Dell"
+        model:
+          type: string
+          example: "OptiPlex 7080"
+        purchaseDate:
+          type: string
+          format: date
+          example: "2022-01-15"
+        status:
+          type: string
+          example: "使用中"
+        user:
+          $ref: "#/components/schemas/DeviceUser"
+        createTime:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T00:00:00Z"
+
+    DevicePageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 100
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 10
+
+    InspectionRecord:
+      type: object
+      properties:
+        recordId:
+          type: string
+          example: "INS001"
+        userId:
+          type: string
+          description: ユーザー社員番号
+          example: "USR001"
+        userName:
+          type: string
+          description: ユーザー氏名
+          example: "張三"
+        deviceNum:
+          type: string
+          description: 機器番号（ホスト番号+モニター番号）
+          example: "HOST001-MON001"
+        powerOnAuth:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 電源オン認証チェック結果
+        passwordScreenSaver:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: パスワードスクリーンセーバーチェック結果
+        antivirusSoftware:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: アンチウイルスソフトウェアチェック結果
+        systemUpdate:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: システム更新チェック結果
+        physicalSecurity:
+          type: string
+          enum: ["○", "", "不適用"]
+          description: 物理セキュリティチェック結果
+        disposalMeasures:
+          type: string
+          description: 処置措置
+          example: "ユーザーにパスワードスクリーンセーバー設定をリマインド済み"
+        updateAdminId:
+          type: string
+          description: 更新管理者ID
+          example: "ADM001"
+        updateTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T10:30:00Z"
+        createTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T09:00:00Z"
+
+    InspectionRecordPageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 100
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/InspectionRecord"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 10
+
+    DevicePermission:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          example: "PERM001"
+        deviceId:
+          type: string
+          description: 機器ID
+          example: "DEV001"
+        userId:
+          type: string
+          description: ユーザー社員番号
+          example: "USR001"
+        userName:
+          type: string
+          description: ユーザー氏名
+          example: "張三"
+        hostNum:
+          type: string
+          description: ホスト機器番号
+          example: "HOST001"
+        monitorNum:
+          type: string
+          description: モニター番号
+          example: "MON001"
+        domain:
+          type: string
+          description: ドメイン
+          example: "DA04-DOMAIN"
+        smartITInstalled:
+          type: string
+          enum: ["はい", "いいえ"]
+          description: SmartITインストール状況
+        usbDevice:
+          type: string
+          description: USB機器状況
+          example: "無効化済み"
+        antivirus:
+          type: string
+          description: アンチウイルス状況
+          example: "最新版をインストール済み"
+        createTime:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T00:00:00Z"
+
+    DevicePermissionPageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 100
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/DevicePermission"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 10
+
+    OperationLog:
+      type: object
+      properties:
+        logId:
+          type: string
+          example: "LOG001"
+        adminId:
+          type: string
+          description: 管理者ID
+          example: "ADM001"
+        adminName:
+          type: string
+          description: 管理者氏名
+          example: "管理者"
+        operation:
+          type: string
+          description: 操作内容
+          example: "システムログイン"
+        operationTime:
+          type: string
+          format: date-time
+          example: "2023-01-10T08:30:00Z"
+        ipAddress:
+          type: string
+          description: 操作IPアドレス
+          example: "192.168.1.100"
+        result:
+          type: string
+          enum: ["成功", "失敗"]
+          description: 操作結果
+          example: "成功"
+
+    OperationLogPageResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 総記録数
+          example: 1000
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/OperationLog"
+        page:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          description: 1ページあたりの記録数
+          example: 10
+        pages:
+          type: integer
+          description: 総ページ数
+          example: 100
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "AUTH_FAILED"
+        message:
+          type: string
+          example: "ユーザー名またはパスワードが誤っています"
