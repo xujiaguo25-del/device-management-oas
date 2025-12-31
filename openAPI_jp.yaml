@@ -1,0 +1,1072 @@
+openapi: 3.0.0
+info:
+  title: 部署内設備管理システムAPI
+  description: 設備管理、ユーザー管理、設備権限、設備点検、ログイン認証のフルセットインターフェース
+  version: 1.0.0
+servers:
+  - url: /api
+    description: ローカル開発環境インターフェースルートパス
+tags:
+  - name: auth
+    description: ログイン認証モジュール
+  - name: user
+    description: ユーザー管理モジュール
+  - name: device
+    description: 設備管理モジュール
+  - name: devicePermission
+    description: 設備権限管理モジュール
+  - name: deviceCheck
+    description: 設備点検管理モジュール
+  - name: dict
+    description: プルダウン辞書テーブルモジュール
+
+paths:
+  # ======================== 登录认证
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: ログインリクエスト
+      description: ユーザーアカウントとパスワードによるログイン、ログイン証憑の取得
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ログインアカウント
+                password:
+                  type: string
+                  description: ログインパスワード
+              required: [username, password]
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: ログイン成功
+                  data:
+                    type: object
+                    description: ログインユーザー情報+token
+
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: ログアウトリクエスト
+      description: ユーザーログアウト、ログインステータスの破棄
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: ログアウト成功
+
+  # ======================== 用户管理
+  /user/import:
+    post:
+      tags:
+        - user
+      summary: Excelデータインポート
+      description: Excelファイルアップロード、ユーザーデータを一括でuserテーブルにインポート
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: インポート成功、合計XX件のデータをインポートしました
+
+  /user/selectAll:
+    get:
+      tags:
+        - user
+      summary: 全ユーザー検索
+      description: ユーザーテーブルの全データ検索、バックエンドはUserオブジェクトで検索パラメータを受け取る
+      parameters:
+        - in: query
+          name: userParam
+          description: ユーザー検索条件
+          schema:
+            $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 検索成功
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+  /user/selectPage:
+    get:
+      tags:
+        - user
+      summary: ユーザーページング検索
+      description: ユーザーリストのページング検索、バックエンドはpageNum、pageSize、userオブジェクトでパラメータを受け取る
+      parameters:
+        - in: query
+          name: pageNum
+          required: true
+          schema:
+            type: integer
+            description: ページ番号
+            example: 1
+        - in: query
+          name: pageSize
+          required: true
+          schema:
+            type: integer
+            description: 1ページあたりの件数
+            example: 10
+        - in: query
+          name: searchName
+          schema:
+            type: string
+            description: あいまい検索-ユーザー名
+        - in: query
+          name: user
+          description: その他のユーザー検索条件
+          schema:
+            $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: ページング検索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResult'
+
+  /user/insertUser:
+    post:
+      tags:
+        - user
+      summary: ユーザー新規追加
+      description: userテーブルにデータ挿入、バックエンドはuserオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: 新規追加成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: ユーザー新規追加成功
+
+  /user/updateUser:
+    put:
+      tags:
+        - user
+      summary: ユーザー情報更新
+      description: userIdまたはuserNameに基づきuser情報更新、バックエンドはuserオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: ユーザー情報更新成功
+
+  /user/updatePwd:
+    put:
+      tags:
+        - user
+      summary: ユーザーパスワード変更
+      description: ログイン済みユーザーが自身のパスワードを変更、バックエンドはuserオブジェクトでパラメータを受け取る(data.form)、旧パスワードの正確性と新パスワードのルールを検証
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: パスワード変更成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: パスワード変更に成功しました
+        '400':
+          description: リクエストパラメータエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  msg:
+                    type: string
+                    example: 旧パスワードが正しくない、または新しいパスワードが規則に合致しません
+
+  /user/deleteByUserId/{userId}:
+    delete:
+      tags:
+        - user
+      summary: ユーザー情報削除
+      description: userIdに基づきuserテーブルのユーザー情報削除
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+            description: ユーザーID
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: ユーザー削除成功
+
+  # ======================== 设备管理
+  /device/import:
+    post:
+      tags:
+        - device
+      summary: Excelデータインポート
+      description: Excelファイルアップロード、設備データを一括でdeviceテーブルにインポート
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: インポート成功、合計XX件のデータをインポートしました
+
+  /device/selectAll:
+    get:
+      tags:
+        - device
+      summary: 全設備検索
+      description: 設備テーブルの全データ検索、バックエンドはdeviceオブジェクトで検索パラメータを受け取る
+      parameters:
+        - in: query
+          name: deviceParam
+          description: 設備検索条件
+          schema:
+            $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 検索成功
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Device'
+
+  /device/selectPage:
+    get:
+      tags:
+        - device
+      summary: 設備ページング検索
+      description: 設備リストのページング検索、バックエンドはpageNum、pageSize、deviceオブジェクトでパラメータを受け取る
+      parameters:
+        - in: query
+          name: pageNum
+          required: true
+          schema:
+            type: integer
+            description: ページ番号
+            example: 1
+        - in: query
+          name: pageSize
+          required: true
+          schema:
+            type: integer
+            description: 1ページあたりの件数
+            example: 10
+        - in: query
+          name: searchName
+          schema:
+            type: string
+            description: あいまい検索-設備名
+        - in: query
+          name: device
+          description: その他の設備検索条件
+          schema:
+            $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: ページング検索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResult'
+
+  /device/insertDevice:
+    post:
+      tags:
+        - device
+      summary: 設備新規追加
+      description: deviceテーブルにデータ挿入、バックエンドはdeviceオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: 新規追加成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備新規追加成功
+
+  /device/updateDevice:
+    put:
+      tags:
+        - device
+      summary: 設備情報更新
+      description: deviceIdまたはdeviceNameに基づきdevice情報更新、バックエンドはdeviceオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備情報更新成功
+
+  /device/deleteByDeviceId/{deviceId}:
+    delete:
+      tags:
+        - device
+      summary: 設備情報削除
+      description: deviceIdに基づきdeviceテーブルの設備情報削除
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: integer
+            description: 設備ID
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備削除成功
+
+  # ======================== 设备权限管理
+  /devicePermission/import:
+    post:
+      tags:
+        - devicePermission
+      summary: Excelデータインポート
+      description: Excelファイルアップロード、設備権限データを一括でdevicePermissionテーブルにインポート
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: インポート成功、合計XX件のデータをインポートしました
+
+  /devicePermission/export:
+    get:
+      tags:
+        - devicePermission
+      summary: Excelにデータエクスポート
+      description: 設備権限テーブルのデータをExcelファイルにエクスポート、fileId不要
+      parameters:
+        - in: query
+          name: devicePermission
+          description: エクスポートフィルタ条件
+          schema:
+            $ref: '#/components/schemas/DevicePermission'
+      responses:
+        '200':
+          description: エクスポート成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  /devicePermission/selectAll:
+    get:
+      tags:
+        - devicePermission
+      summary: 全設備権限検索
+      description: 設備権限テーブルの全データ検索、バックエンドはdevicePermissionオブジェクトで検索パラメータを受け取る
+      parameters:
+        - in: query
+          name: devicePermissionParam
+          description: 設備権限検索条件
+          schema:
+            $ref: '#/components/schemas/DevicePermission'
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 検索成功
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DevicePermission'
+
+  /devicePermission/selectPage:
+    get:
+      tags:
+        - devicePermission
+      summary: 設備権限ページング検索
+      description: 設備権限リストのページング検索、バックエンドはpageNum、pageSize、devicePermissionオブジェクトでパラメータを受け取る
+      parameters:
+        - in: query
+          name: pageNum
+          required: true
+          schema:
+            type: integer
+            description: ページ番号
+            example: 1
+        - in: query
+          name: pageSize
+          required: true
+          schema:
+            type: integer
+            description: 1ページあたりの件数
+            example: 10
+        - in: query
+          name: searchName
+          schema:
+            type: string
+            description: あいまい検索-権限名/設備名
+        - in: query
+          name: devicePermission
+          description: その他の権限検索条件
+          schema:
+            $ref: '#/components/schemas/DevicePermission'
+      responses:
+        '200':
+          description: ページング検索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResult'
+
+  /devicePermission/insertDeviceCheck:
+    post:
+      tags:
+        - devicePermission
+      summary: 設備権限新規追加
+      description: devicePermissionテーブルにデータ挿入、バックエンドはdevicePermissionオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermission'
+      responses:
+        '200':
+          description: 新規追加成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備権限新規追加成功
+
+  /devicePermission/updatedevicePerm:
+    put:
+      tags:
+        - devicePermission
+      summary: 設備権限情報更新
+      description: devicePermissionIdに基づきdevicePermission情報更新、バックエンドはdevicePermissionオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermission'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備権限情報更新成功
+
+  /devicePermission/deleteByDevicePermId/{devicePermId}:
+    delete:
+      tags:
+        - devicePermission
+      summary: 設備権限情報削除
+      description: devicePermIdに基づきdevicePermissionテーブルの権限情報削除
+      parameters:
+        - in: path
+          name: devicePermId
+          required: true
+          schema:
+            type: integer
+            description: 設備権限ID
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備権限削除成功
+
+  # ======================== 设备检查管理
+  /deviceCheck/import:
+    post:
+      tags:
+        - deviceCheck
+      summary: Excelデータインポート
+      description: Excelファイルアップロード、設備点検データを一括でdeviceCheckテーブルにインポート
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: インポート成功、合計XX件のデータをインポートしました
+
+  /deviceCheck/export:
+    get:
+      tags:
+        - deviceCheck
+      summary: Excelにデータエクスポート
+      description: 設備点検テーブルのデータをExcelファイルにエクスポート、fileId不要
+      parameters:
+        - in: query
+          name: deviceCheck
+          description: エクスポートフィルタ条件
+          schema:
+            $ref: '#/components/schemas/DeviceCheck'
+      responses:
+        '200':
+          description: エクスポート成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  /deviceCheck/selectAll:
+    get:
+      tags:
+        - deviceCheck
+      summary: 全設備点検記録検索
+      description: 設備点検テーブルの全データ検索、バックエンドはdeviceCheckオブジェクトで検索パラメータを受け取る
+      parameters:
+        - in: query
+          name: deviceCheckParam
+          description: 設備点検検索条件
+          schema:
+            $ref: '#/components/schemas/DeviceCheck'
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 検索成功
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceCheck'
+
+  /deviceCheck/selectPage:
+    get:
+      tags:
+        - deviceCheck
+      summary: 設備点検ページング検索
+      description: 設備点検リストのページング検索、バックエンドはpageNum、pageSize、deviceCheckオブジェクトでパラメータを受け取る
+      parameters:
+        - in: query
+          name: pageNum
+          required: true
+          schema:
+            type: integer
+            description: ページ番号
+            example: 1
+        - in: query
+          name: pageSize
+          required: true
+          schema:
+            type: integer
+            description: 1ページあたりの件数
+            example: 10
+        - in: query
+          name: searchName
+          schema:
+            type: string
+            description: あいまい検索-設備名/点検項目
+        - in: query
+          name: deviceCheck
+          description: その他の点検検索条件
+          schema:
+            $ref: '#/components/schemas/DeviceCheck'
+      responses:
+        '200':
+          description: ページング検索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResult'
+
+  /deviceCheck/insertDeviceCheck:
+    post:
+      tags:
+        - deviceCheck
+      summary: 設備点検記録新規追加
+      description: deviceCheckテーブルにデータ挿入、バックエンドはdeviceCheckオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCheck'
+      responses:
+        '200':
+          description: 新規追加成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備点検記録新規追加成功
+
+  /deviceCheck/updateDeviceCheck:
+    put:
+      tags:
+        - deviceCheck
+      summary: 設備点検情報更新
+      description: userIdに基づきdeviceCheck情報更新、バックエンドはdeviceCheckオブジェクトでパラメータを受け取る(data.form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCheck'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備点検情報更新成功
+
+  /deviceCheck/deleteByDeviceId/{deviceId}:
+    delete:
+      tags:
+        - deviceCheck
+      summary: 設備点検記録削除
+      description: deviceIdに基づきdeviceCheckテーブルの点検情報削除
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: integer
+            description: 設備ID
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 設備点検記録削除成功
+
+  # ======================== 下拉框字典表
+  /dict/selectDict:
+    get:
+      tags:
+        - dict
+      summary: 辞書情報取得
+      description: プルダウンに必要な辞書テーブルのデータ検索
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  msg:
+                    type: string
+                    example: 検索成功
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        dictCode:
+                          type: string
+                          description: 辞書コード
+                        dictName:
+                          type: string
+                          description: 辞書名
+                        dictValue:
+                          type: string
+                          description: 辞書値
+
+components:
+  schemas:
+    User:
+      type: object
+      description: ユーザーテーブルエンティティ
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+        userName:
+          type: string
+          description: ユーザー名
+        userAccount:
+          type: string
+          description: ユーザーアカウント
+        userStatus:
+          type: integer
+          description: ユーザーステータス
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+        oldPassword:  # ← 新增 旧密码
+          type: string
+          description: 旧パスワード
+        newPassword:  # ← 新增 新密码
+          type: string
+          description: 新パスワード
+        confirmPassword:  # ← 新增 确认新密码
+          type: string
+          description: 新パスワード確認
+
+    Device:
+      type: object
+      description: 設備テーブルエンティティ
+      properties:
+        deviceId:
+          type: integer
+          description: 設備ID
+        deviceName:
+          type: string
+          description: 設備名
+        deviceCode:
+          type: string
+          description: 設備コード
+        deviceStatus:
+          type: integer
+          description: 設備ステータス
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+
+    DevicePermission:
+      type: object
+      description: 設備権限テーブルエンティティ
+      properties:
+        devicePermId:
+          type: integer
+          description: 設備権限ID
+        devicePermissionId:
+          type: integer
+          description: 権限関連ID
+        deviceId:
+          type: integer
+          description: 関連設備ID
+        userId:
+          type: integer
+          description: 関連ユーザーID
+        permStatus:
+          type: integer
+          description: 権限ステータス
+
+    DeviceCheck:
+      type: object
+      description: 設備点検テーブルエンティティ
+      properties:
+        checkId:
+          type: integer
+          description: 点検ID
+        deviceId:
+          type: integer
+          description: 設備ID
+        userId:
+          type: integer
+          description: 点検者ID
+        checkContent:
+          type: string
+          description: 点検内容
+        checkStatus:
+          type: integer
+          description: 点検ステータス
+        checkTime:
+          type: string
+          format: date-time
+          description: 点検時間
+
+    PageResult:
+      type: object
+      description: すべてのページングインターフェースの統一的な戻りフォーマット
+      properties:
+        code:
+          type: integer
+          example: 200
+        msg:
+          type: string
+          example: 検索成功
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: 総件数
+              example: 100
+            pageNum:
+              type: integer
+              description: 現在のページ番号
+              example: 1
+            pageSize:
+              type: integer
+              description: 1ページあたりの件数
+              example: 10
+            pages:
+              type: integer
+              description: 総ページ数
+              example: 10
+            rows:
+              type: array
+              description: 現在のページのデータリスト
+              items:
+                type: object
