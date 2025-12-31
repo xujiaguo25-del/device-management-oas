@@ -51,16 +51,10 @@
        ```
    
    ---
-   
-   
 
 2. ### 设备管理接口
    
-   - 获取设备导入excel模板(表格)
-     
-     ```url
-     GET /device/import-template
-     ```
+   
    
    - <b>设备导入</b>(表格)
      
@@ -74,6 +68,22 @@
        
        ```url
        GET /device
+       
+       request:
+           pageSize:30,
+           pageNum:1,
+           data:{
+               userInfo:{}
+               deviceInfo:{}
+           }
+       
+       request:
+           pageSize:30,
+           pageNum:1,
+           data:{
+               userInfo:{}
+               deviceInfo:{}
+           }
        ```
      
      - 设备修改
@@ -85,7 +95,7 @@
      - 设备删除
        
        ```url
-       DELETE /device/{deviceID}
+       DELETE /device/{deviceId}
        ```
      
      - 设备增加
@@ -97,18 +107,46 @@
        
    
    ---
-   
-   
 
 3. ### 抽查接口
    
-   - <b>设备抽查（按人，添加记录）</b>
-   
-   - ```url
-     POST /inspection/{jobNumber}
+   - <b>设备抽查（添加记录）</b>
+     
+     ```url
+     POST /inspection
+     
+     request:
+         data:{
+            list:[
+             userInfo:{'jobNumber':'123'}
+             deviceInfo: {
+                 'deviceId':1,
+                 'startUpAuth':true,
+                 'passwordScreenSaver':ture
+                 ...
+                 },
+             ]
+         }
+   - <b>设备抽查（添加记录）</b>
+     
+     ```url
+     POST /inspection
+     
+     request:
+         data:{
+            list:[
+             userInfo:{'jobNumber':'123'}
+             deviceInfo: {
+                 'deviceId':1,
+                 'startUpAuth':true,
+                 'passwordScreenSaver':ture
+                 ...
+                 },
+             ]
+         }
      ```
    
-   - 抽查信息查询（月度报告）
+   - 抽查信息查询
      
      ```url
      GET /inspection
@@ -121,49 +159,31 @@
      ```
    
    ---
-   
-   
 
 4. ### 权限接口
-   
-   
-   
-   - 设备权限信息查询
-     
-     ```url
-     GET /device-permission
-     ```
-   
-   - 设备权限信息修改
-     
-     ```url
-     PATCH /device-permission/{deviceId}
-     ```
-   
-   - 设备权限清单导出
-     
-     ```url
-     POST /device-permission/export
-     ```
-   
-   ---
-   
-   
+- 设备权限信息查询
+  
+  ```url
+  GET /device-permission
+  ```
 
+- 设备权限信息修改
+  
+  ```url
+  PATCH /device-permission/{deviceId}
+  ```
+
+- 设备权限清单导出
+  
+  ```url
+  POST /device-permission/export
+  ```
+  
+   ---
 5. ### Common
    
    - 获取字典
      
      ```url
-     GET common/dict
+     GET /common/dict
      ```
-
-
-
-
-
-
-
-
-
-
