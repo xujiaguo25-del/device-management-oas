@@ -1,0 +1,180 @@
+# 現場検査管理
+  /sampling-spot-checks:
+    get:
+      tags:
+        - 現場検査
+      description: 現場点検記録取得
+      operationId: getSpotCheck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ペイジ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: ペイジあたりの数量
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+            minimum: 1
+        - name: year_month
+          in: query
+          description: 検査年月
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 現場検査記録列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SpotCheck"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+  /sampling-spot-checks/{checkId}:
+    get:
+      tags:
+        - 現場検査
+      summary: 特定検査記録取得
+      description: 特定検査記録の詳細情報を取得
+      operationId: getSpotCheckById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 特定検査取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotCheckById"
+        "404":
+          description: 記録がない
+
+    put:
+      tags:
+        - 現場検査
+      summary: 検査結果更新
+      description: 検査結果更新
+      operationId: updateSpotCheck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSpotCheck"
+      responses:
+        "200":
+          description: 検査結果更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotCheck"
+  
+  /non-sampling-spot-checks:
+    post:
+      tags:
+        - 現場検査
+      summary: 非抜き打ち検査記録作成
+      description: 非抜き打ち検査記録作成
+      operationId: createNonSamplingSpotCheck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNonSamplingSpotCheck"
+      responses:
+        "201":
+          description: 非抜き打ち検査記録作成成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingSpotCheck"
+        "400":
+          description: エラー
+
+    get:
+      tags:
+        - 現場検査
+      description:  非抜き打ち検査記録取得
+      operationId: getNonSamplingSpotCheck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year_month
+          in: query
+          description: 検査年月
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 非抜き打ち検査記録列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NonSamplingSpotCheck"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                    
+    put:
+      tags:
+        - 現場検査
+      summary: 非抜き打ち検査結果更新
+      description: 非抜き打ち検査結果更新
+      operationId: updateNonSamplingSpotCheck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNonSamplingSpotCheck"
+      responses:
+        "200":
+          description: 点検結果更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingSpotCheck"
