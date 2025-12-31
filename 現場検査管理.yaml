@@ -85,6 +85,36 @@
           required: true
           schema:
             type: string
+        - name: powerAuthentication
+          in: query
+          description: 操作开机认证
+          required: false
+          schema:
+            type: boolean
+        - name: password
+          in: query
+          description: 操作密码屏保
+          required: false
+          schema:
+            type: boolean
+        - name: software
+          in: query
+          description: 操作安装软件
+          required: false
+          schema:
+            type: boolean
+        - name: securityPatch
+          in: query
+          description: 操作安全补丁
+          required: false
+          schema:
+            type: boolean
+        - name: defence
+          in: query
+          description: 操作病毒防护
+          required: false
+          schema:
+            type: boolean
       requestBody:
         required: true
         content:
