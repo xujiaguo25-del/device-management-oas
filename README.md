@@ -53,59 +53,47 @@
    ---
 
 2. ### 设备管理接口
-   
-   
-   
-   - <b>设备导入</b>(表格)
-     
-     ```url
-     POST /device/import
-     ```
-   
-   - 设备管理
-     
-     - 设备查询
-       
-       ```url
-       GET /device
-       
-       request:
-           pageSize:30,
-           pageNum:1,
-           data:{
-               userInfo:{}
-               deviceInfo:{}
-           }
-       
-       request:
-           pageSize:30,
-           pageNum:1,
-           data:{
-               userInfo:{}
-               deviceInfo:{}
-           }
-       ```
-     
-     - 设备修改
-       
-       ```url
-       PATCH /device/{deviceId}
-       ```
-     
-     - 设备删除
-       
-       ```url
-       DELETE /device/{deviceId}
-       ```
-     
-     - 设备增加
-       
-       ```url
-       POST /device
-       ```
-       
-       
-   
+- <b>设备导入</b>(表格)
+  
+  ```url
+  POST /device/import
+  ```
+
+- 设备管理
+  
+  - 设备查询
+    
+    ```url
+    GET　/device
+    
+    request:
+        pageSize:30,
+        pageNum:1,
+        data:{
+            userInfo:{}
+            deviceInfo:{}
+        }
+    
+    ```
+  
+  - 设备修改
+    
+    ```url
+    PATCH /device/{deviceId}
+    ```
+  
+  - 设备删除
+    
+    ```url
+    DELETE /device/{deviceId}
+    ```
+  
+  - 设备增加
+    
+    ```url
+    POST /device
+    ```
+
    ---
 
 3. ### 抽查接口
@@ -127,6 +115,10 @@
                  },
              ]
          }
+     ```
+     
+     
+   
    - <b>设备抽查（添加记录）</b>
      
      ```url
