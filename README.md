@@ -76,6 +76,14 @@
                userInfo:{}
                deviceInfo:{}
            }
+       
+       request:
+           pageSize:30,
+           pageNum:1,
+           data:{
+               userInfo:{}
+               deviceInfo:{}
+           }
        ```
      
      - 设备修改
@@ -95,11 +103,30 @@
        ```url
        POST /device
        ```
+       
+       
    
    ---
 
 3. ### 抽查接口
    
+   - <b>设备抽查（添加记录）</b>
+     
+     ```url
+     POST /inspection
+     
+     request:
+         data:{
+            list:[
+             userInfo:{'jobNumber':'123'}
+             deviceInfo: {
+                 'deviceId':1,
+                 'startUpAuth':true,
+                 'passwordScreenSaver':ture
+                 ...
+                 },
+             ]
+         }
    - <b>设备抽查（添加记录）</b>
      
      ```url
