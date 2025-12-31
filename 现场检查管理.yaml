@@ -327,6 +327,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NonSamplingCheckResponse"
+        "404":
+          description: 記録が存在しません        
     
     delete:
       tags:
@@ -367,18 +369,6 @@ paths:
       summary: 抜取検査記録エクスポート
       description: 抜取検査記録をCSV/Excelファイルとしてエクスポート
       parameters:
-        - name: employeeId
-          in: query
-          description: 社員番号
-          required: false
-          schema:
-            type: string
-        - name: employeeName
-          in: query
-          description: 社員名
-          required: false
-          schema:
-            type: string
         - name: format
           in: query
           description: 出力フォーマット
