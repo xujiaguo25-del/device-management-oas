@@ -1,0 +1,5488 @@
+openapi: 3.0.1
+info:
+  title: 设备管理系统
+  description: ユーザー・ロール・権限の管理および関連付けを行うAPI
+  version: 1.0.0
+tags:
+  - name: 用户管理
+  - name: 用户管理/ユーザー管理
+  - name: 用户管理/権限管理
+  - name: 用户管理/ロール管理
+  - name: 用户管理/ロール権限関連付け
+  - name: 用户管理/ユーザーロール関連付け
+  - name: 用户管理/ユーザー権限上書き
+  - name: 设备信息
+  - name: 设备信息/デバイス管理
+  - name: 设备信息/デバイスIP管理
+  - name: 设备信息/モニター管理
+  - name: 设备权限
+  - name: 设备权限/設備権限
+  - name: 设备权限/権限IP
+  - name: 设备权限/権限デバイス関連付け
+  - name: 字典
+  - name: 字典/辞書类型
+  - name: 字典/辞書项
+  - name: 安全点检
+  - name: 安全点检/月次点検報告
+  - name: 安全点检/抜き取り検査
+  - name: 安全点检/非抜き取り検査
+  - name: ユーザー管理
+  - name: 権限管理
+  - name: ロール管理
+  - name: ロール権限関連付け
+  - name: ユーザーロール関連付け
+  - name: ユーザー権限上書き
+  - name: デバイス管理
+  - name: デバイスIP管理
+  - name: モニター管理
+  - name: 設備権限
+  - name: 権限IP
+  - name: 権限デバイス関連付け
+  - name: 辞書类型
+  - name: 辞書项
+  - name: 月次点検報告
+  - name: 抜き取り検査
+  - name: 非抜き取り検査
+paths:
+  /users:
+    get:
+      summary: ユーザー一覧取得
+      deprecated: false
+      description: ユーザーの一覧をページングで取得します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: jobNumber
+          in: query
+          description: 社員番号で検索
+          required: false
+          example: EMP001
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: 氏名で検索（部分一致）
+          required: false
+          example: 张三
+          schema:
+            type: string
+        - name: deptId
+          in: query
+          description: 部署番号でフィルター
+          required: false
+          example: DEPT001
+          schema:
+            type: string
+        - name: userTypeId
+          in: query
+          description: ユーザータイプIDでフィルター
+          required: false
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+          headers: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          description: 認証トークンが無効または期限切れです
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: 操作に必要な権限がありません
+      security:
+        - BearerAuth: []
+    post:
+      summary: ユーザー新規作成
+      deprecated: false
+      description: 新しいユーザーアカウントを作成します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        '201':
+          description: ユーザーの作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: 社員番号が既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /users/{userId}:
+    get:
+      summary: ユーザー詳細取得
+      deprecated: false
+      description: 指定されたユーザーIDの詳細情報を取得します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserDetailResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: ユーザー情報更新
+      deprecated: false
+      description: 指定されたユーザーの情報を更新します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        '200':
+          description: ユーザー情報の更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: ユーザー削除
+      deprecated: false
+      description: 指定されたユーザーを論理削除します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ユーザーの削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /users/{userId}/password:
+    put:
+      summary: パスワード変更
+      deprecated: false
+      description: 指定されたユーザーのパスワードを変更します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newPassword
+                - confirmPassword
+              properties:
+                newPassword:
+                  type: string
+                  description: 新しいパスワード
+                  example: NewP@ssw0rd123
+                confirmPassword:
+                  type: string
+                  description: 新しいパスワード（確認用）
+                  example: NewP@ssw0rd123
+        required: true
+      responses:
+        '200':
+          description: パスワードの変更に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /users/search:
+    get:
+      summary: ユーザー検索
+      deprecated: false
+      description: さまざまな条件でユーザーを検索します
+      tags:
+        - 用户管理/ユーザー管理
+        - ユーザー管理
+      parameters:
+        - name: keyword
+          in: query
+          description: 検索キーワード（社員番号または氏名）
+          required: false
+          example: EMP001
+          schema:
+            type: string
+        - name: deptId
+          in: query
+          description: 部署番号でフィルター
+          required: false
+          example: DEPT001
+          schema:
+            type: string
+        - name: userTypeId
+          in: query
+          description: ユーザータイプIDでフィルター
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: 取得件数制限
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: ユーザー検索の取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSimpleResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permissions:
+    get:
+      summary: 権限一覧取得
+      deprecated: false
+      description: システム権限の一覧を取得します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: permissionCode
+          in: query
+          description: 権限コードで検索
+          required: false
+          example: PERM_VIEW_USER
+          schema:
+            type: string
+        - name: permissionName
+          in: query
+          description: 権限名で検索（部分一致）
+          required: false
+          example: ユーザー参照
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: リソースタイプでフィルター
+          required: false
+          example: メニュー
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: 権限新規作成
+      deprecated: false
+      description: 新しいシステム権限を作成します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionRequest'
+        required: true
+      responses:
+        '201':
+          description: 権限の作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: 権限コードが既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permissions/{permissionId}:
+    get:
+      summary: 権限詳細取得
+      deprecated: false
+      description: 指定された権限IDの詳細情報を取得します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 権限詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionDetailResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: 権限情報更新
+      deprecated: false
+      description: 指定された権限の情報を更新します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionRequest'
+        required: true
+      responses:
+        '200':
+          description: 権限情報の更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: 権限削除
+      deprecated: false
+      description: 指定された権限を論理削除します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 権限の削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /permissions/tree:
+    get:
+      summary: 権限ツリー取得
+      deprecated: false
+      description: 階層構造の権限ツリーを取得します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters: []
+      responses:
+        '200':
+          description: 権限ツリーの取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionTreeNode'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permissions/import:
+    post:
+      summary: 権限一括インポート
+      deprecated: false
+      description: 権限データを一括でインポートします
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissions
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CreatePermissionRequest'
+        required: true
+      responses:
+        '200':
+          description: 権限の一括インポートに成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permissions/statistics:
+    get:
+      summary: 権限統計情報取得
+      deprecated: false
+      description: 権限関連の統計情報を取得します
+      tags:
+        - 用户管理/権限管理
+        - 権限管理
+      parameters: []
+      responses:
+        '200':
+          description: 権限統計情報の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionStatisticsResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /roles:
+    get:
+      summary: ロール一覧取得
+      deprecated: false
+      description: システムロールの一覧を取得します
+      tags:
+        - 用户管理/ロール管理
+        - ロール管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: roleCode
+          in: query
+          description: ロールコードで検索
+          required: false
+          example: ROLE_ADMIN
+          schema:
+            type: string
+        - name: roleName
+          in: query
+          description: ロール名で検索（部分一致）
+          required: false
+          example: 管理者
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ロール一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoleResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: ロール新規作成
+      deprecated: false
+      description: 新しいシステムロールを作成します
+      tags:
+        - 用户管理/ロール管理
+        - ロール管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+        required: true
+      responses:
+        '201':
+          description: ロールの作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoleResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: ロールコードが既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /roles/{roleId}:
+    get:
+      summary: ロール詳細取得
+      deprecated: false
+      description: 指定されたロールIDの詳細情報を取得します
+      tags:
+        - 用户管理/ロール管理
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ロール詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoleDetailResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: ロール情報更新
+      deprecated: false
+      description: 指定されたロールの情報を更新します
+      tags:
+        - 用户管理/ロール管理
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+        required: true
+      responses:
+        '200':
+          description: ロール情報の更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoleResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: ロール削除
+      deprecated: false
+      description: 指定されたロールを論理削除します
+      tags:
+        - 用户管理/ロール管理
+        - ロール管理
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ロールの削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /roles/{roleId}/permissions:
+    get:
+      summary: ロール権限一覧取得
+      deprecated: false
+      description: 指定されたロールに割り当てられた権限一覧を取得します
+      tags:
+        - 用户管理/ロール権限関連付け
+        - ロール権限関連付け
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ロール権限一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: ロール権限割り当て
+      deprecated: false
+      description: ロールに権限を割り当てます
+      tags:
+        - 用户管理/ロール権限関連付け
+        - ロール権限関連付け
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissionIds
+              properties:
+                permissionIds:
+                  type: array
+                  items:
+                    type: integer
+                  description: 割り当てる権限IDのリスト
+                  example:
+                    - 1
+                    - 2
+                    - 3
+        required: true
+      responses:
+        '200':
+          description: ロール権限の割り当てに成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /roles/{roleId}/permissions/{permissionId}:
+    delete:
+      summary: ロール権限解除
+      deprecated: false
+      description: ロールから権限を解除します
+      tags:
+        - 用户管理/ロール権限関連付け
+        - ロール権限関連付け
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ロール権限の解除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /roles/{roleId}/permissions/batch:
+    post:
+      summary: ロール権限一括割り当て
+      deprecated: false
+      description: ロールに権限を一括で割り当てます
+      tags:
+        - 用户管理/ロール権限関連付け
+        - ロール権限関連付け
+      parameters:
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - operation
+                - permissionIds
+              properties:
+                operation:
+                  type: string
+                  enum:
+                    - add
+                    - remove
+                    - replace
+                  description: 操作タイプ（追加/削除/置換）
+                  example: add
+                permissionIds:
+                  type: array
+                  items:
+                    type: integer
+                  description: 権限IDのリスト
+                  example:
+                    - 1
+                    - 2
+                    - 3
+        required: true
+      responses:
+        '200':
+          description: ロール権限の一括割り当てに成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /users/{userId}/roles:
+    get:
+      summary: ユーザーロール一覧取得
+      deprecated: false
+      description: 指定されたユーザーに割り当てられたロール一覧を取得します
+      tags:
+        - 用户管理/ユーザーロール関連付け
+        - ユーザーロール関連付け
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザーロール一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoleResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: ユーザーロール割り当て
+      deprecated: false
+      description: ユーザーにロールを割り当てます
+      tags:
+        - 用户管理/ユーザーロール関連付け
+        - ユーザーロール関連付け
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roleIds
+              properties:
+                roleIds:
+                  type: array
+                  items:
+                    type: integer
+                  description: 割り当てるロールIDのリスト
+                  example:
+                    - 1
+                    - 2
+        required: true
+      responses:
+        '200':
+          description: ユーザーロールの割り当てに成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /users/{userId}/roles/{roleId}:
+    delete:
+      summary: ユーザーロール解除
+      deprecated: false
+      description: ユーザーからロールを解除します
+      tags:
+        - 用户管理/ユーザーロール関連付け
+        - ユーザーロール関連付け
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: roleId
+          in: path
+          description: ロールID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ユーザーロールの解除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /users/{userId}/direct-permissions:
+    get:
+      summary: ユーザー直接権限一覧取得
+      deprecated: false
+      description: ユーザーに直接割り当てられた権限一覧を取得します
+      tags:
+        - 用户管理/ユーザー権限上書き
+        - ユーザー権限上書き
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: grantType
+          in: query
+          description: 付与タイプでフィルター（許可/拒否）
+          required: false
+          example: 許可
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー直接権限一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserPermissionResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: ユーザー直接権限割り当て
+      deprecated: false
+      description: ユーザーに直接権限を割り当てます（ロール権限の上書き）
+      tags:
+        - 用户管理/ユーザー権限上書き
+        - ユーザー権限上書き
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissionId
+                - grantType
+              properties:
+                permissionId:
+                  type: integer
+                  description: 権限ID
+                  example: 1
+                grantType:
+                  type: string
+                  description: 付与タイプ（許可/拒否）
+                  example: 許可
+        required: true
+      responses:
+        '200':
+          description: ユーザー直接権限の割り当てに成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /users/{userId}/direct-permissions/{permissionId}:
+    delete:
+      summary: ユーザー直接権限解除
+      deprecated: false
+      description: ユーザーから直接権限を解除します
+      tags:
+        - 用户管理/ユーザー権限上書き
+        - ユーザー権限上書き
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ユーザー直接権限の解除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /users/{userId}/effective-permissions:
+    get:
+      summary: ユーザー有効権限一覧取得
+      deprecated: false
+      description: ユーザーの有効な権限一覧を取得します（ロール権限+直接権限）
+      tags:
+        - 用户管理/ユーザー権限上書き
+        - ユーザー権限上書き
+      parameters:
+        - name: userId
+          in: path
+          description: ユーザーID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー有効権限一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /auth/check-permission:
+    post:
+      summary: 権限チェック
+      deprecated: false
+      description: 現在のユーザーが指定された権限を持っているかチェックします
+      tags:
+        - 用户管理/ユーザー権限上書き
+        - ユーザー権限上書き
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissionCode
+              properties:
+                permissionCode:
+                  type: string
+                  description: チェックする権限コード
+                  example: PERM_VIEW_USER
+        required: true
+      responses:
+        '200':
+          description: 権限チェックの結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hasPermission:
+                    type: boolean
+                    description: 権限を持っているかどうか
+                  permission:
+                    $ref: '#/components/schemas/PermissionResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /devices:
+    get:
+      summary: デバイス一覧の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイス管理
+        - デバイス管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: deviceModel
+          in: query
+          description: デバイス型番
+          required: false
+          schema:
+            type: string
+        - name: project
+          in: query
+          description: 所属プロジェクト
+          required: false
+          schema:
+            type: string
+        - name: devRoom
+          in: query
+          description: デバイス設置機器室
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: デバイス一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceInfo'
+                  totalElements:
+                    type: integer
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 新規デバイスの作成
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイス管理
+        - デバイス管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreateDTO'
+        required: true
+      responses:
+        '201':
+          description: デバイス作成に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '409':
+          description: デバイスIDが既に存在します
+          headers: {}
+      security:
+        - bearerAuth: []
+  /devices/{deviceId}:
+    get:
+      summary: デバイス詳細情報の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイス管理
+        - デバイス管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: デバイス詳細情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDetail'
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: デバイス情報の更新
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイス管理
+        - デバイス管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdateDTO'
+        required: true
+      responses:
+        '200':
+          description: デバイス情報の更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: デバイスの論理削除
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイス管理
+        - デバイス管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: デバイスの削除に成功
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /devices/{deviceId}/ips:
+    get:
+      summary: デバイスのIP一覧の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: IP状態
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - allocated
+              - available
+        - name: ipType
+          in: query
+          description: IP種別
+          required: false
+          schema:
+            type: string
+            enum:
+              - ipv4
+              - ipv6
+      responses:
+        '200':
+          description: IP一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceIP'
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: デバイスへのIP追加
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceIPCreateDTO'
+        required: true
+      responses:
+        '201':
+          description: IPの追加に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceIP'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+        '409':
+          description: IPアドレスが既に存在します
+          headers: {}
+      security:
+        - bearerAuth: []
+  /devices/{deviceId}/ips/{ipId}:
+    get:
+      summary: デバイスIP詳細情報の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+        - name: ipId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: IP詳細情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceIP'
+          headers: {}
+        '404':
+          description: IPが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: デバイスIP情報の更新
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+        - name: ipId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceIPUpdateDTO'
+        required: true
+      responses:
+        '200':
+          description: IP情報の更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceIP'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: IPが存在しません
+          headers: {}
+        '409':
+          description: IPアドレスが既に存在します
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: デバイスIPの削除
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+        - name: ipId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: IPの削除に成功
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: IPが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /ip-pool:
+    get:
+      summary: IPアドレスプール一覧の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: network
+          in: query
+          description: ネットワークアドレス
+          required: false
+          schema:
+            type: string
+        - name: subnetMask
+          in: query
+          description: サブネットマスク
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: IP状態
+          required: false
+          schema:
+            type: string
+            enum:
+              - available
+              - allocated
+              - reserved
+      responses:
+        '200':
+          description: IPアドレスプール一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IPPool'
+                  totalElements:
+                    type: integer
+          headers: {}
+      security:
+        - bearerAuth: []
+  /ip-pool/allocate:
+    post:
+      summary: デバイスへのIPアドレス割り当て
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPAllocationRequest'
+        required: true
+      responses:
+        '200':
+          description: IP割り当てに成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceIP'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+        '409':
+          description: 利用可能なIPアドレスがありません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /ip-pool/{poolId}:
+    delete:
+      summary: IPプールからのIPアドレス解放
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/デバイスIP管理
+        - デバイスIP管理
+      parameters:
+        - name: poolId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: IP解放に成功
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: IPが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monitors:
+    get:
+      summary: モニター一覧の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: brand
+          in: query
+          description: ブランド
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: 状態
+          required: false
+          schema:
+            type: string
+            enum:
+              - available
+              - in_use
+              - maintenance
+              - retired
+        - name: resolution
+          in: query
+          description: 解像度
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: モニター一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonitorInfo'
+                  totalElements:
+                    type: integer
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 新規モニターの作成
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitorCreateDTO'
+        required: true
+      responses:
+        '201':
+          description: モニター作成に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorInfo'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '409':
+          description: モニターシリアル番号が既に存在します
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monitors/{monitorId}:
+    get:
+      summary: モニター詳細情報の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: monitorId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: モニター詳細情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorDetail'
+          headers: {}
+        '404':
+          description: モニターが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: モニター情報の更新
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: monitorId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitorUpdateDTO'
+        required: true
+      responses:
+        '200':
+          description: モニター情報の更新に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorInfo'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: モニターが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: モニターの論理削除
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: monitorId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: モニターの削除に成功
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: モニターが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monitors/{monitorId}/bind:
+    post:
+      summary: モニターのデバイスへのバインド
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: monitorId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitorBindRequest'
+        required: true
+      responses:
+        '200':
+          description: モニターバインドに成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorInfo'
+          headers: {}
+        '400':
+          description: リクエストパラメータエラー
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: モニターまたはデバイスが存在しません
+          headers: {}
+        '409':
+          description: モニターは既にバインドされています
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monitors/{monitorId}/unbind:
+    post:
+      summary: モニターのバインド解除
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: monitorId
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: モニターバインド解除に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorInfo'
+          headers: {}
+        '403':
+          description: 操作権限がありません
+          headers: {}
+        '404':
+          description: モニターが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /devices/{deviceId}/monitors:
+    get:
+      summary: デバイスにバインドされたモニター一覧の取得
+      deprecated: false
+      description: ''
+      tags:
+        - 设备信息/モニター管理
+        - モニター管理
+      parameters:
+        - name: deviceId
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: モニター一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonitorInfo'
+          headers: {}
+        '404':
+          description: デバイスが存在しません
+          headers: {}
+      security:
+        - bearerAuth: []
+  /device-permissions:
+    get:
+      summary: 設備権限一覧取得
+      deprecated: false
+      description: 設備権限の一覧をページングで取得します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: permissionId
+          in: query
+          description: 権限番号で検索
+          required: false
+          example: PERM_DEV001
+          schema:
+            type: string
+        - name: jobNumber
+          in: query
+          description: 社員番号でフィルター
+          required: false
+          example: EMP001
+          schema:
+            type: string
+        - name: domainStatusId
+          in: query
+          description: ドメインステータスIDでフィルター
+          required: false
+          example: 7
+          schema:
+            type: integer
+        - name: usbStatusId
+          in: query
+          description: USBステータスIDでフィルター
+          required: false
+          example: 11
+          schema:
+            type: integer
+        - name: antivirusStatusId
+          in: query
+          description: ウイルス対策ステータスIDでフィルター
+          required: false
+          example: 13
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 設備権限一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse2'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DevicePermissionResponse'
+          headers: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          description: 認証トークンが無効または期限切れです
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: 操作に必要な権限がありません
+      security:
+        - BearerAuth: []
+    post:
+      summary: 設備権限新規作成
+      deprecated: false
+      description: 新しい設備権限レコードを作成します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDevicePermissionRequest'
+        required: true
+      responses:
+        '201':
+          description: 設備権限の作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DevicePermissionResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: 権限番号が既に存在しています
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse3'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /device-permissions/{permissionId}:
+    get:
+      summary: 設備権限詳細取得
+      deprecated: false
+      description: 指定された権限番号の設備権限詳細情報を取得します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限番号
+          required: true
+          example: PERM_DEV001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 設備権限詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DevicePermissionDetailResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: 設備権限更新
+      deprecated: false
+      description: 指定された権限番号の設備権限情報を更新します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限番号
+          required: true
+          example: PERM_DEV001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDevicePermissionRequest'
+        required: true
+      responses:
+        '200':
+          description: 設備権限の更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DevicePermissionResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: 設備権限削除
+      deprecated: false
+      description: 指定された権限番号の設備権限を論理削除します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限番号
+          required: true
+          example: PERM_DEV001
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 設備権限の削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /device-permissions/{permissionId}/usb-expire:
+    patch:
+      summary: USB使用有効期限更新
+      deprecated: false
+      description: 指定された設備権限のUSB使用有効期限を更新します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限番号
+          required: true
+          example: PERM_DEV001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - usbExpireDate
+              properties:
+                usbExpireDate:
+                  type: string
+                  format: date
+                  description: 新しいUSB使用有効期限
+                  example: '2026-12-31'
+        required: true
+      responses:
+        '200':
+          description: USB使用有効期限の更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /device-permissions/batch-update:
+    post:
+      summary: 設備権限一括更新
+      deprecated: false
+      description: 複数の設備権限を一括で更新します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissionIds
+                - updateData
+              properties:
+                permissionIds:
+                  type: array
+                  items:
+                    type: string
+                  description: 更新する権限番号のリスト
+                  example:
+                    - PERM_DEV001
+                    - PERM_DEV002
+                updateData:
+                  type: object
+                  description: 更新するデータ
+                  properties:
+                    domainStatusId:
+                      type: integer
+                      description: ドメインステータスID
+                    usbStatusId:
+                      type: integer
+                      description: USBステータスID
+                    antivirusStatusId:
+                      type: integer
+                      description: ウイルス対策ステータスID
+                    updater:
+                      type: string
+                      description: 更新者
+        required: true
+      responses:
+        '200':
+          description: 設備権限の一括更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /device-permissions/statistics:
+    get:
+      summary: 設備権限統計取得
+      deprecated: false
+      description: 設備権限の各種統計情報を取得します
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: date
+          in: query
+          description: 統計基準日（YYYY-MM-DD、デフォルト当日）
+          required: false
+          example: '2025-12-30'
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 設備権限統計の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionStatisticsResponse4'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /device-permissions/export:
+    get:
+      summary: 設備権限エクスポート
+      deprecated: false
+      description: 設備権限データをCSVまたはExcel形式でエクスポートします
+      tags:
+        - 设备权限/設備権限
+        - 設備権限
+      parameters:
+        - name: format
+          in: query
+          description: エクスポート形式
+          required: false
+          schema:
+            type: string
+            enum:
+              - csv
+              - excel
+            default: csv
+        - name: startDate
+          in: query
+          description: 開始日付（YYYY-MM-DD）
+          required: false
+          example: '2025-01-01'
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: 終了日付（YYYY-MM-DD）
+          required: false
+          example: '2025-12-31'
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 設備権限データのエクスポートに成功しました
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permission-ips:
+    get:
+      summary: 権限IP一覧取得
+      deprecated: false
+      description: 権限に関連付けられたIPアドレスの一覧を取得します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: ipId
+          in: query
+          description: IP番号で検索
+          required: false
+          example: PIP001
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          description: 設備番号でフィルター
+          required: false
+          example: DEV001
+          schema:
+            type: string
+        - name: ipAddress
+          in: query
+          description: IPアドレスで検索（部分一致）
+          required: false
+          example: 192.168.1
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限IP一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse2'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionIpResponse'
+          headers: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          description: 認証トークンが無効または期限切れです
+      security:
+        - BearerAuth: []
+    post:
+      summary: 権限IP新規作成
+      deprecated: false
+      description: 権限に関連付けられた新しいIPアドレスを作成します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionIpRequest'
+        required: true
+      responses:
+        '201':
+          description: 権限IPの作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionIpResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: IP番号またはIPアドレスが既に存在しています
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse3'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permission-ips/{ipId}:
+    get:
+      summary: 権限IP詳細取得
+      deprecated: false
+      description: 指定されたIP番号の権限IP詳細情報を取得します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters:
+        - name: ipId
+          in: path
+          description: IP番号
+          required: true
+          example: PIP001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限IP詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionIpResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: 権限IP更新
+      deprecated: false
+      description: 指定されたIP番号の権限IP情報を更新します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters:
+        - name: ipId
+          in: path
+          description: IP番号
+          required: true
+          example: PIP001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionIpRequest'
+        required: true
+      responses:
+        '200':
+          description: 権限IPの更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionIpResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: 権限IP削除
+      deprecated: false
+      description: 指定されたIP番号の権限IPを論理削除します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters:
+        - name: ipId
+          in: path
+          description: IP番号
+          required: true
+          example: PIP001
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 権限IPの削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /devices/{deviceId}/permission-ips:
+    get:
+      summary: 設備別権限IP一覧取得
+      deprecated: false
+      description: 指定された設備に関連付けられた権限IP一覧を取得します
+      tags:
+        - 设备权限/権限IP
+        - 権限IP
+      parameters:
+        - name: deviceId
+          in: path
+          description: 設備番号
+          required: true
+          example: DEV001
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 設備別権限IP一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse2'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionIpResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permission-devices:
+    get:
+      summary: 権限デバイス関連付け一覧取得
+      deprecated: false
+      description: 権限とデバイスの関連付け一覧を取得します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソートフィールド（例：createTime,desc）
+          required: false
+          schema:
+            type: string
+        - name: permissionId
+          in: query
+          description: 権限番号でフィルター
+          required: false
+          example: PERM_DEV001
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          description: 設備番号でフィルター
+          required: false
+          example: DEV001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限デバイス関連付け一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse2'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionDeviceInfoResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+    post:
+      summary: 権限デバイス関連付け新規作成
+      deprecated: false
+      description: 権限とデバイスの新しい関連付けを作成します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionDeviceInfoRequest'
+        required: true
+      responses:
+        '201':
+          description: 権限デバイス関連付けの作成に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionDeviceInfoResponse'
+          headers: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          description: リクエストパラメータが不正です
+        '409':
+          description: 権限とデバイスの関連付けが既に存在しています
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse3'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /permission-devices/{deviceId}:
+    get:
+      summary: 権限デバイス関連付け詳細取得
+      deprecated: false
+      description: 指定された設備番号の権限デバイス関連付け詳細を取得します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters:
+        - name: deviceId
+          in: path
+          description: 設備番号
+          required: true
+          example: DEV001
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限デバイス関連付け詳細の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionDeviceInfoResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    put:
+      summary: 権限デバイス関連付け更新
+      deprecated: false
+      description: 指定された設備番号の権限デバイス関連付け情報を更新します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters:
+        - name: deviceId
+          in: path
+          description: 設備番号
+          required: true
+          example: DEV001
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionDeviceInfoRequest'
+        required: true
+      responses:
+        '200':
+          description: 権限デバイス関連付けの更新に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse1'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionDeviceInfoResponse'
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+    delete:
+      summary: 権限デバイス関連付け削除
+      deprecated: false
+      description: 指定された設備番号の権限デバイス関連付けを論理削除します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters:
+        - name: deviceId
+          in: path
+          description: 設備番号
+          required: true
+          example: DEV001
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 権限デバイス関連付けの削除に成功しました
+          headers: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+          description: リソースが見つかりません
+      security:
+        - BearerAuth: []
+  /device-permissions/{permissionId}/devices:
+    get:
+      summary: 権限別関連デバイス一覧取得
+      deprecated: false
+      description: 指定された権限番号に関連付けられたデバイス一覧を取得します
+      tags:
+        - 设备权限/権限デバイス関連付け
+        - 権限デバイス関連付け
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限番号
+          required: true
+          example: PERM_DEV001
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 権限別関連デバイス一覧の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponse2'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceInfoResponse'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /dict-types:
+    get:
+      summary: 获取辞書类型列表
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters:
+        - name: page
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DictType'
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 创建辞書类型
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DictType'
+        required: true
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /dict-types/{dict_type_id}:
+    get:
+      summary: 获取单个辞書类型
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters:
+        - name: dict_type_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictType'
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新辞書类型
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters:
+        - name: dict_type_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DictType'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: 删除辞書类型
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters:
+        - name: dict_type_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /dict-types/code/{dict_type_code}:
+    get:
+      summary: タイプコードに基づいて辞書の種類を取得する
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書类型
+        - 辞書类型
+      parameters:
+        - name: dict_type_code
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictType'
+          headers: {}
+      security:
+        - bearerAuth: []
+  /dict-items:
+    get:
+      summary: 获取辞書项列表
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters:
+        - name: page
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 15
+        - name: dict_type_id
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DictItem'
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 创建辞書项
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DictItem'
+        required: true
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /dict-items/{dict_item_id}:
+    get:
+      summary: 获取单个辞書项
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters:
+        - name: dict_item_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItem'
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新辞書项
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters:
+        - name: dict_item_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DictItem'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: 删除辞書项
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters:
+        - name: dict_item_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /dict-types/{dict_type_id}/items:
+    get:
+      summary: あるタイプのすべての辞書項目を取得する
+      deprecated: false
+      description: ''
+      tags:
+        - 字典/辞書项
+        - 辞書项
+      parameters:
+        - name: dict_type_id
+          in: path
+          description: ''
+          required: true
+          example: 0
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DictItem'
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monthly-check-reports:
+    get:
+      summary: 获取月次点検報告列表
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/月次点検報告
+        - 月次点検報告
+      parameters:
+        - name: page
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonthlyCheckReport'
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 创建月次点検報告
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/月次点検報告
+        - 月次点検報告
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonthlyCheckReport'
+        required: true
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /monthly-check-reports/{report_id}:
+    get:
+      summary: 単一レポートを取得する
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/月次点検報告
+        - 月次点検報告
+      parameters:
+        - name: report_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyCheckReport'
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新報告
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/月次点検報告
+        - 月次点検報告
+      parameters:
+        - name: report_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonthlyCheckReport'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: 删除報告
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/月次点検報告
+        - 月次点検報告
+      parameters:
+        - name: report_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /sampling-checks:
+    get:
+      summary: 获取抜き取り検査列表
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/抜き取り検査
+        - 抜き取り検査
+      parameters:
+        - name: page
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SamplingCheck'
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 创建抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/抜き取り検査
+        - 抜き取り検査
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SamplingCheck'
+        required: true
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /sampling-checks/{sampling_id}:
+    get:
+      summary: 获取单个抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/抜き取り検査
+        - 抜き取り検査
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SamplingCheck'
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/抜き取り検査
+        - 抜き取り検査
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SamplingCheck'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: 删除抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/抜き取り検査
+        - 抜き取り検査
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /non-sampling-checks:
+    get:
+      summary: 获取非抜き取り検査列表
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/非抜き取り検査
+        - 非抜き取り検査
+      parameters:
+        - name: page
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NonSamplingCheck'
+          headers: {}
+      security:
+        - bearerAuth: []
+    post:
+      summary: 创建非抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/非抜き取り検査
+        - 非抜き取り検査
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonSamplingCheck'
+        required: true
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security:
+        - bearerAuth: []
+  /non-sampling-checks/{non_sampling_id}:
+    get:
+      summary: 获取单个非抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/非抜き取り検査
+        - 非抜き取り検査
+      parameters:
+        - name: non_sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NonSamplingCheck'
+          headers: {}
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新非抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/非抜き取り検査
+        - 非抜き取り検査
+      parameters:
+        - name: non_sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonSamplingCheck'
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security:
+        - bearerAuth: []
+    delete:
+      summary: 删除非抜き取り検査
+      deprecated: false
+      description: ''
+      tags:
+        - 安全点检/非抜き取り検査
+        - 非抜き取り検査
+      parameters:
+        - name: non_sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security:
+        - bearerAuth: []
+components:
+  schemas:
+    ApiResponse: &ref_0
+      type: object
+      properties:
+        code:
+          type: integer
+          description: レスポンスコード（200=成功）
+          example: 200
+        message:
+          type: string
+          description: レスポンスメッセージ
+          example: 成功
+        data:
+          type: object
+          description: レスポンスデータ
+          properties: {}
+        timestamp:
+          type: string
+          format: date-time
+          description: レスポンス時刻
+          example: '2025-12-30T01:23:45.678Z'
+    PageResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            pageInfo:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  description: 現在のページ番号
+                  example: 1
+                size:
+                  type: integer
+                  description: ページサイズ
+                  example: 20
+                total:
+                  type: integer
+                  description: 総レコード数
+                  example: 100
+                pages:
+                  type: integer
+                  description: 総ページ数
+                  example: 5
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: エラーコード
+          example: 401
+        message:
+          type: string
+          description: エラーメッセージ
+          example: 認証に失敗しました
+        error:
+          type: string
+          description: エラータイプ
+          example: UNAUTHORIZED
+        path:
+          type: string
+          description: リクエストパス
+          example: /api/v1/users
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+          example: '2025-12-30T01:23:45.678Z'
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: フィールド名
+              message:
+                type: string
+                description: フィールドエラーメッセージ
+    CreateUserRequest:
+      type: object
+      required:
+        - deptId
+        - name
+        - jobNumber
+        - password
+      properties:
+        deptId:
+          type: string
+          description: 部署番号
+          example: DEPT001
+        name:
+          type: string
+          description: 氏名
+          example: 王五
+        jobNumber:
+          type: string
+          description: 社員番号（ユニーク）
+          example: EMP003
+        userTypeId:
+          type: integer
+          description: ユーザータイプID
+          example: 2
+        password:
+          type: string
+          description: パスワード
+          example: P@ssw0rd123
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: wangwu@example.com
+        phone:
+          type: string
+          description: 電話番号
+          example: 090-1234-5678
+    UpdateUserRequest:
+      type: object
+      properties:
+        deptId:
+          type: string
+          description: 部署番号
+          example: DEPT002
+        name:
+          type: string
+          description: 氏名
+          example: 王五
+        userTypeId:
+          type: integer
+          description: ユーザータイプID
+          example: 1
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: wangwu@example.com
+        phone:
+          type: string
+          description: 電話番号
+          example: 090-1234-5678
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 1
+        deptId:
+          type: string
+          description: 部署番号
+          example: DEPT001
+        name:
+          type: string
+          description: 氏名
+          example: 张三
+        jobNumber:
+          type: string
+          description: 社員番号
+          example: EMP001
+        userTypeId:
+          type: integer
+          description: ユーザータイプID
+          example: 1
+        userTypeName:
+          type: string
+          description: ユーザータイプ名
+          example: 管理者
+        email:
+          type: string
+          description: メールアドレス
+          example: zhangsan@example.com
+        phone:
+          type: string
+          description: 電話番号
+          example: 090-1234-5678
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+    UserSimpleResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 1
+        name:
+          type: string
+          description: 氏名
+          example: 张三
+        jobNumber:
+          type: string
+          description: 社員番号
+          example: EMP001
+        deptId:
+          type: string
+          description: 部署番号
+          example: DEPT001
+    UserDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserResponse'
+        - type: object
+          properties:
+            roles:
+              type: array
+              description: ユーザーロールリスト
+              items:
+                $ref: '#/components/schemas/RoleResponse'
+            directPermissions:
+              type: array
+              description: ユーザー直接権限リスト
+              items:
+                $ref: '#/components/schemas/UserPermissionResponse'
+            effectivePermissions:
+              type: array
+              description: 有効権限リスト（ロール権限+直接権限）
+              items:
+                $ref: '#/components/schemas/PermissionResponse'
+    CreatePermissionRequest:
+      type: object
+      required:
+        - permissionName
+        - permissionCode
+      properties:
+        permissionName:
+          type: string
+          description: 権限名
+          example: ユーザー参照
+        permissionCode:
+          type: string
+          description: 権限コード（ユニーク）
+          example: PERM_VIEW_USER
+        resourceType:
+          type: string
+          description: リソースタイプ（メニュー/ボタン/インターフェース）
+          example: メニュー
+        resourceKey:
+          type: string
+          description: リソース識別子（メニューURL等）
+          example: /user/list
+        description:
+          type: string
+          description: 権限の説明
+          example: ユーザー情報を参照する権限
+    UpdatePermissionRequest:
+      type: object
+      properties:
+        permissionName:
+          type: string
+          description: 権限名
+          example: ユーザー参照（更新）
+        resourceType:
+          type: string
+          description: リソースタイプ
+          example: ボタン
+        resourceKey:
+          type: string
+          description: リソース識別子
+          example: /user/view
+        description:
+          type: string
+          description: 権限の説明
+          example: 更新された説明
+    PermissionResponse:
+      type: object
+      properties:
+        permissionId:
+          type: integer
+          description: 権限ID
+          example: 1
+        permissionName:
+          type: string
+          description: 権限名
+          example: ユーザー参照
+        permissionCode:
+          type: string
+          description: 権限コード
+          example: PERM_VIEW_USER
+        resourceType:
+          type: string
+          description: リソースタイプ
+          example: メニュー
+        resourceKey:
+          type: string
+          description: リソース識別子
+          example: /user/list
+        description:
+          type: string
+          description: 権限の説明
+          example: ユーザー情報を参照する権限
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+        isDeleted:
+          type: integer
+          description: 論理削除フラグ
+          example: 0
+    PermissionDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/PermissionResponse'
+        - type: object
+          properties:
+            assignedRoles:
+              type: array
+              description: 割り当てられたロールリスト
+              items:
+                type: object
+                properties:
+                  roleId:
+                    type: integer
+                    description: ロールID
+                  roleName:
+                    type: string
+                    description: ロール名
+                  roleCode:
+                    type: string
+                    description: ロールコード
+            assignedUsers:
+              type: array
+              description: 直接割り当てられたユーザーリスト
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    description: ユーザーID
+                  name:
+                    type: string
+                    description: ユーザー名
+                  jobNumber:
+                    type: string
+                    description: 社員番号
+    PermissionTreeNode:
+      type: object
+      properties:
+        permissionId:
+          type: integer
+          description: 権限ID
+        permissionName:
+          type: string
+          description: 権限名
+        permissionCode:
+          type: string
+          description: 権限コード
+        resourceType:
+          type: string
+          description: リソースタイプ
+        resourceKey:
+          type: string
+          description: リソース識別子
+        children:
+          type: array
+          description: 子権限ノード
+          items:
+            $ref: '#/components/schemas/PermissionTreeNode'
+    CreateRoleRequest:
+      type: object
+      required:
+        - roleName
+        - roleCode
+      properties:
+        roleName:
+          type: string
+          description: ロール名
+          example: 監査担当者
+        roleCode:
+          type: string
+          description: ロールコード（ユニーク）
+          example: ROLE_AUDITOR
+        description:
+          type: string
+          description: ロール説明
+          example: セキュリティ監査を担当するロール
+    UpdateRoleRequest:
+      type: object
+      properties:
+        roleName:
+          type: string
+          description: ロール名
+          example: 監査担当者（更新）
+        description:
+          type: string
+          description: ロール説明
+          example: 更新された説明
+    RoleResponse:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          description: ロールID
+          example: 1
+        roleName:
+          type: string
+          description: ロール名
+          example: システム管理者
+        roleCode:
+          type: string
+          description: ロールコード
+          example: ROLE_ADMIN
+        description:
+          type: string
+          description: ロール説明
+          example: システムの全権限を保有
+        userCount:
+          type: integer
+          description: ユーザー数
+          example: 5
+        permissionCount:
+          type: integer
+          description: 権限数
+          example: 10
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        isDeleted:
+          type: integer
+          description: 論理削除フラグ
+          example: 0
+    RoleDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/RoleResponse'
+        - type: object
+          properties:
+            permissions:
+              type: array
+              description: ロール権限リスト
+              items:
+                $ref: '#/components/schemas/PermissionResponse'
+            users:
+              type: array
+              description: ロールに割り当てられたユーザーリスト
+              items:
+                $ref: '#/components/schemas/UserSimpleResponse'
+    UserPermissionResponse:
+      type: object
+      properties:
+        userPermissionId:
+          type: integer
+          description: ユーザー権限上書きID
+          example: 1
+        userId:
+          type: integer
+          description: ユーザーID
+          example: 1
+        permissionId:
+          type: integer
+          description: 権限ID
+          example: 1
+        permissionName:
+          type: string
+          description: 権限名
+          example: ユーザー参照
+        permissionCode:
+          type: string
+          description: 権限コード
+          example: PERM_VIEW_USER
+        grantType:
+          type: string
+          description: 付与タイプ（許可/拒否）
+          example: 許可
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+    PermissionStatisticsResponse:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+          description: 総ユーザー数
+          example: 150
+        totalRoles:
+          type: integer
+          description: 総ロール数
+          example: 10
+        totalPermissions:
+          type: integer
+          description: 総権限数
+          example: 50
+        averageRolesPerUser:
+          type: number
+          format: float
+          description: ユーザーあたりの平均ロール数
+          example: 2.5
+        averagePermissionsPerRole:
+          type: number
+          format: float
+          description: ロールあたりの平均権限数
+          example: 8.3
+        userPermissionOverrides:
+          type: integer
+          description: ユーザー権限上書き数
+          example: 25
+        topRoles:
+          type: array
+          description: ユーザー数が多い上位ロール
+          items:
+            type: object
+            properties:
+              roleId:
+                type: integer
+                description: ロールID
+              roleName:
+                type: string
+                description: ロール名
+              userCount:
+                type: integer
+                description: ユーザー数
+        topPermissions:
+          type: array
+          description: 割り当て数が多い上位権限
+          items:
+            type: object
+            properties:
+              permissionId:
+                type: integer
+                description: 権限ID
+              permissionName:
+                type: string
+                description: 権限名
+              assignmentCount:
+                type: integer
+                description: 割り当て数
+    IPAllocationRequest:
+      type: object
+      required:
+        - deviceId
+        - network
+      properties:
+        deviceId:
+          type: string
+          description: デバイスID
+        network:
+          type: string
+          description: ネットワークアドレス
+        ipType:
+          type: string
+          description: IP種別
+          enum:
+            - ipv4
+            - ipv6
+          default: ipv4
+    DeviceIPUpdateDTO:
+      type: object
+      properties:
+        ipAddress:
+          type: string
+          description: IPアドレス
+        subnetMask:
+          type: string
+          description: サブネットマスク
+        gateway:
+          type: string
+          description: ゲートウェイアドレス
+        dns:
+          type: array
+          description: DNSサーバー一覧
+          items:
+            type: string
+        status:
+          type: string
+          description: IP状態
+          enum:
+            - active
+            - inactive
+        expirationDate:
+          type: string
+          format: date-time
+          description: 有効期限
+    IPPool:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: IPプールレコードID
+        ipAddress:
+          type: string
+          description: IPアドレス
+        network:
+          type: string
+          description: ネットワークアドレス
+        subnetMask:
+          type: string
+          description: サブネットマスク
+        ipType:
+          type: string
+          description: IP種別
+          enum:
+            - ipv4
+            - ipv6
+        status:
+          type: string
+          description: IP状態
+          enum:
+            - available
+            - allocated
+            - reserved
+        deviceId:
+          type: string
+          description: 所属デバイスID
+        allocationDate:
+          type: string
+          format: date-time
+          description: 割り当て日時
+    DeviceIPCreateDTO:
+      type: object
+      required:
+        - ipAddress
+        - subnetMask
+      properties:
+        ipAddress:
+          type: string
+          description: IPアドレス
+        subnetMask:
+          type: string
+          description: サブネットマスク
+        gateway:
+          type: string
+          description: ゲートウェイアドレス
+        dns:
+          type: array
+          description: DNSサーバー一覧
+          items:
+            type: string
+        ipType:
+          type: string
+          description: IP種別
+          enum:
+            - ipv4
+            - ipv6
+          default: ipv4
+        status:
+          type: string
+          description: IP状態
+          enum:
+            - active
+            - allocated
+          default: active
+    DeviceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: デバイスID
+        name:
+          type: string
+          description: デバイス名
+        deviceModel:
+          type: string
+          description: デバイス型番
+        serialNumber:
+          type: string
+          description: シリアル番号
+        status:
+          type: string
+          description: デバイス状態
+          enum:
+            - active
+            - inactive
+            - maintenance
+            - retired
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: デバイス設置機器室
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    DeviceCreateDTO:
+      type: object
+      required:
+        - name
+        - deviceModel
+        - serialNumber
+      properties:
+        name:
+          type: string
+          description: デバイス名
+        deviceModel:
+          type: string
+          description: デバイス型番
+        serialNumber:
+          type: string
+          description: シリアル番号
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: デバイス設置機器室
+        hardwareConfig:
+          $ref: '#/components/schemas/HardwareConfigDTO'
+          description: ハードウェア構成
+    DeviceUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: デバイス名
+        deviceModel:
+          type: string
+          description: デバイス型番
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: デバイス設置機器室
+        status:
+          type: string
+          description: デバイス状態
+          enum:
+            - active
+            - inactive
+            - maintenance
+            - retired
+        hardwareConfig:
+          $ref: '#/components/schemas/HardwareConfigDTO'
+          description: ハードウェア構成
+    DeviceDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: デバイスID
+        name:
+          type: string
+          description: デバイス名
+        deviceModel:
+          type: string
+          description: デバイス型番
+        serialNumber:
+          type: string
+          description: シリアル番号
+        status:
+          type: string
+          description: デバイス状態
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: デバイス設置機器室
+        hardwareConfig:
+          $ref: '#/components/schemas/HardwareConfig'
+          description: ハードウェア構成
+        ips:
+          type: array
+          description: IPアドレス一覧
+          items:
+            $ref: '#/components/schemas/DeviceIP'
+        monitors:
+          type: array
+          description: バインドされたモニター一覧
+          items:
+            $ref: '#/components/schemas/MonitorInfo'
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    HardwareConfigDTO:
+      type: object
+      properties:
+        cpu:
+          type: string
+          description: CPU情報
+        memory:
+          type: string
+          description: メモリ情報
+        storage:
+          type: string
+          description: ストレージ情報
+        networkCards:
+          type: array
+          description: ネットワークカード情報
+          items:
+            type: string
+    HardwareConfig:
+      type: object
+      properties:
+        cpu:
+          type: string
+          description: CPU情報
+        memory:
+          type: string
+          description: メモリ情報
+        storage:
+          type: string
+          description: ストレージ情報
+        networkCards:
+          type: array
+          description: ネットワークカード情報
+          items:
+            type: string
+        lastUpdated:
+          type: string
+          format: date-time
+          description: 最終更新日時
+    DeviceIP:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: IPレコードID
+        ipAddress:
+          type: string
+          description: IPアドレス
+        subnetMask:
+          type: string
+          description: サブネットマスク
+        gateway:
+          type: string
+          description: ゲートウェイアドレス
+        dns:
+          type: array
+          description: DNSサーバー一覧
+          items:
+            type: string
+        ipType:
+          type: string
+          description: IP種別
+          enum:
+            - ipv4
+            - ipv6
+        status:
+          type: string
+          description: IP状態
+          enum:
+            - active
+            - inactive
+            - allocated
+            - available
+        deviceId:
+          type: string
+          description: 所属デバイスID
+        allocationDate:
+          type: string
+          format: date-time
+          description: 割り当て日時
+        expirationDate:
+          type: string
+          format: date-time
+          description: 有効期限
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+    MonitorInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: モニターID
+        serialNumber:
+          type: string
+          description: シリアル番号
+        brand:
+          type: string
+          description: ブランド
+        model:
+          type: string
+          description: 型番
+        size:
+          type: string
+          description: サイズ
+        resolution:
+          type: string
+          description: 解像度
+        status:
+          type: string
+          description: 状態
+          enum:
+            - available
+            - in_use
+            - maintenance
+            - retired
+        deviceId:
+          type: string
+          description: バインドされたデバイスID
+        bindDate:
+          type: string
+          format: date-time
+          description: バインド日時
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    MonitorCreateDTO:
+      type: object
+      required:
+        - serialNumber
+        - brand
+        - model
+      properties:
+        serialNumber:
+          type: string
+          description: シリアル番号
+        brand:
+          type: string
+          description: ブランド
+        model:
+          type: string
+          description: 型番
+        size:
+          type: string
+          description: サイズ
+        resolution:
+          type: string
+          description: 解像度
+        status:
+          type: string
+          description: 状態
+          enum:
+            - available
+            - maintenance
+            - retired
+          default: available
+    MonitorUpdateDTO:
+      type: object
+      properties:
+        brand:
+          type: string
+          description: ブランド
+        model:
+          type: string
+          description: 型番
+        size:
+          type: string
+          description: サイズ
+        resolution:
+          type: string
+          description: 解像度
+        status:
+          type: string
+          description: 状態
+          enum:
+            - available
+            - in_use
+            - maintenance
+            - retired
+    MonitorDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: モニターID
+        serialNumber:
+          type: string
+          description: シリアル番号
+        brand:
+          type: string
+          description: ブランド
+        model:
+          type: string
+          description: 型番
+        size:
+          type: string
+          description: サイズ
+        resolution:
+          type: string
+          description: 解像度
+        status:
+          type: string
+          description: 状態
+        deviceId:
+          type: string
+          description: バインドされたデバイスID
+        bindDate:
+          type: string
+          format: date-time
+          description: バインド日時
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          description: バインドされたデバイス情報
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    MonitorBindRequest:
+      type: object
+      required:
+        - deviceId
+      properties:
+        deviceId:
+          type: string
+          description: デバイスID
+        bindDate:
+          type: string
+          format: date-time
+          description: バインド日時
+    ApiResponse1: *ref_0
+    PageResponse2:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse1'
+        - type: object
+          properties:
+            pageInfo:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  description: 現在のページ番号
+                  example: 1
+                size:
+                  type: integer
+                  description: ページサイズ
+                  example: 20
+                total:
+                  type: integer
+                  description: 総レコード数
+                  example: 100
+                pages:
+                  type: integer
+                  description: 総ページ数
+                  example: 5
+    ErrorResponse3:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: エラーコード
+          example: 401
+        message:
+          type: string
+          description: エラーメッセージ
+          example: 認証に失敗しました
+        error:
+          type: string
+          description: エラータイプ
+          example: UNAUTHORIZED
+        path:
+          type: string
+          description: リクエストパス
+          example: /api/v1/device-permissions
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+          example: '2025-12-30T01:23:45.678Z'
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: フィールド名
+              message:
+                type: string
+                description: フィールドエラーメッセージ
+    CreateDevicePermissionRequest:
+      type: object
+      required:
+        - permissionId
+        - jobNumber
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号（ユニーク）
+          example: PERM_DEV003
+        jobNumber:
+          type: string
+          description: 社員番号
+          example: EMP003
+        domainStatusId:
+          type: integer
+          description: ドメインステータスID
+          example: 7
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+          example: Domain Users
+        noDomainReason:
+          type: string
+          description: ドメイン未加入理由
+          example: テスト環境のため
+        smartitStatusId:
+          type: integer
+          description: SmartITステータスID
+          example: 9
+        noSmartitReason:
+          type: string
+          description: SmartIT未インストール理由
+          example: 特殊ソフトウェア環境のため
+        usbStatusId:
+          type: integer
+          description: USBステータスID
+          example: 11
+        usbReason:
+          type: string
+          description: USB使用許可理由
+          example: 開発ツール接続用
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+          example: '2026-12-31'
+        antivirusStatusId:
+          type: integer
+          description: ウイルス対策ステータスID
+          example: 13
+        noSymantecReason:
+          type: string
+          description: Symantec未導入理由
+          example: 代替セキュリティソフト使用
+        remark:
+          type: string
+          description: 備考
+          example: 特別許可あり
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    UpdateDevicePermissionRequest:
+      type: object
+      properties:
+        domainStatusId:
+          type: integer
+          description: ドメインステータスID
+          example: 8
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+          example: Domain Users
+        noDomainReason:
+          type: string
+          description: ドメイン未加入理由
+        smartitStatusId:
+          type: integer
+          description: SmartITステータスID
+          example: 10
+        noSmartitReason:
+          type: string
+          description: SmartIT未インストール理由
+        usbStatusId:
+          type: integer
+          description: USBステータスID
+          example: 12
+        usbReason:
+          type: string
+          description: USB使用許可理由
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirusStatusId:
+          type: integer
+          description: ウイルス対策ステータスID
+          example: 14
+        noSymantecReason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    DevicePermissionResponse:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号
+          example: PERM_DEV001
+        jobNumber:
+          type: string
+          description: 社員番号
+          example: EMP001
+        userName:
+          type: string
+          description: ユーザー名
+          example: 张三
+        domainStatus:
+          type: string
+          description: ドメインステータス
+          example: 加入済
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+          example: Domain Users
+        smartitStatus:
+          type: string
+          description: SmartITステータス
+          example: インストール済
+        usbStatus:
+          type: string
+          description: USBステータス
+          example: 有効化済
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+          example: '2026-12-31'
+        antivirusStatus:
+          type: string
+          description: ウイルス対策ステータス
+          example: インストール済
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          description: 論理削除フラグ
+          example: 0
+    DevicePermissionDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/DevicePermissionResponse'
+        - type: object
+          properties:
+            noDomainReason:
+              type: string
+              description: ドメイン未加入理由
+            noSmartitReason:
+              type: string
+              description: SmartIT未インストール理由
+            usbReason:
+              type: string
+              description: USB使用許可理由
+            noSymantecReason:
+              type: string
+              description: Symantec未導入理由
+            remark:
+              type: string
+              description: 備考
+            associatedDevices:
+              type: array
+              description: 関連付けられたデバイス
+              items:
+                $ref: '#/components/schemas/DeviceInfoResponse'
+    CreatePermissionIpRequest:
+      type: object
+      required:
+        - ipId
+        - deviceId
+        - ipAddress
+      properties:
+        ipId:
+          type: string
+          description: IP番号（ユニーク）
+          example: PIP003
+        deviceId:
+          type: string
+          description: 設備番号
+          example: DEV003
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.1.103
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    UpdatePermissionIpRequest:
+      type: object
+      properties:
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.1.104
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    PermissionIpResponse:
+      type: object
+      properties:
+        ipId:
+          type: string
+          description: IP番号
+          example: PIP001
+        deviceId:
+          type: string
+          description: 設備番号
+          example: DEV001
+        deviceModel:
+          type: string
+          description: ホスト機種
+          example: Dell XPS
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: PC-DELL-001
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.1.101
+        createTime:
+          type: string
+          format: date-time
+          description: 作成時間
+          example: '2025-12-30T00:01:57.379709'
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          description: 論理削除フラグ
+          example: 0
+    CreatePermissionDeviceInfoRequest:
+      type: object
+      required:
+        - permissionId
+        - deviceId
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号
+          example: PERM_DEV001
+        deviceId:
+          type: string
+          description: 設備番号
+          example: DEV001
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    UpdatePermissionDeviceInfoRequest:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号
+          example: PERM_DEV002
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+    PermissionDeviceInfoResponse:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号
+          example: PERM_DEV001
+        deviceId:
+          type: string
+          description: 設備番号
+          example: DEV001
+        deviceModel:
+          type: string
+          description: ホスト機種
+          example: Dell XPS
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: PC-DELL-001
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新時間
+          example: '2025-12-30T00:01:57.379709'
+        updater:
+          type: string
+          description: 更新者
+        isDeleted:
+          type: integer
+          description: 論理削除フラグ
+          example: 0
+    DeviceInfoResponse:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          description: 設備番号
+          example: DEV001
+        deviceModel:
+          type: string
+          description: ホスト機種
+          example: Dell XPS
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: PC-DELL-001
+        loginUsername:
+          type: string
+          description: ログインユーザ名
+          example: zhangsan
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: Project A
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: Room101
+        jobNumber:
+          type: string
+          description: 社員番号
+          example: EMP001
+        userName:
+          type: string
+          description: ユーザー名
+          example: 张三
+    PermissionStatisticsResponse4:
+      type: object
+      properties:
+        totalPermissions:
+          type: integer
+          description: 総権限数
+          example: 150
+        domainJoinedCount:
+          type: integer
+          description: ドメイン加入済み数
+          example: 120
+        domainJoinedRate:
+          type: number
+          format: float
+          description: ドメイン加入率
+          example: 80
+        smartitInstalledCount:
+          type: integer
+          description: SmartITインストール済み数
+          example: 140
+        smartitInstalledRate:
+          type: number
+          format: float
+          description: SmartITインストール率
+          example: 93.3
+        usbEnabledCount:
+          type: integer
+          description: USB有効化済み数
+          example: 50
+        usbEnabledRate:
+          type: number
+          format: float
+          description: USB有効化率
+          example: 33.3
+        antivirusInstalledCount:
+          type: integer
+          description: ウイルス対策インストール済み数
+          example: 145
+        antivirusInstalledRate:
+          type: number
+          format: float
+          description: ウイルス対策インストール率
+          example: 96.7
+        usbExpiredCount:
+          type: integer
+          description: USB有効期限切れ数
+          example: 5
+        usbExpiringSoonCount:
+          type: integer
+          description: USB有効期限切れ間近数（30日以内）
+          example: 10
+        byDepartment:
+          type: array
+          description: 部署別統計
+          items:
+            type: object
+            properties:
+              deptId:
+                type: string
+                description: 部署番号
+              deptName:
+                type: string
+                description: 部署名
+              permissionCount:
+                type: integer
+                description: 権限数
+              domainJoinedRate:
+                type: number
+                format: float
+                description: ドメイン加入率
+    DictType:
+      type: object
+      properties:
+        dict_type_id:
+          type: integer
+          format: int64
+          description: ディクショナリタイプID
+          example: 1
+        dict_type_code:
+          type: string
+          description: ディクショナリタイプコード
+          example: USER_TYPE
+        dict_type_name:
+          type: string
+          description: ディクショナリタイプ名
+          example: ユーザータイプ
+        description:
+          type: string
+          description: ディクショナリタイプの説明
+        is_enabled:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 1
+          description: 有効フラグ（0=無効，1=有効）
+        create_time:
+          type: string
+          format: date-time
+          readOnly: true
+        update_time:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+    DictItem:
+      type: object
+      properties:
+        dict_item_id:
+          type: integer
+          format: int64
+          description: ディクショナリ項目ID
+          example: 1
+        dict_type_id:
+          type: integer
+          format: int64
+          description: ディクショナリタイプID
+          example: 1
+        dict_item_code:
+          type: string
+          description: ディクショナリ項目コード
+          example: ADMIN
+        dict_item_name:
+          type: string
+          description: ディクショナリ項目名
+          example: 管理者
+        sort:
+          type: integer
+          description: ソート番号
+          example: 1
+        is_enabled:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 1
+          description: 有効フラグ（0=無効，1=有効）
+        create_time:
+          type: string
+          format: date-time
+          readOnly: true
+        update_time:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+    MonthlyCheckReport:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: レポート番号
+          example: report01
+        update_date:
+          type: string
+          format: date
+          description: 更新日期
+          example: '2025-12-30'
+        security_promoter:
+          type: string
+          description: 情報セキュリティ推進者
+          example: 张三
+        security_responsible:
+          type: string
+          description: 情報セキュリティ責任者
+          example: 李四
+        quality_dept:
+          type: string
+          description: 管理部
+          example: 管理部
+        check_remark:
+          type: string
+          description: 点検備考
+        check_description:
+          type: string
+          description: 点検説明
+        work_area:
+          type: string
+          description: 作業区域
+          example: DA04
+        dept_id:
+          type: string
+          description: 部署番号
+          example: DEPT001
+        create_time:
+          type: string
+          format: date-time
+          readOnly: true
+        update_time:
+          type: string
+          format: date-time
+          readOnly: true
+        updater:
+          type: string
+        is_deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+    SamplingCheck:
+      type: object
+      properties:
+        sampling_id:
+          type: string
+          description: 抜取り点検番号
+          example: '001'
+        job_number:
+          type: string
+          description: 社員番号
+          example: JS0001
+        device_id:
+          type: string
+          description: 機器番号
+          example: HYRON-000001 PC-DC-001
+        screen_saver_pwd_id:
+          type: integer
+          description: スクリーンセーバーパスワードステータスID
+        installed_software:
+          type: string
+          description: インストール済ソフトウェア
+        disposal_measures:
+          type: string
+          description: 処置措置
+        usb_interface_id:
+          type: integer
+          description: USBインターフェースステータスID
+        security_patch_id:
+          type: integer
+          description: セキュリティパッチステータスID
+        antivirus_protection_id:
+          type: integer
+          description: ウイルス防御ステータスID
+        boot_authentication_id:
+          type: integer
+          description: 起動認証ステータスID
+        name:
+          type: string
+          description: 姓名
+        create_time:
+          type: string
+          format: date-time
+          readOnly: true
+        update_time:
+          type: string
+          format: date-time
+          readOnly: true
+        updater:
+          type: string
+        is_deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+    NonSamplingCheck:
+      type: object
+      properties:
+        non_sampling_id:
+          type: string
+          description: 非抜取り点検番号
+          example: N001
+        report_id:
+          type: string
+          descriptiFon: レポート番号
+          example: report001
+        private_mobile_dev_id:
+          type: integer
+          description: 個人モバイル機器ステータスID
+        unrecorded_wifi_id:
+          type: integer
+          description: 未登録WiFiステータスID
+        floor_access_closed_id:
+          type: integer
+          description: フロア入退管理ステータスID
+        public_mobile_dev_out_id:
+          type: integer
+          description: 共有モバイル機器持出しステータスID
+        ic_card_worn_id:
+          type: integer
+          description: ICカード着用ステータスID
+        copier_no_doc_id:
+          type: integer
+          description: コピー機文書遺留ステータスID
+        printer_no_doc_id:
+          type: integer
+          description: プリンタ文書遺留ステータスID
+        no_idle_device_id:
+          type: integer
+          description: 未使用機器ステータスID
+        desk_no_doc_id:
+          type: integer
+          description: 机上文書遺留ステータスID
+        disposal_measures:
+          type: string
+          description: 処置措置
+        create_time:
+          type: string
+          format: date-time
+          readOnly: true
+        update_time:
+          type: string
+          format: date-time
+          readOnly: true
+        updater:
+          type: string
+        is_deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 0
+  responses:
+    Unauthorized:
+      description: 認証トークンが無効または期限切れです
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse3'
+    Forbidden:
+      description: 操作に必要な権限がありません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse3'
+    NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse3'
+    BadRequest:
+      description: リクエストパラメータが不正です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse3'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT認証トークン
+servers:
+  - url: http://localhost:8080/api
+    description: 開発環境
+security:
+  - bearerAuth: []
