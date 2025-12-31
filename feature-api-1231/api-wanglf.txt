@@ -1,0 +1,43 @@
+用户接口 
+用户登录 POST /user/login 
+用户登出POST /user/logout 
+用户管理 用户查询GET /user 
+用户密码重置POST /user/{jobNumber}/password-reset 
+用户新增PUT /user 
+用户信息修改（角色，用户名）PATCH /user/{jobNumber} 
+用户删除DELETE /user/{jobNumber} 
+===============================
+设备管理接口 
+获取设备导入 excel 模板 (表格) GET /device/import-template 
+设备导入 (表格)POST /device/import 
+设备导出 (表格)POST /device/export
+===============================
+设备管理 
+设备查询 GET /device
+	request:
+	  pageSize:30,
+	  pageNum:1,
+	  data:{userInfo:{}deviceInfo:{}} 
+设备修改 PATCH /device/{deviceId} 
+设备删除 DELETE /device/{deviceId} 
+设备增加 POST /device 
+===============================
+抽查接口
+设备抽查（添加记录）
+POST /inspection
+	request:
+	  data:{
+	    list:[{userInfo:{'jobNumber':'123'},
+		deviceInfo: {'deviceId':1,'startUpAuth':true,'passwordScreenSaver':ture...}}
+		,...]
+	           } 
+抽查信息查询GET /inspection 
+抽查信息导出POST /inspection/export
+=============================== 
+权限接口 
+设备权限信息查询 GET /device-permission
+设备权限信息修改 PATCH /device-permission/{deviceId} 
+设备权限清单导出 POST /device-permission/export
+================================
+共通
+获取字典 GET /common/dict
