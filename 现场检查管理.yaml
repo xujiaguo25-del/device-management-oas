@@ -30,6 +30,13 @@ paths:
       summary: 抜取検査記録リスト取得
       description: 抜取検査記録リストを取得、ページングとフィルタリング対応
       parameters:
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
+          required: true
+          schema:
+            type: string
+            format: date
         - name: page
           in: query
           description: ページ番号
@@ -47,18 +54,7 @@ paths:
             default: 20
             maximum: 100
             minimum: 1
-        - name: employeeId
-          in: query
-          description: 社員番号
-          required: false
-          schema:
-            type: string
-        - name: employeeName
-          in: query
-          description: 社員名
-          required: false
-          schema:
-            type: string
+        
       responses:
         "200":
           description: 抜取検査記録リスト取得成功
@@ -97,10 +93,23 @@ paths:
       summary: 単一抜取検査記録取得
       description: IDによる単一抜取検査記録取得
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       responses:
@@ -119,10 +128,23 @@ paths:
       summary: 抜取検査記録更新
       description: 指定された抜取検査記録を更新
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       requestBody:
@@ -147,10 +169,23 @@ paths:
       summary: 抜取検査記録削除
       description: 指定された抜取検査記録を削除
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       responses:
@@ -167,6 +202,13 @@ paths:
       summary: 非抜取検査記録リスト取得
       description: 非抜取検査記録リストを取得、ページング対応
       parameters:
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
+          required: true
+          schema:
+            type: string
+            format: date
         - name: page
           in: query
           description: ページ番号
@@ -218,10 +260,23 @@ paths:
       summary: 単一非抜取検査記録取得
       description: IDによる単一非抜取検査記録取得
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       responses:
@@ -240,10 +295,23 @@ paths:
       summary: 非抜取検査記録更新
       description: 指定された非抜取検査記録を更新
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       requestBody:
@@ -266,10 +334,23 @@ paths:
       summary: 非抜取検査記録削除
       description: 指定された非抜取検査記録を削除
       parameters:
-        - name: checkId
-          in: path
+        - name: checkDate
+          in: query
+          description: 検査日フィルター
           required: true
-          description: 検査記録ID
+          schema:
+            type: string
+            format: date
+        - name: deviceCode
+          in: query
+          description: 機器番号
+          required: false
+          schema:
+            type: string
+        - name: deviceDisplay
+          in: query
+          description: モニター番号
+          required: false
           schema:
             type: string
       responses:
@@ -593,6 +674,10 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
 
     # 非抜取検査記録
     NonSamplingCheck:
@@ -652,6 +737,10 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
 
     # 非抜取検査リストレスポンス
     NonSamplingCheckListResponse:
@@ -717,6 +806,10 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
 
     # 非抜取検査更新リクエスト
     UpdateNonSamplingCheckRequest:
@@ -761,6 +854,10 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
 
     # レポートレスポンス
     ReportResponse:
