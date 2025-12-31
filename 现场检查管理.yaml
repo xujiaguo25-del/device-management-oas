@@ -1,0 +1,699 @@
+openapi: 3.0.0
+info:
+  title: 作業現場検査管理API
+  description: 作業現場検査記録のCRUD機能を提供
+  version: 1.0.0
+  contact:
+    name: ハイロンソフトウェア
+    email: support@hyron.com
+
+servers:
+  - url: https://api.hyron.com/v1
+    description: 本番環境
+  - url: https://api-dev.hyron.com/v1
+    description: 開発環境
+
+tags:
+  - name: 抜取検査
+    description: PC、ノートパソコン及びサーバーの検査記録管理
+  - name: 非抜取検査
+    description: モバイル機器、オフィス環境の検査記録管理
+
+paths:
+  # 抜取検査記録管理
+  /sampling-checks:
+    get:
+      tags:
+        - 抜取検査
+      summary: 抜取検査記録リスト取得
+      description: 抜取検査記録リストを取得、ページングとフィルタリング対応
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: ページあたりの記録数
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+            minimum: 1
+        - name: employeeId
+          in: query
+          description: 社員番号
+          required: false
+          schema:
+            type: string
+        - name: employeeName
+          in: query
+          description: 社員名
+          required: false
+          schema:
+            type: string
+        - name: department
+          in: query
+          description: 部門
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 抜取検査記録リスト取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamplingCheckListResponse"
+        "400":
+          description: リクエストパラメータエラー
+    
+    post:
+      tags:
+        - 抜取検査
+      summary: 抜取検査記録作成
+      description: 新しい抜取検査記録を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSamplingCheckRequest"
+      responses:
+        "201":
+          description: 抜取検査記録作成成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamplingCheckResponse"
+        "400":
+          description: リクエストパラメータエラー
+
+  /sampling-checks/{checkId}:
+    get:
+      tags:
+        - 抜取検査
+      summary: 単一抜取検査記録取得
+      description: IDによる単一抜取検査記録取得
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 抜取検査記録取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamplingCheckResponse"
+        "404":
+          description: 記録が存在しません
+    
+    put:
+      tags:
+        - 抜取検査
+      summary: 抜取検査記録更新
+      description: 指定された抜取検査記録を更新
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSamplingCheckRequest"
+      responses:
+        "200":
+          description: 抜取検査記録更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamplingCheckResponse"
+        "404":
+          description: 記録が存在しません
+    
+    delete:
+      tags:
+        - 抜取検査
+      summary: 抜取検査記録削除
+      description: 指定された抜取検査記録を削除
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 記録が存在しません
+
+  # 非抜取検査記録管理
+  /non-sampling-checks:
+    get:
+      tags:
+        - 非抜取検査
+      summary: 非抜取検査記録リスト取得
+      description: 非抜取検査記録リストを取得、ページング対応
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: ページあたりの記録数
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+            minimum: 1
+      responses:
+        "200":
+          description: 非抜取検査記録リスト取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingCheckListResponse"
+    
+    post:
+      tags:
+        - 非抜取検査
+      summary: 非抜取検査記録作成
+      description: 新しい非抜取検査記録を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNonSamplingCheckRequest"
+      responses:
+        "201":
+          description: 非抜取検査記録作成成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingCheckResponse"
+
+  /non-sampling-checks/{checkId}:
+    get:
+      tags:
+        - 非抜取検査
+      summary: 単一非抜取検査記録取得
+      description: IDによる単一非抜取検査記録取得
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 非抜取検査記録取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingCheckResponse"
+        "404":
+          description: 記録が存在しません
+    
+    put:
+      tags:
+        - 非抜取検査
+      summary: 非抜取検査記録更新
+      description: 指定された非抜取検査記録を更新
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNonSamplingCheckRequest"
+      responses:
+        "200":
+          description: 非抜取検査記録更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonSamplingCheckResponse"
+    
+    delete:
+      tags:
+        - 非抜取検査
+      summary: 非抜取検査記録削除
+      description: 指定された非抜取検査記録を削除
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          description: 検査記録ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 削除成功
+        "404":
+          description: 記録が存在しません
+
+components:
+  schemas:
+    # 基本レスポンス構造
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: 現在のページ番号
+        limit:
+          type: integer
+          description: ページあたりの記録数
+        total:
+          type: integer
+          description: 総記録数
+        totalPages:
+          type: integer
+          description: 総ページ数
+
+    # 抜取検査記録
+    SamplingCheck:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 記録ID
+          example: "1"
+        serialNumber:
+          type: integer
+          description: 番号
+          example: 1
+        employeeId:
+          type: string
+          description: 社員番号
+          example: "JS0020"
+        employeeName:
+          type: string
+          description: 氏名
+          example: "劉文豊"
+        deviceCode:
+          type: string
+          description: 機器番号
+          example: "hyron-220914 pc-dc-049"
+        deviceDisplay:
+          type: string
+          description: モニター番号
+          example: "hyron-220914 pc-dc-049(モニター)"
+        powerAuthentication:
+          type: string
+          description: 起動認証状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        passwordScreenSaver:
+          type: string
+          description: パスワードスクリーンセーバー状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        installedSoftware:
+          type: string
+          description: インストールソフトウェア状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        securityPatch:
+          type: string
+          description: セキュリティパッチ状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        virusProtection:
+          type: string
+          description: ウイルス対策状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        usbSeal:
+          type: string
+          description: USBインターフェース封印状態
+          enum: ["〇", "×", ""]
+          example: "〇"
+        disposalMeasures:
+          type: string
+          description: 処置措置
+        department:
+          type: string
+          description: 部門
+          example: "DA04"
+        workArea:
+          type: string
+          description: 作業区域(階数)
+          example: "2F，5F"
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
+
+    # 抜取検査リストレスポンス
+    SamplingCheckListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SamplingCheck"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # 単一抜取検査レスポンス
+    SamplingCheckResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/SamplingCheck"
+
+    # 抜取検査作成リクエスト
+    CreateSamplingCheckRequest:
+      type: object
+      required:
+        - employeeId
+        - employeeName
+        - deviceCode
+      properties:
+        employeeId:
+          type: string
+          description: 社員番号
+        employeeName:
+          type: string
+          description: 氏名
+        deviceCode:
+          type: string
+          description: 機器番号
+        deviceDisplay:
+          type: string
+          description: モニター番号
+        powerAuthentication:
+          type: string
+          description: 起動認証状態
+          enum: ["〇", "×", ""]
+        passwordScreenSaver:
+          type: string
+          description: パスワードスクリーンセーバー状態
+          enum: ["〇", "×", ""]
+        installedSoftware:
+          type: string
+          description: インストールソフトウェア状態
+          enum: ["〇", "×", ""]
+        securityPatch:
+          type: string
+          description: セキュリティパッチ状態
+          enum: ["〇", "×", ""]
+        virusProtection:
+          type: string
+          description: ウイルス対策状態
+          enum: ["〇", "×", ""]
+        usbSeal:
+          type: string
+          description: USBインターフェース封印状態
+          enum: ["〇", "×", ""]
+        disposalMeasures:
+          type: string
+          description: 処置措置
+        department:
+          type: string
+          description: 部門
+        workArea:
+          type: string
+          description: 作業区域(階数)
+        checkDate:
+          type: string
+          format: date
+          description: 検査日
+
+    # 抜取検査更新リクエスト
+    UpdateSamplingCheckRequest:
+      type: object
+      properties:
+        powerAuthentication:
+          type: string
+          description: 起動認証状態
+          enum: ["〇", "×", ""]
+        passwordScreenSaver:
+          type: string
+          description: パスワードスクリーンセーバー状態
+          enum: ["〇", "×", ""]
+        installedSoftware:
+          type: string
+          description: インストールソフトウェア状態
+          enum: ["〇", "×", ""]
+        securityPatch:
+          type: string
+          description: セキュリティパッチ状態
+          enum: ["〇", "×", ""]
+        virusProtection:
+          type: string
+          description: ウイルス対策状態
+          enum: ["〇", "×", ""]
+        usbSeal:
+          type: string
+          description: USBインターフェース封印状態
+          enum: ["〇", "×", ""]
+        disposalMeasures:
+          type: string
+          description: 処置措置
+
+    # 非抜取検査記録
+    NonSamplingCheck:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 記録ID
+        serialNumber:
+          type: integer
+          description: 番号
+        privateDeviceBringIn:
+          type: string
+          description: 私物私的持ち込み
+          enum: ["有", "無", ""]
+          example: "無"
+        publicDeviceTakeOut:
+          type: string
+          description: 公用私的持ち出し
+          enum: ["有", "無", ""]
+          example: "無"
+        floorAccessControl:
+          type: string
+          description: 階層入退管理閉鎖
+          enum: ["〇", "×", ""]
+          example: "〇"
+        wearIcCard:
+          type: string
+          description: ICカード携帯
+          enum: ["〇", "×", ""]
+          example: "〇"
+        printerNoDocument:
+          type: string
+          description: プリンタードキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+          example: "-"
+        copierNoDocument:
+          type: string
+          description: コピー機ドキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+          example: "-"
+        deskNoDocument:
+          type: string
+          description: デスクドキュメント残留なし
+          enum: ["〇", "×", ""]
+          example: "〇"
+        noIdleEquipment:
+          type: string
+          description: 遊休機器なし
+          enum: ["〇", "×", ""]
+          example: "〇"
+        unregisteredNetwork:
+          type: string
+          description: 未登録無線ネットワーク存在
+          enum: ["有", "無", ""]
+          example: "無"
+        disposalMeasures:
+          type: string
+          description: 処置措置
+
+    # 非抜取検査リストレスポンス
+    NonSamplingCheckListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/NonSamplingCheck"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # 単一非抜取検査レスポンス
+    NonSamplingCheckResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/NonSamplingCheck"
+
+    # 非抜取検査作成リクエスト
+    CreateNonSamplingCheckRequest:
+      type: object
+      required:
+        - floorAccessControl
+        - wearIcCard
+      properties:
+        privateDeviceBringIn:
+          type: string
+          description: 私物私的持ち込み
+          enum: ["有", "無", ""]
+        publicDeviceTakeOut:
+          type: string
+          description: 公用私的持ち出し
+          enum: ["有", "無", ""]
+        floorAccessControl:
+          type: string
+          description: 階層入退管理閉鎖
+          enum: ["〇", "×", ""]
+        wearIcCard:
+          type: string
+          description: ICカード携帯
+          enum: ["〇", "×", ""]
+        printerNoDocument:
+          type: string
+          description: プリンタードキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+        copierNoDocument:
+          type: string
+          description: コピー機ドキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+        deskNoDocument:
+          type: string
+          description: デスクドキュメント残留なし
+          enum: ["〇", "×", ""]
+        noIdleEquipment:
+          type: string
+          description: 遊休機器なし
+          enum: ["〇", "×", ""]
+        unregisteredNetwork:
+          type: string
+          description: 未登録無線ネットワーク存在
+          enum: ["有", "無", ""]
+        disposalMeasures:
+          type: string
+          description: 処置措置
+
+    # 非抜取検査更新リクエスト
+    UpdateNonSamplingCheckRequest:
+      type: object
+      properties:
+        privateDeviceBringIn:
+          type: string
+          description: 私物私的持ち込み
+          enum: ["有", "無", ""]
+        publicDeviceTakeOut:
+          type: string
+          description: 公用私的持ち出し
+          enum: ["有", "無", ""]
+        floorAccessControl:
+          type: string
+          description: 階層入退管理閉鎖
+          enum: ["〇", "×", ""]
+        wearIcCard:
+          type: string
+          description: ICカード携帯
+          enum: ["〇", "×", ""]
+        printerNoDocument:
+          type: string
+          description: プリンタードキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+        copierNoDocument:
+          type: string
+          description: コピー機ドキュメント残留なし
+          enum: ["〇", "×", "-", ""]
+        deskNoDocument:
+          type: string
+          description: デスクドキュメント残留なし
+          enum: ["〇", "×", ""]
+        noIdleEquipment:
+          type: string
+          description: 遊休機器なし
+          enum: ["〇", "×", ""]
+        unregisteredNetwork:
+          type: string
+          description: 未登録無線ネットワーク存在
+          enum: ["有", "無", ""]
+        disposalMeasures:
+          type: string
+          description: 処置措置
+
+  # 共通パラメータ
+  parameters:
+    PageQueryParam:
+      name: page
+      in: query
+      description: ページ番号
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+
+    LimitQueryParam:
+      name: limit
+      in: query
+      description: ページあたりの記録数
+      required: false
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+        minimum: 1
+
+  # 共通レスポンス
+  responses:
+    NotFoundResponse:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "リソースが見つかりません"
+
+    BadRequestResponse:
+      description: リクエストパラメータエラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "リクエストパラメータエラー"
