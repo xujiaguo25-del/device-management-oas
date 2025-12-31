@@ -116,27 +116,6 @@
              ]
          }
      ```
-     
-     
-   
-   - <b>设备抽查（添加记录）</b>
-     
-     ```url
-     POST /inspection
-     
-     request:
-         data:{
-            list:[
-             userInfo:{'jobNumber':'123'}
-             deviceInfo: {
-                 'deviceId':1,
-                 'startUpAuth':true,
-                 'passwordScreenSaver':ture
-                 ...
-                 },
-             ]
-         }
-     ```
    
    - 抽查信息查询
      
