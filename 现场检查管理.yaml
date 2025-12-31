@@ -18,6 +18,8 @@ tags:
     description: PC、ノートパソコン及びサーバーの検査記録管理
   - name: 非抜取検査
     description: モバイル機器、オフィス環境の検査記録管理
+  - name: ファイル出力
+    description: 検査記録のファイル出力機能  
 
 paths:
   # 抜取検査記録管理
@@ -54,12 +56,6 @@ paths:
         - name: employeeName
           in: query
           description: 社員名
-          required: false
-          schema:
-            type: string
-        - name: department
-          in: query
-          description: 部門
           required: false
           schema:
             type: string
@@ -281,6 +277,135 @@ paths:
           description: 削除成功
         "404":
           description: 記録が存在しません
+    # ファイル出力機能
+  /sampling-checks/export:
+    get:
+      tags:
+        - ファイル出力
+        - 抜取検査
+      summary: 抜取検査記録エクスポート
+      description: 抜取検査記録をCSV/Excelファイルとしてエクスポート
+      parameters:
+        - name: employeeId
+          in: query
+          description: 社員番号
+          required: false
+          schema:
+            type: string
+        - name: employeeName
+          in: query
+          description: 社員名
+          required: false
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: 出力フォーマット
+          required: false
+          schema:
+            type: string
+            enum: [csv, excel]
+            default: csv
+      responses:
+        "200":
+          description: ファイル出力成功
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: ファイルダウンロード用ヘッダー
+
+  /non-sampling-checks/export:
+    get:
+      tags:
+        - ファイル出力
+        - 非抜取検査
+      summary: 非抜取検査記録エクスポート
+      description: 非抜取検査記録をCSV/Excelファイルとしてエクスポート
+      parameters:
+        - name: format
+          in: query
+          description: 出力フォーマット
+          required: false
+          schema:
+            type: string
+            enum: [csv, excel]
+            default: csv
+      responses:
+        "200":
+          description: ファイル出力成功
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: ファイルダウンロード用ヘッダー
+
+  /reports/:
+    get:
+      tags:
+        - ファイル出力
+      summary: 月次検査サマリーレポート出力
+      description: 指定した年月の検査サマリーレポートを出力
+      parameters:
+        - name: year
+          in: query
+          description: 年（YYYY形式）
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}$'
+            example: "2024"
+        - name: month
+          in: query
+          description: 月（MM形式、1-12）
+          required: true
+          schema:
+            type: string
+            pattern: '^(0[1-9]|1[0-2])$'
+            example: "01"
+        - name: format
+          in: query
+          description: 出力フォーマット
+          required: false
+          schema:
+            type: string
+            enum: [pdf, excel]
+            default: pdf
+      responses:
+        "200":
+          description: 月次レポート出力成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: ファイルダウンロード用ヘッダー
 
 components:
   schemas:
@@ -362,14 +487,6 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
-        department:
-          type: string
-          description: 部門
-          example: "DA04"
-        workArea:
-          type: string
-          description: 作業区域(階数)
-          example: "2F，5F"
         checkDate:
           type: string
           format: date
@@ -440,12 +557,6 @@ components:
         disposalMeasures:
           type: string
           description: 処置措置
-        department:
-          type: string
-          description: 部門
-        workArea:
-          type: string
-          description: 作業区域(階数)
         checkDate:
           type: string
           format: date
@@ -651,6 +762,27 @@ components:
           type: string
           description: 処置措置
 
+    # レポートレスポンス
+    ReportResponse:
+      type: object
+      properties:
+        reportId:
+          type: string
+          description: レポートID
+        fileName:
+          type: string
+          description: ファイル名
+        fileSize:
+          type: integer
+          description: ファイルサイズ（バイト）
+        downloadUrl:
+          type: string
+          description: ダウンロードURL
+        generatedAt:
+          type: string
+          format: date-time
+          description: 生成日時
+
   # 共通パラメータ
   parameters:
     PageQueryParam:
@@ -673,6 +805,16 @@ components:
         default: 20
         maximum: 100
         minimum: 1
+
+    ExportFormatParam:
+      name: format
+      in: query
+      description: 出力フォーマット
+      required: false
+      schema:
+        type: string
+        enum: [csv, excel, pdf]
+        default: csv
 
   # 共通レスポンス
   responses:
@@ -697,3 +839,24 @@ components:
               error:
                 type: string
                 example: "リクエストパラメータエラー"
+    
+    FileExportSuccessResponse:
+      description: ファイル出力成功
+      content:
+        text/csv:
+          schema:
+            type: string
+            format: binary
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+          schema:
+            type: string
+            format: binary
+        application/pdf:
+          schema:
+            type: string
+            format: binary
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          description: ファイルダウンロード用ヘッダー
