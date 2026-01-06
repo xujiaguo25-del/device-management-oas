@@ -1,0 +1,250 @@
+openapi: 3.0.0
+info:
+  title: DA04部门设备管理系统 API
+  description:  DA04部门设备管理系统的OpenAPI规范，用于设备清单管理、权限管理和日常评审检查
+  version: 1.0.0
+  contact:
+    name: API 支持
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com/v1
+    description: 生产服务器
+  - url: https://staging-api.example.com/v1
+    description: 测试服务器
+
+tags:
+  - name: 设备
+    description: 设备信息管理
+
+paths:
+  # 设备管理端点
+
+  /devices/{id}:
+    delete:
+      tags:
+        - 设备管理
+      summary: 删除设备
+      description: 根据设备ID删除指定的设备记录
+      operationId: deleteDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "DEV001"
+      responses:
+        "200":
+          description: 设备删除成功,无返回内容
+        "404":
+          description: 设备不存在
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "设备不存在"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "服务器内部错误"
+
+  /devices/export:
+    get:
+      tags:
+        - 设备管理
+      summary: 导出设备信息
+      description: 导出所有设备信息为Excel文件
+      operationId: exportDevices
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            description: 过滤条件：用户工号
+            example: "USR001"
+      responses:
+        "200":
+          description: 成功导出设备清单
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "服务器内部错误"
+components:
+  schemas:
+   # 機器エンティティ
+    Device:
+      type: object
+      description: 機器オブジェクト
+      properties:
+        deviceId:
+          type: string
+          description: 機器番号（プライマリキー）
+          example: HYRON-221129 PC-DC-089
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5000
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: DA04-LINF-PC
+        LoginUserName:
+          type: string
+          description: ログインユーザ名
+          example: linf-nrtu
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        jobNumber:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        selfConfirmId:
+          type: integer
+          description: 本人確認ID（辞書項目：CONFIRM_STATUS 関連、外部キー）
+          example: 1
+        osId:
+          type: integer
+          description: OSID（辞書項目：OS_TYPE 関連、外部キー）
+          example: 3
+        memoryId:
+          type: integer
+          description: メモリID（辞書項目：MEMORY_SIZE 関連、外部キー）
+          example: 1
+        ssdId:
+          type: integer
+          description: SSDID（辞書項目：SSD_SIZE 関連、外部キー）
+          example: 1
+        hddId:
+          type: integer
+          description: HDDID（辞書項目：HDD_SIZE 関連、外部キー）
+          example: 2
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: 2026-01-02T09:00:00+08:00
+        creater:
+          type: string
+          description: 作成者
+          example: JS0014
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: 2026-01-02T10:00:00+08:00
+        updater:
+          type: string
+          description: 更新者
+          example: JS0014
+
+  # 機器IP情報エンティティ
+    deviceIp:
+      type: object
+      description: 機器のIP情報
+      properties:
+        ipId:
+          type: integer
+          description: IP番号（プライマリキー）
+          example: 1
+        deviceId:
+          type: string
+          description: 機器番号（外部キー）
+          example: HYRON-221129 PC-DC-089
+        ipAddress:
+          type: string
+          description: IPアドレス（ユニーク）
+          example: 173.28.100.112
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: 2026-01-02T09:00:00+08:00
+        creater:
+          type: string
+          description: 作成者
+          example: JS0014
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: 2026-01-02T10:00:00+08:00
+        updater:
+          type: string
+          description: 更新者
+          example: JS0014
+
+  # 機器モニター情報エンティティ
+    monitorInfo:
+      type: object
+      description: モニター情報
+      properties:
+        monitorId:
+          type: integer
+          description: モニター番号（プライマリキー）
+          example: 1
+        deviceId:
+          type: string
+          description: 機器番号（外部キー）
+          example: HYRON-221129 PC-DC-089
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-241118 Minitor-131
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: 2026-01-02T09:00:00+08:00
+        creater:
+          type: string
+          description: 作成者
+          example: JS0014
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: 2026-01-02T10:00:00+08:00
+        updater:
+          type: string
+          description: 更新者
+          example: JS0014
+          
