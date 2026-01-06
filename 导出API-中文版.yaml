@@ -1,0 +1,107 @@
+openapi: 3.0.1
+info:
+  title: 安全检查API
+  description: 更新削除
+  version: 1.0.0
+tags: []
+paths:
+  /security-checks/export:
+    get:
+      summary: 报表导出
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: reportCode
+          in: query
+          description: 报表编号（根据报表编号筛选）
+          required: true
+          example: ISMSFM1601-1
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回报表文件，文件名后端动态生成
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                properties: {}
+          headers: {}
+      security: []
+components:
+  schemas:
+    SampleCheckDTO:
+      title: SampleCheckDTO
+      type: object
+      required:
+        - sampling_id
+        - user_id
+        - device_id
+        - name
+        - report_id
+        - update_date
+        - create_time
+        - update_time
+      properties:
+        sampling_id:
+          type: string
+          maxLength: 50
+        user_id:
+          type: string
+          maxLength: 50
+        device_id:
+          type: string
+          maxLength: 50
+        installed_software:
+          type: boolean
+          nullable: true
+        disposal_measures:
+          type: string
+          maxLength: 65535
+          nullable: true
+        name:
+          type: string
+          maxLength: 100
+        report_id:
+          type: string
+          maxLength: 50
+        update_date:
+          type: string
+          format: date
+        screen_saver_pwd:
+          type: boolean
+          nullable: true
+        usb_interface:
+          type: boolean
+          nullable: true
+        security_patch:
+          type: boolean
+          nullable: true
+        antivirus_protection:
+          type: boolean
+          nullable: true
+        boot_authentication:
+          type: boolean
+          nullable: true
+        create_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        creater:
+          type: string
+          maxLength: 100
+          nullable: true
+        update_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        updater:
+          type: string
+          maxLength: 100
+          nullable: true
+  responses: {}
+  securitySchemes: {}
+servers:
+  - url: http://localhost:8080/api
+    description: 开发环境
+security: []
