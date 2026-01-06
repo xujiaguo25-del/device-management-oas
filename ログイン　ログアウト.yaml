@@ -1,0 +1,171 @@
+openapi: 3.0.0
+info:
+  title: ユーザー認証API
+  description: ユーザーログイン、ログアウト機能を提供する認証インターフェース。データベース`users`テーブルと`dict`テーブルに基づいて実装
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: ローカル開発サーバー
+
+paths:
+  /auth/login:
+    post:
+      summary: ユーザーログイン
+      description: ユーザID（user_id）とパスワードでシステムにログインし、JWTトークンを取得
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功、トークンとユーザー情報を返却
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: リクエストパラメータエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                パラメータ不足:
+                  value:
+                    code: 400
+                    message: "userIdとpasswordは必須です"
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ユーザーが存在しない:
+                  value:
+                    code: 401
+                    message: "ユーザーが存在しません"
+                パスワードが誤り:
+                  value:
+                    code: 401
+                    message: "パスワードが正しくありません"
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: ユーザーログアウト
+      description: 現在のユーザーセッションを終了（クライアントはローカルトークンを削除する必要あり）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                トークンが無効:
+                  value:
+                    code: 401
+                    message: "トークンが無効です"
+                トークン期限切れ:
+                  value:
+                    code: 401
+                    message: "トークンの有効期限が切れています"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [userId, password]
+      properties:
+        userId:
+          type: string
+          description: ユーザID（`users`テーブルの`user_id`フィールドに対応）
+          example: "ADMIN001"
+        password:
+          type: string
+          description: ユーザーパスワード
+          example: "123456"
+
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+          example: 200
+        message:
+          type: string
+          description: 応答メッセージ
+          example: "ログイン成功"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWTアクセストークン
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user_info:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: ユーザID
+                  example: "ADMIN001"
+                name:
+                  type: string
+                  description: ユーザー氏名（`users`テーブルの`name`フィールドに対応）
+                  example: "システム管理者"
+                userType:
+                  type: string
+                  description: ユーザータイプ（`dict`テーブルの`USER_TYPE`辞書項目に関連）
+                  example: "管理者"
+                deptId:
+                  type: string
+                  description: 部門番号（`users`テーブルの`dept_id`フィールドに対応）
+                  example: "dept_001"
+
+    LogoutResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+          example: 200
+        message:
+          type: string
+          description: 応答メッセージ
+          example: "ログアウト成功"
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: エラーステータスコード
+          example: 500
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "システムエラー"
