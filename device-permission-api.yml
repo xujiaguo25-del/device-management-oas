@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: デバイス権限管理API  # 设备权限管理API
+  version: 1.0.0
+
+#权限校验：仅拥有「权限管理」权限的管理员可调用
+#存在性校验：校验传入的权限 ID 是否存在于数据库
+#关联校验：校验该权限是否绑定用户 / 设备等资源，
+#数据删除：所有校验通过后，物理删除数据库中对应的权限记录；
+#结果反馈：操作成功、异常
+
+servers:
+  - url: http://localhost:8080
+paths:
+  /permissions/{id}:
+    delete:
+      summary: デバイス使用権限の削除  # 删除设备使用权限
+      description: 権限と関連関係の検証後、指定された権限を削除します  # 校验权限/关联关系后删除指定权限
+      tags: [権限-削除api]  
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1001
+      responses:
+        '200':
+          description: 削除成功  # 删除成功
+          content:
+            application/json:
+              example: { "code": 200, "msg": "削除に成功しました", "data": null }  # 提示
+        '403':
+          description: 削除権限なし  # 无删除权限
+          content:
+            application/json:
+              example: { "code": 403, "msg": "削除する権限がありません", "data": null }
+        '404':
+          description: 権限が存在しない  # 权限不存在
+          content:
+            application/json:
+              example: { "code": 404, "msg": "指定された権限は存在しません", "data": null }
+        '400':
+          description: 権限がリソースに関連づけられている  # 权限已绑定资源
+          content:
+            application/json:
+              example: { "code": 400, "msg": "権限はユーザーまたはデバイスに関連づけられているため、削除できません", "data": null }
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []
