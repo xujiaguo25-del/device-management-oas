@@ -1,0 +1,101 @@
+openapi: 3.0.1
+info:
+  title: セキュリティチェックAPI
+  description: 更新・削除
+  version: 1.0.0
+tags: []
+paths:
+  /security-checks/{sampling_id}:
+    get:
+      summary: セキュリティチェック詳細情報の取得
+      deprecated: false
+      description: 指定されたIDのセキュリティチェック詳細情報を取得する
+      operationId: query-checks-by-id
+      tags: []
+      parameters:
+        - name: sampling_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SampleCheckDTO'
+          headers: {}
+        '404':
+          description: 対象が存在しません
+          headers: {}
+      security: []
+components:
+  schemas:
+    SampleCheckDTO:
+      title: SampleCheckDTO
+      type: object
+      required:
+        - sampling_id
+        - user_id
+        - device_id
+        - name
+        - report_id
+        - update_date
+        - create_time
+        - update_time
+      properties:
+        sampling_id:
+          type: string
+          maxLength: 50
+        user_id:
+          type: string
+          maxLength: 50
+        device_id:
+          type: string
+          maxLength: 50
+        installed_software:
+          type: boolean
+          nullable: true
+        disposal_measures:
+          type: string
+          maxLength: 65535
+          nullable: true
+        name:
+          type: string
+          maxLength: 100
+        report_id:
+          type: string
+          maxLength: 50
+        update_date:
+          type: string
+          format: date
+        screen_saver_pwd:
+          type: boolean
+          nullable: true
+        usb_interface:
+          type: boolean
+          nullable: true
+        security_patch:
+          type: boolean
+          nullable: true
+        antivirus_protection:
+          type: boolean
+          nullable: true
+        boot_authentication:
+          type: boolean
+          nullable: true
+        create_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        creater:
+          type: string
+          maxLength: 100
+          nullable: true
+        update_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        updater:
+          type: string
+          maxLength: 100
+          nullable: true
