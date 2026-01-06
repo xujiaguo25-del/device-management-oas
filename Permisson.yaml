@@ -1,0 +1,695 @@
+openapi: 3.0.0
+info:
+  title: 設備管理システム - 権限管理 API
+  description: DA04部門内機器管理システムの権限管理モジュール OpenAPI 仕様
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/
+
+tags:
+  - name: 権限管理
+    description: 設備使用権限管理操作
+
+paths:
+  /permissions:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限一覧取得
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+        - name: deviceId
+          in: query
+          description: 設備ID
+          required: false
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: ユーザID(jobNumber?)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 権限一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DevicePermissionsVo'
+
+    post:
+      tags:
+        - 権限管理
+      summary: 権限作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissions'
+
+      responses:  
+        '200':
+          description: 権限作成成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data: 
+                        type: string
+                        example: "権限作成成功"      
+                                   
+
+  /permissions/{permissionId}:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限詳細
+      responses:
+        '200':
+          description: 権限詳細
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/DevicePermissionsVo'
+
+    put:
+      tags:
+        - 権限管理
+      summary: 権限更新
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissions'
+      responses:
+        '200':
+          description: 権限更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: string
+                        example: "権限更新成功"
+          # description: 権限更新成功
+    delete:
+      tags:
+        - 権限管理
+      summary: 権限削除
+      responses:
+        '200':
+          description: 権限削除成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: string
+                        example: "権限削除成功"
+          
+          # description: 権限削除成功
+
+  /permissions/export:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限一覧エクスポート
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Excelファイル
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "成功"
+        data:
+          description: 响应数据
+          nullable: true
+      required:
+        - code
+        - message
+
+    PaginationBaseResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+        data:
+          type: array
+
+    DevicePermissionsVo:
+      allOf:
+        - $ref: '#/components/schemas/DevicePermissions'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            device:
+              $ref: '#/components/schemas/DeviceInfo'
+            monitor:
+              type: array
+              items:
+                $ref: '#/components/schemas/MonitorInfo'
+            ip:
+              type: array
+              items:
+                $ref: '#/components/schemas/IpInfo'
+
+    DevicePermissions:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          example: ""
+        deviceId:
+          type: string
+          example: "123123"
+        domainStatus:
+          type: string
+          example: "1"
+        domainGroup:
+          type: string
+          example: "hyronjs"
+        noDomainReason:
+          type: string
+          example: "設備使用権限管理システムへの登録が必要です。"
+        smartitStatus:
+          type: string
+          example: "1"
+        noSmartitReason:
+          type: string
+          example: "SmartITへの登録が必要です。"
+        usbStatus:
+          type: string
+          example: "1"
+        usbReason:
+          type: string
+          example: "USB接続が必要です。"
+        usbExpireDate:
+          type: string
+          example: "2022-12-31"
+        antivirusStatus:
+          type: string
+          example: "1"
+        noSymantecReason:
+          type: string
+          example: "Symantec Antivirusのインストールが必要です。"
+        remark:
+          type: string
+          example: "備考"
+        createTime:
+          type: string
+          example: ""
+        creater:
+          type: string
+          example: ""
+        updateTime:
+          type: string
+          example: ""
+        updater:
+          type: string
+          example: ""
+
+        
+
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+        deptId:
+          type: string
+        name:
+          type: string
+        jobNumber:
+          type: string
+        userType:
+          type: object
+          properties:
+            dictId:
+              type: string
+            dictName:
+              type: string
+        password:
+          type: string
+        createTime:
+          type: string
+        creater:
+          type: string
+        updateTime:
+          type: string
+        updater:
+          type: string
+
+    MonitorInfo:
+      type: object
+      properties:
+        monitorId:
+          type: string
+        monitorName:
+          type: string
+        monitorType:
+          type: string
+        monitorStatus:
+          type: string
+        monitorIp:
+          type: string
+        monitorPort:
+          type: string
+        monitorUsername:
+          type: string
+        monitorPassword:
+          type: string
+        monitorRemark:
+          type: string
+        createTime:
+          type: string
+        creater:
+          type: string
+        updateTime:
+          type: string
+        updater:
+          type: string
+
+    IpInfo:
+      type: object
+      properties:
+        ipId:
+          type: string
+        ipAddress:
+          type: string
+        ipStatus:
+          type: string
+        ipRemark:
+          type: string
+        createTime:
+          type: string
+        creater:
+          type: string
+        updateTime:
+          type: string
+        updater:
+          type: string
+
+    DeviceInfo:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        deviceModel:
+          type: string
+        computerName:
+          type: string
+        loginUsername:
+          type: string
+        project:
+          type: string
+        devRoom:
+          type: string
+        jobNumber:
+          type: object
+          properties:
+            userId:
+              type: string
+            deptId:
+              type: string
+            name:
+              type: string
+            jobNumber:  
+              type: string
+            userType:
+              type: object
+              properties:
+                dictId:
+                  type: string
+                dictName:
+                  type: string
+        remark:
+          type: string
+        selfConfirm:
+          type: object  
+          properties:
+            dictId:
+              type: string
+            dictName:
+              type: string
+        os:
+          type: object
+          properties:
+            dictId:
+              type: string
+            dictName:
+              type: string
+        memory:
+          type: object
+          properties:
+            dictId:
+              type: string
+            dictName:
+              type: string
+        createTime:
+          type: string
+        creater:
+          type: string
+        updateTime:
+          type: string
+        updater:
+          type: string
+
+#     public class User {
+#     @Id
+#     @Size(max = 50)
+#     @Column(name = "user_id", nullable = false, length = 50)
+#     private String userId;
+
+#     @Size(max = 50)
+#     @NotNull
+#     @Column(name = "dept_id", nullable = false, length = 50)
+#     private String deptId;
+
+#     @Size(max = 100)
+#     @NotNull
+#     @Column(name = "name", nullable = false, length = 100)
+#     private String name;
+
+#     @Size(max = 50)
+#     @NotNull
+#     @Column(name = "job_number", nullable = false, length = 50)
+#     private String jobNumber;
+
+#     @NotNull
+#     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "user_type_id", nullable = false)
+#     private Dict userType;
+
+#     @Size(max = 255)
+#     @NotNull
+#     @Column(name = "password", nullable = false)
+#     private String password;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "create_time", nullable = false)
+#     private Instant createTime;
+
+#     @Size(max = 100)
+#     @Column(name = "creater", length = 100)
+#     private String creater;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "update_time", nullable = false)
+#     private Instant updateTime;
+
+#     @Size(max = 100)
+#     @Column(name = "updater", length = 100)
+#     private String updater;
+# }
+
+  
+    #   @Id
+    # @Size(max = 50)
+    # @Column(name = "permission_id", nullable = false, length = 50)
+    # private String permissionId;
+
+    # @NotNull
+    # @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    # @OnDelete(action = OnDeleteAction.CASCADE)
+    # @JoinColumn(name = "device_id", nullable = false)
+    # private DeviceInfo device;
+
+    # @ManyToOne(fetch = FetchType.LAZY)
+    # @OnDelete(action = OnDeleteAction.SET_NULL)
+    # @JoinColumn(name = "domain_status_id")
+    # private Dict domainStatus;
+
+    # @Size(max = 100)
+    # @Column(name = "domain_group", length = 100)
+    # private String domainGroup;
+
+    # @Column(name = "no_domain_reason", length = Integer.MAX_VALUE)
+    # private String noDomainReason;
+
+    # @ManyToOne(fetch = FetchType.LAZY)
+    # @OnDelete(action = OnDeleteAction.SET_NULL)
+    # @JoinColumn(name = "smartit_status_id")
+    # private Dict smartitStatus;
+
+    # @Column(name = "no_smartit_reason", length = Integer.MAX_VALUE)
+    # private String noSmartitReason;
+
+    # @ManyToOne(fetch = FetchType.LAZY)
+    # @OnDelete(action = OnDeleteAction.SET_NULL)
+    # @JoinColumn(name = "usb_status_id")
+    # private Dict usbStatus;
+
+    # @Column(name = "usb_reason", length = Integer.MAX_VALUE)
+    # private String usbReason;
+
+    # @Column(name = "usb_expire_date")
+    # private LocalDate usbExpireDate;
+
+    # @ManyToOne(fetch = FetchType.LAZY)
+    # @OnDelete(action = OnDeleteAction.SET_NULL)
+    # @JoinColumn(name = "antivirus_status_id")
+    # private Dict antivirusStatus;
+
+    # @Column(name = "no_symantec_reason", length = Integer.MAX_VALUE)
+    # private String noSymantecReason;
+
+    # @Column(name = "remark", length = Integer.MAX_VALUE)
+    # private String remark;
+
+    # @NotNull
+    # @ColumnDefault("CURRENT_TIMESTAMP")
+    # @Column(name = "create_time", nullable = false)
+    # private Instant createTime;
+
+    # @Size(max = 100)
+    # @Column(name = "creater", length = 100)
+    # private String creater;
+
+    # @NotNull
+    # @ColumnDefault("CURRENT_TIMESTAMP")
+    # @Column(name = "update_time", nullable = false)
+    # private Instant updateTime;
+
+    # @Size(max = 100)
+    # @Column(name = "updater", length = 100)
+    # private String updater;
+
+#     public class DeviceInfo {
+#     @Id
+#     @Size(max = 50)
+#     @Column(name = "device_id", nullable = false, length = 50)
+#     private String deviceId;
+
+#     @Size(max = 100)
+#     @Column(name = "device_model", length = 100)
+#     private String deviceModel;
+
+#     @Size(max = 100)
+#     @Column(name = "computer_name", length = 100)
+#     private String computerName;
+
+#     @Size(max = 100)
+#     @Column(name = "login_username", length = 100)
+#     private String loginUsername;
+
+#     @Size(max = 100)
+#     @Column(name = "project", length = 100)
+#     private String project;
+
+#     @Size(max = 100)
+#     @Column(name = "dev_room", length = 100)
+#     private String devRoom;
+
+#     @NotNull
+#     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+#     @OnDelete(action = OnDeleteAction.RESTRICT)
+#     @JoinColumn(name = "job_number", nullable = false, referencedColumnName = "job_number")
+#     private User jobNumber;
+
+#     @Column(name = "remark", length = Integer.MAX_VALUE)
+#     private String remark;
+
+#     @ManyToOne(fetch = FetchType.LAZY)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "self_confirm_id")
+#     private Dict selfConfirm;
+
+#     @ManyToOne(fetch = FetchType.LAZY)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "os_id")
+#     private Dict os;
+
+#     @ManyToOne(fetch = FetchType.LAZY)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "memory_id")
+#     private Dict memory;
+
+#     @ManyToOne(fetch = FetchType.LAZY)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "ssd_id")
+#     private Dict ssd;
+
+#     @ManyToOne(fetch = FetchType.LAZY)
+#     @OnDelete(action = OnDeleteAction.SET_NULL)
+#     @JoinColumn(name = "hdd_id")
+#     private Dict hdd;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "create_time", nullable = false)
+#     private Instant createTime;
+
+#     @Size(max = 100)
+#     @Column(name = "creater", length = 100)
+#     private String creater;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "update_time", nullable = false)
+#     private Instant updateTime;
+
+#     @Size(max = 100)
+#     @Column(name = "updater", length = 100)
+#     private String updater;
+
+
+# }
+
+# public class DeviceIp {
+#     @Id
+#     @Column(name = "ip_id", nullable = false)
+#     private Integer id;
+
+#     @NotNull
+#     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+#     @OnDelete(action = OnDeleteAction.CASCADE)
+#     @JoinColumn(name = "device_id", nullable = false)
+#     private DeviceInfo device;
+
+#     @Size(max = 50)
+#     @Column(name = "ip_address", length = 50)
+#     private String ipAddress;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "create_time", nullable = false)
+#     private Instant createTime;
+
+#     @Size(max = 100)
+#     @Column(name = "creater", length = 100)
+#     private String creater;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "update_time", nullable = false)
+#     private Instant updateTime;
+
+#     @Size(max = 100)
+#     @Column(name = "updater", length = 100)
+#     private String updater;
+
+
+# }
+
+# public class MonitorInfo {
+#     @Id
+#     @Column(name = "monitor_id", nullable = false)
+#     private Integer id;
+
+#     @NotNull
+#     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+#     @OnDelete(action = OnDeleteAction.CASCADE)
+#     @JoinColumn(name = "device_id", nullable = false)
+#     private DeviceInfo device;
+
+#     @Size(max = 100)
+#     @Column(name = "monitor_name", length = 100)
+#     private String monitorName;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "create_time", nullable = false)
+#     private Instant createTime;
+
+#     @Size(max = 100)
+#     @Column(name = "creater", length = 100)
+#     private String creater;
+
+#     @NotNull
+#     @ColumnDefault("CURRENT_TIMESTAMP")
+#     @Column(name = "update_time", nullable = false)
+#     private Instant updateTime;
+
+#     @Size(max = 100)
+#     @Column(name = "updater", length = 100)
+#     private String updater;
+
+
+# }

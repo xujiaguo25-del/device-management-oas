@@ -1,0 +1,681 @@
+openapi: 3.0.0
+info:
+  title: 設備管理システム - 権限管理 API
+  description: DA04部門内機器管理システムの権限管理モジュール OpenAPI 仕様
+  version: 1.0.0
+  contact:
+    name: 設備管理APIサポート
+    email: equip-support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com/v1
+    description: 本番サーバー
+  - url: https://staging-api.example.com/v1
+    description: ステージングサーバー
+
+tags:
+  - name: 権限管理
+    description: 設備使用権限管理操作
+
+paths:
+  # 権限管理モジュール - 権限リスト操作
+  /permissions:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限リスト取得
+      description: 設備使用権限のリストを取得（分頁・篩選対応）
+      operationId: getPermissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: deviceId
+          in: query
+          description: 設備IDでフィルタリング
+          required: false
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: ユーザーID（社員番号）でフィルタリング
+          required: false
+          schema:
+            type: string
+        - name: smartitStatus
+          in: query
+          description: SmartITステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1", "2"]
+            description: "0=ローカル, 1=リモート, 2=未インストール"
+        - name: usbStatus
+          in: query
+          description: USBステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1", "2"]
+            description: "0=クローズ, 1=データ, 2=3Gモデム"
+        - name: connectionStatus
+          in: query
+          description: 接続ステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1"]
+            description: "0=オート, 1=マニュアル"
+        - name: search
+          in: query
+          description: 検索キーワード（コンピュータ名、ユーザー名、ドメイン名）
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 権限リスト取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionListResponse"
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - 権限管理
+      summary: 新規権限登録
+      description: 新規設備使用権限を登録（管理者権限必要）
+      operationId: createPermission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePermissionRequest"
+      responses:
+        "201":
+          description: 権限登録成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+        "400":
+          description: 無効なリクエストデータ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # 権限管理モジュール - 個別権限操作
+  /permissions/{id}:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限詳細取得
+      description: 権限IDに基づき権限詳細情報を取得
+      operationId: getPermissionById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 権限ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: 権限詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 権限が存在しません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+        - 権限管理
+      summary: 権限情報更新
+      description: 権限情報を更新（管理者権限必要）
+      operationId: updatePermission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePermissionRequest"
+      responses:
+        "200":
+          description: 権限更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+        "400":
+          description: 無効なリクエストデータ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 権限が存在しません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags:
+        - 権限管理
+      summary: 権限削除
+      description: 権限を削除（管理者権限必要）
+      operationId: deletePermission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "204":
+          description: 権限削除成功
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 権限が存在しません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # 権限管理モジュール - ファイル入出力
+  /permissions/export:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限リストエクスポート
+      description: 設備使用権限リストをExcelファイルでエクスポート
+      operationId: exportPermissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: query
+          description: 設備IDでフィルタリング
+          required: false
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: ユーザーID（社員番号）でフィルタリング
+          required: false
+          schema:
+            type: string
+        - name: smartitStatus
+          in: query
+          description: SmartITステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1", "2"]
+        - name: usbStatus
+          in: query
+          description: USBステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1", "2"]
+        - name: connectionStatus
+          in: query
+          description: 接続ステータスでフィルタリング
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1"]
+        - name: search
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Excelファイルダウンロード
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  # 安全方案定义
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラータイプ
+          example: "NOT_FOUND"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "権限が存在しません"
+        details:
+          type: object
+          description: 詳細情報
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+
+    # 設備情報
+    DeviceInfo:
+      type: object
+      properties:
+        deviceId:
+          type: integer
+          description: 設備ID
+          example: 1
+        computerId:
+          type: string
+          description: コンピュータ番号
+          example: "PC-001"
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: "DELL-WORKSTATION-001"
+        computerModel:
+          type: string
+          description: コンピュータモデル
+          example: "Dell Precision 5550"
+        developmentRoom:
+          type: string
+          description: 開発室
+          example: "Room101"
+        projectName:
+          type: string
+          description: プロジェクト名
+          example: "プロジェクトA"
+        isActive:
+          type: string
+          description: 有効状態
+          enum: ["Y", "N"]
+          example: "Y"
+
+    # ユーザー情報
+    UserInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザーID（社員番号）
+          example: "EMP001"
+        userName:
+          type: string
+          description: ユーザー名
+          example: "山田 太郎"
+        departmentCode:
+          type: string
+          description: 部署コード
+          example: "DEPT001"
+
+    # 権限管理スキーマ
+    PermissionListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 権限ID
+          example: 1
+        deviceId:
+          type: integer
+          description: 設備ID
+          example: 1
+        userId:
+          type: string
+          description: ユーザーID
+          example: "EMP001"
+        smartitStatus:
+          type: string
+          description: "SmartITステータス"
+          enum: ["0", "1", "2"]
+          example: "1"
+        usbStatus:
+          type: string
+          description: "USBステータス"
+          enum: ["0", "1", "2"]
+          example: "1"
+        connectionStatus:
+          type: string
+          description: "接続ステータス"
+          enum: ["0", "1"]
+          example: "0"
+        domainName:
+          type: string
+          description: ドメイン名
+          example: "corp.local"
+        domainGroup:
+          type: string
+          description: ドメイングループ
+          example: "Domain Users"
+        usbOpenEnddate:
+          type: string
+          format: date-time
+          description: USB開放終了日
+          example: "2025-12-31T23:59:59"
+        commet:
+          type: string
+          description: コメント
+          example: "通常権限"
+        createdDate:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedDate:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    PermissionResponse:
+      allOf:
+        - $ref: "#/components/schemas/PermissionListItem"
+        - type: object
+          properties:
+            device:
+              $ref: "#/components/schemas/DeviceInfo"
+            user:
+              $ref: "#/components/schemas/UserInfo"
+
+    PermissionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionListItem"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CreatePermissionRequest:
+      type: object
+      required:
+        - deviceId
+        - userId
+        - smartitStatus
+        - usbStatus
+        - connectionStatus
+      properties:
+        deviceId:
+          type: integer
+          description: 設備ID
+          example: 1
+        userId:
+          type: string
+          description: ユーザーID
+          example: "EMP001"
+        smartitStatus:
+          type: string
+          description: "SmartITステータス: 0=ローカル, 1=リモート, 2=未インストール"
+          enum: ["0", "1", "2"]
+          example: "1"
+        noSmartitReason:
+          type: string
+          description: "SmartIT未インストール理由"
+          example: "特別許可"
+        usbStatus:
+          type: string
+          description: "USBステータス: 0=クローズ, 1=データ, 2=3Gモデム"
+          enum: ["0", "1", "2"]
+          example: "1"
+        usbOpenReason:
+          type: string
+          description: "USB開放理由"
+          example: "データ転送必要"
+        usbOpenEnddate:
+          type: string
+          format: date-time
+          description: "USB開放終了日"
+          example: "2025-12-31T23:59:59"
+        connectionStatus:
+          type: string
+          description: "接続ステータス: 0=オート, 1=マニュアル"
+          enum: ["0", "1"]
+          example: "0"
+        noSymentecReason:
+          type: string
+          description: "セキュリティソフト未インストール理由"
+          example: "代替ソフト使用"
+        domainName:
+          type: string
+          description: "ドメイン名"
+          example: "corp.local"
+        domainGroup:
+          type: string
+          description: "ドメイングループ"
+          example: "Domain Users"
+        noDomainReason:
+          type: string
+          description: "ドメイン未接続理由"
+          example: "スタンドアローン運用"
+        commet:
+          type: string
+          description: "コメント"
+          example: "通常権限"
+
+    UpdatePermissionRequest:
+      type: object
+      properties:
+        smartitStatus:
+          type: string
+          description: "SmartITステータス"
+          enum: ["0", "1", "2"]
+          example: "1"
+        noSmartitReason:
+          type: string
+          description: "SmartIT未インストール理由"
+          example: "特別許可"
+        usbStatus:
+          type: string
+          description: "USBステータス"
+          enum: ["0", "1", "2"]
+          example: "1"
+        usbOpenReason:
+          type: string
+          description: "USB開放理由"
+          example: "データ転送必要"
+        usbOpenEnddate:
+          type: string
+          format: date-time
+          description: "USB開放終了日"
+          example: "2025-12-31T23:59:59"
+        connectionStatus:
+          type: string
+          description: "接続ステータス"
+          enum: ["0", "1"]
+          example: "0"
+        noSymentecReason:
+          type: string
+          description: "セキュリティソフト未インストール理由"
+          example: "代替ソフト使用"
+        domainName:
+          type: string
+          description: "ドメイン名"
+          example: "corp.local"
+        domainGroup:
+          type: string
+          description: "ドメイングループ"
+          example: "Domain Users"
+        noDomainReason:
+          type: string
+          description: "ドメイン未接続理由"
+          example: "スタンドアローン運用"
+        commet:
+          type: string
+          description: "コメント"
+          example: "権限更新済み"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+             # 基础响应包装器
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "成功"
+        data:
+          description: 响应数据
+          nullable: true
+      required:
+        - code
+        - message
+
+
+    # 共通スキーマ
+    PaginationResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: 現在のページ番号
+        size:
+          type: integer
+          description: ページサイズ
+        total:
+          type: integer
+          description: 総アイテム数
+        pages:
+          type: integer
+          description: 総ページ数
+
+    
