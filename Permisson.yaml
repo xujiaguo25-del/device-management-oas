@@ -307,8 +307,6 @@ components:
           type: string
         name:
           type: string
-        jobNumber:
-          type: string
         userType:
           type: object
           properties:
