@@ -88,10 +88,106 @@ paths:
                 type: string
           headers: {}
       security: []
-  
+  /security-checks/{sampling_id}:
+    get:
+      summary: セキュリティチェック詳細情報の取得
+      deprecated: false
+      description: 指定されたIDのセキュリティチェック詳細情報を取得する
+      operationId: query-checks-by-id
+      tags: []
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SampleCheckDTO'
+          headers: {}
+        '404':
+          description: 対象が存在しません
+          headers: {}
+      security: []
+  /security-checks/export:
+    get:
+      summary: レポート出力
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: reportCode
+          in: query
+          description: レポート番号（レポート番号に基づいてフィルタリング）
+          required: true
+          example: ISMSFM1601-1
+          schema:
+            type: string
+      responses:
+        '200':
+          description: レポートファイルを返却。ファイル名はバックエンドで動的に生成される。
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                properties: {}
+          headers: {}
+      security: []
+  /sampling-checks/{sampling_id}:
+    put:
+      summary: 更新
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SampleCheckDTO'
+            examples: {}
+        required: true
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security: []
+    delete:
+      summary: 削除
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: sampling_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 削除成功
+          headers: {}
+      security: []
 components:
   schemas:
     SampleCheckDTO:
+      $comment: JSON Schema for SampleCheckDTO table
+      $id: SampleCheckDTO
       title: SampleCheckDTO
       type: object
       required:
@@ -105,6 +201,7 @@ components:
         - update_time
       properties:
         sampling_id:
+          $comment: primary key
           type: string
           maxLength: 50
         user_id:
