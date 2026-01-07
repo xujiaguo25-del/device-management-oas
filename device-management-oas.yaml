@@ -1,0 +1,140 @@
+openapi: 3.0.0
+info:
+  title: 設備管理システム - 権限管理 API
+  description: DA04部門内機器管理システムの権限管理モジュール OpenAPI 仕様
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/
+
+tags:
+  - name: 権限管理
+    description: 設備使用権限管理操作
+
+paths:
+  /permissions:
+    post:
+      tags:
+        - 権限管理
+      summary: 権限作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissionDTO'
+
+      responses:  
+        '200':
+          description: 権限作成成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data: 
+                        type: string
+                        example: "権限作成成功"      
+
+  /permissions/export:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限一覧エクスポート
+      parameters:
+        # - name: page
+        #   in: query
+        #   description: ページ番号
+        #   required: false
+        #   schema:
+        #     type: integer
+        # - name: size
+        #   in: query
+        #   description: 1ページあたりの件数
+        #   required: false
+        #   schema:
+        #     type: integer
+      responses:
+        '200':
+          description: Excelファイル
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+        message:
+          type: string
+          description: 消息
+          example: "成功"
+        data:
+          description: 响应数据
+          nullable: true
+      required:
+        - code
+        - message
+
+    DevicePermissionDTO:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          example: ""
+        deviceId:
+          type: string
+          example: "123123"
+        domainStatus:
+          type: string
+          example: "39"
+        domainGroup:
+          type: string
+          example: "hyronjs"
+        noDomainReason:
+          type: string
+          example: "設備使用権限管理システムへの登録が必要です。"
+        smartitStatus:
+          type: string
+          example: "41"
+        noSmartitReason:
+          type: string
+          example: "SmartITへの登録が必要です。"
+        usbStatus:
+          type: string
+          example: "44"
+        usbReason:
+          type: string
+          example: "USB接続が必要です。"
+        usbExpireDate:
+          type: string
+          example: "2022-12-31"
+        antivirusStatus:
+          type: string
+          example: "47"
+        noSymantecReason:
+          type: string
+          example: "Symantec Antivirusのインストールが必要です。"
+        remark:
+          type: string
+          example: "備考"
+        createTime:
+          type: string
+          example: ""
+        creater:
+          type: string
+          example: ""
+        updateTime:
+          type: string
+          example: ""
+        updater:
+          type: string
+          example: ""
