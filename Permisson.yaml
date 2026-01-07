@@ -30,18 +30,18 @@ paths:
           required: false
           schema:
             type: integer
-        - name: deviceId
-          in: query
-          description: 設備ID
-          required: false
-          schema:
-            type: string
-        - name: userId
-          in: query
-          description: ユーザID(jobNumber?)
-          required: false
-          schema:
-            type: string
+        # - name: deviceId
+        #   in: query
+        #   description: 設備ID
+        #   required: false
+        #   schema:
+        #     type: string
+        # - name: userId
+        #   in: query
+        #   description: ユーザID(jobNumber?)
+        #   required: false
+        #   schema:
+        #     type: string
       responses:
         '200':
           description: 権限一覧
@@ -86,6 +86,14 @@ paths:
       tags:
         - 権限管理
       summary: 権限詳細
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          schema:
+            type: string
+            example: "55ff394f-e0c1-40c6-ac5a-2d5b33174d84"
       responses:
         '200':
           description: 権限詳細
@@ -102,6 +110,14 @@ paths:
       tags:
         - 権限管理
       summary: 権限更新
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          schema:
+            type: string
+            example: "55ff394f-e0c1-40c6-ac5a-2d5b33174d84"
       requestBody:
         required: true
         content:
@@ -125,6 +141,14 @@ paths:
       tags:
         - 権限管理
       summary: 権限削除
+      parameters:
+        - name: permissionId
+          in: path
+          description: 権限ID
+          required: true
+          schema:
+            type: string
+            example: "55ff394f-e0c1-40c6-ac5a-2d5b33174d84"
       responses:
         '200':
           description: 権限削除成功
@@ -228,7 +252,7 @@ components:
           example: "123123"
         domainStatus:
           type: string
-          example: "1"
+          example: "39"
         domainGroup:
           type: string
           example: "hyronjs"
@@ -237,13 +261,13 @@ components:
           example: "設備使用権限管理システムへの登録が必要です。"
         smartitStatus:
           type: string
-          example: "1"
+          example: "41"
         noSmartitReason:
           type: string
           example: "SmartITへの登録が必要です。"
         usbStatus:
           type: string
-          example: "1"
+          example: "44"
         usbReason:
           type: string
           example: "USB接続が必要です。"
@@ -252,7 +276,7 @@ components:
           example: "2022-12-31"
         antivirusStatus:
           type: string
-          example: "1"
+          example: "47"
         noSymantecReason:
           type: string
           example: "Symantec Antivirusのインストールが必要です。"
