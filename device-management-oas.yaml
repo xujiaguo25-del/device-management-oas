@@ -1,0 +1,364 @@
+openapi: 3.0.0
+info:
+  title: device-management-oas
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Login
+      summary: ユーザーログイン
+      description: ユーザID（user_id）とパスワードでシステムにログインし、JWTトークンを取得
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功、トークンとユーザー情報を返却
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: リクエストパラメータエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                パラメータ不足:
+                  value:
+                    code: 400
+                    message: "userIdとpasswordは必須です"
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ユーザーが存在しない:
+                  value:
+                    code: 401
+                    message: "ユーザーが存在しません"
+                パスワードが誤り:
+                  value:
+                    code: 401
+                    message: "パスワードが正しくありません"
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Logout
+      summary: ユーザーログアウト
+      description: 現在のユーザーセッションを終了（クライアントはローカルトークンを削除する必要あり）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                トークンが無効:
+                  value:
+                    code: 401
+                    message: "トークンが無効です"
+                トークン期限切れ:
+                  value:
+                    code: 401
+                    message: "トークンの有効期限が切れています"
+  /auth/change-password:
+    post:
+      summary: パスワード変更
+      description: ログイン済みのユーザーが userId を使用して自身のログインパスワードを変更します。有効な JWT が必要です。
+      tags:
+        - change-password
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: パスワードの更新が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordResponse'
+        '400':
+          description: ビジネスロジックの検証に失敗しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                wrongCurrent:
+                  value: { code: 40001, msg: 現在のパスワードが正しくありません }
+                weakNew:
+                  value: { code: 40002, msg: 新しいパスワードが強度要件を満たしていません }
+                sameAsOld:
+                  value: { code: 40003, msg: 新しいパスワードは古いパスワードと同じにすることはできません }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /dict/items:
+    get:
+      summary: 辞書項目の取得
+      description: 登録されている辞書項目を取得します（sortフィールドで昇順ソート済）。
+      tags:
+        - Dict
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dictTypeCode
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 辞書タイプコードでフィルタリング
+          example: "USB_STATUS"
+      responses:
+        '200':
+          description: 辞書項目の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemsResponse'
+              examples:
+                successExample:
+                  $ref: '#/components/examples/DictSuccessExample'
+        '400':
+          description: パラメータ不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemsResponse'
+              examples:
+                paramErrorExample:
+                  $ref: '#/components/examples/DictParamErrorExample'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictItemsResponse'
+              examples:
+                serverErrorExample:
+                  $ref: '#/components/examples/DictServerErrorExample'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  examples:
+    DictSuccessExample:
+      summary: 取得成功例
+      value:
+        code: 200
+        message: "成功"
+        data:
+          - dictId: 1
+            dictItemName: "使用可"
+            sort: 1
+          - dictId: 2
+            dictItemName: "使用不可"
+            sort: 2
+
+    DictParamErrorExample:
+      summary: パラメータ不正例
+      value: { code: 40001, message: "dictTypeCodeは文字列で指定してください", data: null }
+
+    DictServerErrorExample:
+      summary: サーバー内部エラー例
+      value: { code: 50000, message: "システムエラーが発生しました", data: null }
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [userId, password]
+      properties:
+        userId:
+          type: string
+          description: ユーザID（`users`テーブルの`user_id`フィールドに対応）
+          example: "ADMIN001"
+        password:
+          type: string
+          description: ユーザーパスワード
+          example: "T+vWQMZO0qaTX+mfzbgrYA=="
+  
+    ChangePasswordRequest:
+      type: object
+      required:
+        - userId
+        - currentPassword
+        - newPassword
+      properties:
+        userId:
+          type: string
+          description: ユーザー主キー（user_id）
+          example: admin001
+        currentPassword:
+          type: string
+          format: password
+          description: 現在のパスワード
+          example: T+vWQMZO0qaTX+mfzbgrYA==
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+          pattern: '^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+          description: 新しいパスワードは、文字、数字、特殊文字を含む必要があります
+          example: Y7bZjOtwGJorGjrKfLV2yQ==
+
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+          example: 200
+        message:
+          type: string
+          description: 応答メッセージ
+          example: "ログイン成功"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWTアクセストークン
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user_info:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: ユーザID
+                  example: "ADMIN001"
+                name:
+                  type: string
+                  description: ユーザー氏名（`users`テーブルの`name`フィールドに対応）
+                  example: "システム管理者"
+                userType:
+                  type: string
+                  description: ユーザータイプ（`dict`テーブルの`USER_TYPE`辞書項目に関連）
+                  example: "管理者"
+                deptId:
+                  type: string
+                  description: 部門番号（`users`テーブルの`dept_id`フィールドに対応）
+                  example: "dept_001"
+
+    LogoutResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+          example: 200
+        message:
+          type: string
+          description: 応答メッセージ
+          example: "ログアウト成功"
+    
+    ChangePasswordResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        msg:
+          type: string
+          example: パスワードが更新されました。再度ログインしてください。
+    
+    DictItemsResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 処理結果コード
+          example: 200
+        message:
+          type: string
+          description: 処理メッセージ
+          example: "成功"
+        data:
+          type: array
+          nullable: true
+          description: 辞書データ、sort フィールドで昇順ソート済、dictId=value、dictItemName=label
+          items:
+            $ref: '#/components/schemas/DictItem'
+
+    DictItem:
+      type: object
+      description: 統合辞書テーブルのデータ（下拉框用：dictId=value、dictItemName=label）
+      properties:
+        dictId:
+          type: integer
+          format: int64
+          description: 辞書ID（下拉框value値）
+          example: 1
+        dictItemName:
+          type: string
+          description: 辞書項目名（下拉框label値）
+          example: "使用可"
+        sort:
+          type: integer
+          description: ソート番号（昇順でソート済）
+          example: 1
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: エラーステータスコード
+          example: 500
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "システムエラー"
+
+  responses:
+    Unauthorized:
+      description: JWT が無効または期限切れです
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example: { code: 40100, msg: トークンが無効または期限切れです }
+    InternalError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example: { code: 50000, msg: サーバーが混雑しています。しばらくしてから再度お試しください }
