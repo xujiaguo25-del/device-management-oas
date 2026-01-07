@@ -1,20 +1,20 @@
 openapi: 3.0.1
 info:
-  title: 安全检查API
-  description: 更新削除
+  title: セキュリティチェックAPI
+  description: 更新・削除
   version: 1.0.0
 tags: []
 paths:
   /security-checks?size=10:
     get:
-      summary: 获取安全检查列表
+      summary: セキュリティチェック一覧取得
       deprecated: false
-      description: 按可选条件筛选检查记录并分页返回
+      description: 任意の条件でチェック記録をフィルタリングし、ページ分割して返却する
       tags: []
       parameters:
         - name: page
           in: query
-          description: 页码
+          description: ページ番号
           required: true
           example: 1
           schema:
@@ -22,7 +22,7 @@ paths:
             default: 1
         - name: size
           in: query
-          description: 每页数据
+          description: 1ページあたりのデータ件数
           required: false
           example: 10
           schema:
@@ -30,16 +30,16 @@ paths:
             default: 10
         - name: device_Id
           in: query
-          description: 设备ID
+          description: デバイスID
           required: false
-          example: 设备001
+          example: デバイス001
           schema:
             type: string
         - name: user_id
           in: query
-          description: 用户ID
+          description: ユーザーID
           required: false
-          example: 用户001
+          example: ユーザー001
           schema:
             type: string
       responses:
@@ -55,9 +55,9 @@ paths:
       security: []
   /security-checks:
     post:
-      summary: 新增
+      summary: 新規登録
       deprecated: false
-      description: 新增一个安全检查项目
+      description: セキュリティチェック項目を新規に登録する
       tags: []
       parameters: []
       requestBody:
@@ -68,11 +68,11 @@ paths:
             example:
               user_id: EMP00123
               device_id: DEV2024001
-              name: 张三
+              name: 山田 太郎
               report_id: SEC20240115001
               update_date: '2024-01-15'
               installed_software: true
-              disposal_measures: 卸载了未经授权的软件，并重启系统
+              disposal_measures: 未認可のソフトウェアをアンインストールし、システムを再起動した
               screen_saver_pwd: true
               usb_interface: false
               security_patch: true
@@ -90,9 +90,9 @@ paths:
       security: []
   /security-checks/{sampling_id}:
     get:
-      summary: 获取详细的安全检查信息
+      summary: セキュリティチェック詳細情報の取得
       deprecated: false
-      description: 获取详细的安全检查信息
+      description: 指定されたIDのセキュリティチェック詳細情報を取得する
       operationId: query-checks-by-id
       tags: []
       parameters:
@@ -111,26 +111,26 @@ paths:
                 $ref: '#/components/schemas/SampleCheckDTO'
           headers: {}
         '404':
-          description: 目標が存在しない
+          description: 対象が存在しません
           headers: {}
       security: []
   /security-checks/export:
     get:
-      summary: 报表导出
+      summary: レポート出力
       deprecated: false
       description: ''
       tags: []
       parameters:
         - name: reportCode
           in: query
-          description: 报表编号（根据报表编号筛选）
+          description: レポート番号（レポート番号に基づいてフィルタリング）
           required: true
           example: ISMSFM1601-1
           schema:
             type: string
       responses:
         '200':
-          description: 返回报表文件，文件名后端动态生成
+          description: レポートファイルを返却。ファイル名はバックエンドで動的に生成される。
           content:
             application/octet-stream:
               schema:
@@ -166,7 +166,7 @@ paths:
           headers: {}
       security: []
     delete:
-      summary: 删除
+      summary: 削除
       deprecated: false
       description: ''
       tags: []
@@ -180,7 +180,7 @@ paths:
             type: string
       responses:
         '200':
-          description: 删除成功
+          description: 削除成功
           headers: {}
       security: []
 components:
@@ -256,5 +256,5 @@ components:
   securitySchemes: {}
 servers:
   - url: http://localhost:8080/api
-    description: 开发环境
+    description: 開発環境
 security: []
