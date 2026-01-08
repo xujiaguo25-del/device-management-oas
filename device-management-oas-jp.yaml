@@ -1,0 +1,156 @@
+openapi: 3.0.1
+info:
+  title: セキュリティチェックAPI
+  description: セキュリティチェック機能のAPI定義
+  version: 1.0.0
+tags: []
+paths:
+  /security-checks/export:
+    get:
+      summary: レポート出力
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+      - name: reportCode
+        in: query
+        description: レポート番号（レポート番号で絞り込み）
+        required: true
+        example: ISMSFM1601-1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: レポートファイルを返却します。ファイル名はサーバ側で動的に生成されます
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                properties: {}
+          headers: {}
+      security: []
+components:
+  schemas:
+    SampleCheckDTO:
+      title: SampleCheckDTO
+      type: object
+      required:
+      - sampling_id
+      - user_id
+      - device_id
+      - name
+      - report_id
+      - update_date
+      - create_time
+      - update_time
+      properties:
+        sampling_id:
+          type: string
+          maxLength: 50
+        user_id:
+          type: string
+          maxLength: 50
+        device_id:
+          type: string
+          maxLength: 50
+        installed_software:
+          type: boolean
+          nullable: true
+        disposal_measures:
+          type: string
+          maxLength: 65535
+          nullable: true
+        name:
+          type: string
+          maxLength: 100
+        report_id:
+          type: string
+          maxLength: 50
+        update_date:
+          type: string
+          format: date
+        screen_saver_pwd:
+          type: boolean
+          nullable: true
+        usb_interface:
+          type: boolean
+          nullable: true
+        security_patch:
+          type: boolean
+          nullable: true
+        antivirus_protection:
+          type: boolean
+          nullable: true
+        boot_authentication:
+          type: boolean
+          nullable: true
+        create_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        creater:
+          type: string
+          maxLength: 100
+          nullable: true
+        update_time:
+          type: string
+          default: CURRENT_TIMESTAMP
+        updater:
+          type: string
+          maxLength: 100
+          nullable: true
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+        message:
+          type: string
+          description: メッセージ
+        data:
+          description: 業務データ
+        total:
+          type: integer
+          format: int64
+          nullable: true
+        page:
+          type: integer
+          nullable: true
+        size:
+          type: integer
+          nullable: true
+      required:
+      - code
+      - message
+      example:
+        code: 200
+        message: 取得に成功しました
+        data:
+          sampling_id: record001
+          user_id: EMP00123
+          device_id: DEV2024001
+          name: 山田太郎
+          report_id: SEC20240115001
+          update_date: '2024-01-15'
+          create_time: '2024-01-10 09:00:00'
+          update_time: '2024-01-15 10:00:00'
+          installed_software: true
+          disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+          screen_saver_pwd: true
+          usb_interface: false
+          security_patch: true
+          antivirus_protection: true
+          boot_authentication: true
+        total: 120
+        page: 1
+        size: 10
+  responses: {}
+  securitySchemes: {}
+servers:
+- url: http://localhost:8080/api
+  description: 開発環境
+security: []
+
+
+
