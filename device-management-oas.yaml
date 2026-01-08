@@ -5,6 +5,31 @@ info:
   version: 1.0.0
 tags: []
 paths:
+  /security-checks/export:
+    get:
+      summary: レポート出力
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+      - name: reportCode
+        in: query
+        description: レポート番号（レポート番号で絞り込み）
+        required: true
+        example: ISMSFM1601-1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: レポートファイルを返却します。ファイル名はサーバ側で動的に生成されます
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                properties: {}
+          headers: {}
+      security: []
   /security-checks/{sampling_id}:
     get:
       summary: セキュリティチェック詳細情報の取得
