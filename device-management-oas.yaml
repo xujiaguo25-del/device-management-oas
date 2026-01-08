@@ -40,7 +40,6 @@ paths:
                     total: null
                     page: null
                     size: null
-
         '401':
           description: 認証エラー
           content:
@@ -56,7 +55,6 @@ paths:
                     total: null
                     page: null
                     size: null
-                    
                 パスワードが誤り:
                   value:
                     code: 401
@@ -65,7 +63,6 @@ paths:
                     total: null
                     page: null
                     size: null
-                    
         '500':
           description: サーバー内部エラー
           content:
@@ -103,7 +100,6 @@ paths:
                     total: null
                     page: null
                     size: null
-                    
                 トークン期限切れ:
                   value:
                     code: 401
@@ -112,7 +108,7 @@ paths:
                     total: null
                     page: null
                     size: null
-                    
+
   /auth/change-password:
     post:
       summary: パスワード変更
@@ -142,32 +138,29 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 wrongCurrent:
-                  value: 
+                  value:
                     code: 40001
                     message: "現在のパスワードが正しくありません"
                     data: null
                     total: null
                     page: null
                     size: null
-                    
                 weakNew:
-                  value: 
+                  value:
                     code: 40002
                     message: "新しいパスワードが強度要件を満たしていません"
                     data: null
                     total: null
                     page: null
                     size: null
-                    
                 sameAsOld:
-                  value: 
+                  value:
                     code: 40003
                     message: "新しいパスワードは古いパスワードと同じにすることはできません"
                     data: null
                     total: null
                     page: null
                     size: null
-                    
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -224,7 +217,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  
+
   examples:
     DictSuccessExample:
       summary: 取得成功例
@@ -244,7 +237,7 @@ components:
 
     DictParamErrorExample:
       summary: パラメータ不正例
-      value: 
+      value:
         code: 40001
         message: "dictTypeCodeは文字列で指定してください"
         data: null
@@ -254,7 +247,7 @@ components:
 
     DictServerErrorExample:
       summary: サーバー内部エラー例
-      value: 
+      value:
         code: 50000
         message: "システムエラーが発生しました"
         data: null
@@ -263,9 +256,36 @@ components:
         size: null
 
   schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+        message:
+          type: string
+          description: 応答メッセージ
+        data:
+          description: レスポンスデータ（型はエンドポイントにより異なる）
+        total:
+          type: integer
+          nullable: true
+          description: 総件数（ページング時以外はnull）
+        page:
+          type: integer
+          nullable: true
+          description: 現在のページ（ページング時以外はnull）
+        size:
+          type: integer
+          nullable: true
+          description: 1ページあたりの件数（ページング時以外はnull）
+      required:
+        - code
+        - message
+
     LoginRequest:
       type: object
-      required: 
+      required:
         - userId
         - password
       properties:
@@ -277,7 +297,7 @@ components:
           type: string
           description: ユーザーパスワード
           example: "T+vWQMZO0qaTX+mfzbgrYA=="
-  
+
     ChangePasswordRequest:
       type: object
       required:
@@ -302,144 +322,93 @@ components:
           description: 新しいパスワードは、文字、数字、特殊文字を含む必要があります
           example: "Y7bZjOtwGJorGjrKfLV2yQ=="
 
-    LoginResponse:
+    # ログイン成功データ
+    LoginData:
       type: object
       properties:
-        code:
-          type: integer
-          description: ステータスコード
-          example: 200
-        message:
+        token:
           type: string
-          description: 応答メッセージ
-          example: "ログイン成功"
-        data:
+          description: JWTアクセストークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        userInfo:
           type: object
           properties:
-            token:
+            userId:
               type: string
-              description: JWTアクセストークン
-              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            userInfo:
-              type: object
-              properties:
-                userId:
-                  type: string
-                  description: ユーザID
-                  example: "ADMIN001"
-                name:
-                  type: string
-                  description: ユーザー氏名（`users`テーブルの`name`フィールドに対応）
-                  example: "システム管理者"
-                userType:
-                  type: string
-                  description: ユーザータイプ（`dict`テーブルの`USER_TYPE`辞書項目に関連）
-                  example: "管理者"
-                deptId:
-                  type: string
-                  description: 部門番号（`users`テーブルの`dept_id`フィールドに対応）
-                  example: "dept_001"
-        total:
-          type: integer
-          nullable: true
-          description: 総件数（エラー時固定null）
-          example: null
-        page:
-          type: integer
-          nullable: true
-          description: ページ（エラー時固定null）
-          example: null
-        size:
-          type: integer
-          nullable: true
-          description: 1ページあたりの件数（エラー時固定null）
-          example: null  
+              description: ユーザID
+              example: "ADMIN001"
+            name:
+              type: string
+              description: ユーザー氏名（`users`テーブルの`name`フィールドに対応）
+              example: "システム管理者"
+            userType:
+              type: string
+              description: ユーザータイプ（`dict`テーブルの`USER_TYPE`辞書項目に関連）
+              example: "管理者"
+            deptId:
+              type: string
+              description: 部門番号（`users`テーブルの`dept_id`フィールドに対応）
+              example: "dept_001"
 
+    # ログインレスポンス（ApiResponseを継承）
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LoginData'
+          example:
+            code: 200
+            message: "ログイン成功"
+            data:
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              userInfo:
+                userId: "ADMIN001"
+                name: "システム管理者"
+                userType: "管理者"
+                deptId: "dept_001"
+            total: null
+            page: null
+            size: null
+
+    # ログアウトレスポンス
     LogoutResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: ステータスコード
-          example: 200
-        message:
-          type: string
-          description: 応答メッセージ
-          example: "ログアウト成功"
-        total:
-          type: integer
-          nullable: true
-          description: 総件数（エラー時固定null）
-          example: null
-        page:
-          type: integer
-          nullable: true
-          description: ページ（エラー時固定null）
-          example: null
-        size:
-          type: integer
-          nullable: true
-          description: 1ページあたりの件数（エラー時固定null）
-          example: null
-    
-    ChangePasswordResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          example: 200
-        message:
-          type: string
-          example: "パスワードが更新されました。再度ログインしてください。"
-        total:
-          type: integer
-          nullable: true
-          description: 総件数（エラー時固定null）
-          example: null
-        page:
-          type: integer
-          nullable: true
-          description: ページ（エラー時固定null）
-          example: null
-        size:
-          type: integer
-          nullable: true
-          description: 1ページあたりの件数（エラー時固定null）
-          example: null
-    
-    DictSuccessResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: 処理結果コード
-          example: 200
-        message:
-          type: string
-          description: 処理メッセージ
-          example: "成功"
-        data:
-          type: array
-          nullable: true
-          description: 辞書データ、sort フィールドで昇順ソート済、dictId=value、dictItemName=label
-          items:
-            $ref: '#/components/schemas/DictItem'
-        total:
-          type: integer
-          nullable: true
-          description: 総件数（エラー時固定null）
-          example: null
-        page:
-          type: integer
-          nullable: true
-          description: ページ（エラー時固定null）
-          example: null
-        size:
-          type: integer
-          nullable: true
-          description: 1ページあたりの件数（エラー時固定null）
-          example: null
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              example: null
+          example:
+            code: 200
+            message: "ログアウト成功"
+            data: null
+            total: null
+            page: null
+            size: null
 
+    # パスワード変更レスポンス
+    ChangePasswordResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              example: null
+          example:
+            code: 200
+            message: "パスワードが更新されました。再度ログインしてください。"
+            data: null
+            total: null
+            page: null
+            size: null
+
+    # 辞書アイテム
     DictItem:
       type: object
       description: 統合辞書テーブルのデータ（ドロップダウン用：dictId=value、dictItemName=label）
@@ -458,37 +427,47 @@ components:
           description: ソート番号（昇順でソート済）
           example: 1
 
+    # 辞書レスポンス（dataが配列型）
+    DictSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DictItem'
+          example:
+            code: 200
+            message: "成功"
+            data:
+              - dictId: 1
+                dictItemName: "使用可"
+                sort: 1
+              - dictId: 2
+                dictItemName: "使用不可"
+                sort: 2
+            total: null
+            page: null
+            size: null
+
+    # エラーレスポンス（dataはnull）
     ErrorResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: エラーコード
-          example: 400
-        message:
-          type: string
-          description: エラーメッセージ
-          example: "エラーメッセージ"
-        data:
-          type: object
-          nullable: true
-          description: エラー時データ（固定null）
-          example: null
-        total:
-          type: integer
-          nullable: true
-          description: 総件数（エラー時固定null）
-          example: null
-        page:
-          type: integer
-          nullable: true
-          description: ページ（エラー時固定null）
-          example: null
-        size:
-          type: integer
-          nullable: true
-          description: 1ページあたりの件数（エラー時固定null）
-          example: null
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              example: null
+          example:
+            code: 400
+            message: "エラーメッセージ"
+            data: null
+            total: null
+            page: null
+            size: null
 
   responses:
     Unauthorized:
@@ -497,25 +476,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example: 
+          example:
             code: 40100
             message: "トークンが無効または期限切れです"
             data: null
             total: null
             page: null
             size: null
-            
+
     InternalError:
       description: サーバー内部エラー
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example: 
+          example:
             code: 50000
             message: "サーバーが混雑しています。しばらくしてから再度お試しください"
             data: null
             total: null
             page: null
             size: null
-            
