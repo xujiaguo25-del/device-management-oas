@@ -9,9 +9,7 @@ servers:
 tags:
   - name: devices
     description: 設備管理モジュール
-
 paths:
-# 設備モジュールインターフェース定義
   /devices:
     get:
       tags:
@@ -21,10 +19,11 @@ paths:
       parameters:
         - name: page
           in: query
-          description: ページ番号
+          description: ページ番号（1から開始）
           required: false
           schema:
             type: integer
+            minimum: 1
             example: 1
         - name: size
           in: query
@@ -32,7 +31,9 @@ paths:
           required: false
           schema:
             type: integer
-            example: 15
+            minimum: 1
+            maximum: 100
+            example: 10
         - name: userId
           in: query
           description: ユーザーID（フィルタ条件）
@@ -51,64 +52,29 @@ paths:
                   code:
                     type: integer
                     example: 200
+                  message:
+                    type: string
+                    example: "成功"
                   data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Device'
-                  total:
-                    type: integer
-                    description: 総件数
-                    example: 100
-                  page:
-                    type: integer
-                    example: 1
-                  size:
-                    type: integer
-                    example: 10
-        #パラメーター検証例外の処理時は、400 を返却します
-        #認証失敗例外の処理時は、401 を返却します
-        #リソースが見つからない例外の処理時は、404 を返却します
-        #その他のすべての例外の処理時は、500 を返却します
+                    $ref: '#/components/schemas/DevicePageResponse'
         '400':
           description: パラメータ検証エラー
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                      type: integer
-                      example: 400
-                  error:
-                    type: string
-                    example: "パラメータ検証エラー"
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: 認証失敗
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                      type: integer
-                      example: 401
-                  error:
-                    type: string
-                    example: "認証失敗"
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: サーバーエラー
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                  error:
-                    type: string
-                    example: "サーバー内部エラー"
-
+                $ref: '#/components/schemas/ErrorResponse'
   /devices/{id}:
     parameters:
       - name: id
@@ -152,58 +118,123 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 400
-                  error:
-                    type: string
-                    example: "パラメータ検証エラー"
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: 認証失敗
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 401
-                  error:
-                    type: string
-                    example: "認証失敗"
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: リソースが見つかりません
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "リソースが見つかりません"
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: サーバーエラー
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                  error:
-                    type: string
-                    example: "サーバー内部エラー"
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-  # 機器エンティティ
+    # 通用错误响应
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "パラメータ検証エラー"
+      required:
+        - code
+        - error
+    
+    # 字典基础模型
+    DictItem:
+      type: object
+      description: システム辞書項目共通モデル
+      properties:
+        dictId:
+          type: integer
+          description: 辞書ID（データベースPK）
+          example: 3
+        dictTypeName:
+          type: string
+          description: 辞書タイプ名
+          example: 用户类型、操作系统类型、SSD容量等
+        dictTypeCode:
+          type: string
+          description: 辞書タイプコード
+          example: USER_TYPE、OS_TYPE、SSED_SIZE等
+        dictItemName:
+          type: string
+          description: 辞書項目名
+          example: 普通用户、MacOS、512GB等
+        sort:
+          type: integer
+          description: 表示順序
+          example: 3
+        isEnabled:
+          type: boolean
+          description: 有効フラグ
+          example: true
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-06T04:56:41.666516"
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-06T04:57:43.063064"
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+      required:
+        - dictId
+        - dictTypeName
+        - dictItemName
+    
+    # ユーザー情報
+    UserInfo:
+      type: object
+      description: ユーザー情報
+      properties:
+        userId:
+          type: string
+          description: ユーザーID
+          example: JS0105
+        deptId:
+          type: string
+          description: 部署ID
+          example: DA04
+        userName:
+          type: string
+          description: ユーザー名
+          example: 潘小琴
+        userType:
+          $ref: '#/components/schemas/DictItem'
+          description: ユーザー種別（辞書参照：USER_TYPE）
+      required:
+        - userId
+        - userName
+    
+    # 機器オブジェクト
     Device:
       type: object
       description: 機器オブジェクト
       properties:
-        deviceId:        
+        deviceId:
           type: string
           description: 機器番号（プライマリキー）
           example: HYRON-221129 PC-DC-089
@@ -215,10 +246,10 @@ components:
           type: string
           description: コンピュータ名
           example: DA04-LINF-PC
-        LoginUserName:
+        loginUsername:
           type: string
           description: ログインユーザ名
-          example: linf-nrtu
+          example: panxq-mac
         project:
           type: string
           description: 所属プロジェクト
@@ -235,54 +266,74 @@ components:
           type: string
           description: 備考
           example: D1005開発室
-        selfConfirmId:
+        userInfo:
+          $ref: '#/components/schemas/UserInfo'
+          description: ユーザー情報
+        monitorCount:
           type: integer
-          description: 本人確認ID（辞書項目：CONFIRM_STATUS 関連、外部キー）
+          description: モニター数
           example: 1
-        osId:
+        ipCount:
           type: integer
-          description: OSID（辞書項目：OS_TYPE 関連、外部キー）
-          example: 3
-        memoryId:
-          type: integer
-          description: メモリID（辞書項目：MEMORY_SIZE 関連、外部キー）
+          description: IPアドレス数
           example: 1
-        ssdId:
-          type: integer
-          description: SSDID（辞書項目：SSD_SIZE 関連、外部キー）
-          example: 1
-        hddId:
-          type: integer
-          description: HDDID（辞書項目：HDD_SIZE 関連、外部キー）
-          example: 2
+        selfConfirm:
+          $ref: '#/components/schemas/DictItem'
+          description: 本人確認状態（辞書参照：CONFIRM_STATUS）
+        os:
+          $ref: '#/components/schemas/DictItem'
+          description: OSタイプ（辞書参照：OS_TYPE）
+        memory:
+          $ref: '#/components/schemas/DictItem'
+          description: メモリサイズ（辞書参照：MEMORY_SIZE）
+        ssd:
+          $ref: '#/components/schemas/DictItem'
+          nullable: true
+          description: SSD容量（辞書参照：SSD_SIZE、オプション）
+        hdd:
+          $ref: '#/components/schemas/DictItem'
+          nullable: true
+          description: HDD容量（辞書参照：HDD_SIZE、オプション）
+        monitors:
+          type: array
+          description: モニター情報リスト
+          items:
+            $ref: '#/components/schemas/MonitorInfo'
+        deviceIps:
+          type: array
+          description: IP情報リスト
+          items:
+            $ref: '#/components/schemas/DeviceIp'
         createTime:
           type: string
           format: date-time
           description: 作成日時
-          example: 2026-01-02T09:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         creater:
           type: string
           description: 作成者
-          example: JS0014
+          example: admin
         updateTime:
           type: string
           format: date-time
           description: 更新日時
-          example: 2026-01-02T10:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         updater:
           type: string
           description: 更新者
-          example: JS0014
-
-  # 機器IP情報エンティティ
+          example: admin
+      required:
+        - deviceId
+        - userId
+        - selfConfirm
+        - os
+        - memory
+    
+    # 機器IP情報エンティティ
     DeviceIp:
       type: object
       description: 機器のIP情報
       properties:
-        ipId:
-          type: integer
-          description: IP番号（プライマリキー）
-          example: 1
         deviceId:
           type: string
           description: 機器番号（外部キー）
@@ -295,30 +346,29 @@ components:
           type: string
           format: date-time
           description: 作成日時
-          example: 2026-01-02T09:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         creater:
           type: string
           description: 作成者
-          example: JS0014
+          example: admin
         updateTime:
           type: string
           format: date-time
           description: 更新日時
-          example: 2026-01-02T10:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         updater:
           type: string
           description: 更新者
-          example: JS0014
-
-  # 機器モニター情報エンティティ
+          example: admin
+      required:
+        - deviceId
+        - ipAddress
+    
+    # 機器モニター情報エンティティ
     MonitorInfo:
       type: object
       description: モニター情報
       properties:
-        monitorId:
-          type: integer
-          description: モニター番号（プライマリキー）
-          example: 1
         deviceId:
           type: string
           description: 機器番号（外部キー）
@@ -331,45 +381,125 @@ components:
           type: string
           format: date-time
           description: 作成日時
-          example: 2026-01-02T09:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         creater:
           type: string
           description: 作成者
-          example: JS0014
+          example: admin
         updateTime:
           type: string
           format: date-time
           description: 更新日時
-          example: 2026-01-02T10:00:00+08:00
+          example: "2026-01-06T06:55:28Z"
         updater:
           type: string
           description: 更新者
-          example: JS0014
-
-  # ページング応答
-    PaginatedResponse:
+          example: admin
+      required:
+        - deviceId
+        - monitorName
+    
+    # ページネーションレスポンス（直接内联排序信息，去除SortInfo引用）
+    DevicePageResponse:
       type: object
       properties:
-        code:
-          type: integer
-          description: ステータスコード
-        data:
+        content:
           type: array
           items:
-            type: object
-          description: データリスト
-        total:
-          type: integer
-          description: 総件数
-        page:
-          type: integer
-          description: 現在のページ
-        size:
-          type: integer
-          description: ページサイズ
+            $ref: '#/components/schemas/Device'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+              description: ページ番号
+              example: 1
+            pageSize:
+              type: integer
+              description: ページサイズ
+              example: 10
+            sort:
+              type: object
+              properties:
+                empty:
+                  type: boolean
+                  description: 空かどうか
+                  example: false
+                sorted:
+                  type: boolean
+                  description: ソート済みかどうか
+                  example: true
+                unsorted:
+                  type: boolean
+                  description: 未ソートかどうか
+                  example: false
+              required:
+                - empty
+                - sorted
+                - unsorted
+            offset:
+              type: integer
+              description: オフセット
+              example: 0
+            unpaged:
+              type: boolean
+              description: ページング無効かどうか
+              example: false
+            paged:
+              type: boolean
+              description: ページング有効かどうか
+              example: true
+        last:
+          type: boolean
+          description: 最終ページかどうか
+          example: true
         totalPages:
           type: integer
           description: 総ページ数
+          example: 1
+        totalElements:
+          type: integer
+          description: 総要素数
+          example: 3
+        first:
+          type: boolean
+          description: 最初のページかどうか
+          example: true
+        size:
+          type: integer
+          description: ページサイズ
+          example: 10
+        number:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        sort:
+          type: object
+          properties:
+            empty:
+              type: boolean
+              description: 空かどうか
+              example: false
+            sorted:
+              type: boolean
+              description: ソート済みかどうか
+              example: true
+            unsorted:
+              type: boolean
+              description: 未ソートかどうか
+              example: false
+          required:
+            - empty
+            - sorted
+            - unsorted
+        numberOfElements:
+          type: integer
+          description: 現在のページの要素数
+          example: 3
+        empty:
+          type: boolean
+          description: 空かどうか
+          example: false
 
   securitySchemes:
     bearerAuth:
