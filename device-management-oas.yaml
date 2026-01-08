@@ -93,7 +93,7 @@ paths:
       description: 設備IDに基づき設備詳細情報を照会
       responses:
         '200':
-          $ref: '#/components/responses/SuccessWithData'
+          $ref: '#/components/responses/SuccessWithDetail'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -638,6 +638,30 @@ components:
                 message: "作成成功"
                 timestamp: "2024-01-08T10:30:00Z"
     
+    SuccessWithDetail:
+      description: 設備詳細情報の取得に成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 200
+              data:
+                type: object
+                properties:
+                  deviceInfo:
+                    $ref: '#/components/schemas/Device'
+                  ipInfoList:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceIp'
+                  monitorInfoList:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonitorInfo'
+
     SuccessWithData:
       description: 操作成功并返回数据
       content:
@@ -651,18 +675,19 @@ components:
                 message: "成功"
                 timestamp: "2024-01-08T10:30:00Z"
                 data:
-                  type: object
-                  properties:
-                    deviceInfo:
-                      $ref: '#/components/schemas/Device'
-                    ipInfoList:
-                      type: array
-                      items:
-                      $ref: '#/components/schemas/DeviceIp'
-                    monitorInfoList:
-                      type: array
-                      items:
-                      $ref: '#/components/schemas/MonitorInfo'
+                  deviceId: "HYRON-221129 PC-DC-089"
+                  deviceModel: "dell-5000"
+                  computerName: "DA04-LINF-PC"
+                  LoginUserName: "linf-nrtu"
+                  project: "DA05支援"
+                  devRoom: "M10"
+                  jobNumber: "JS0014"
+                  remark: "D1005開発室"
+                  selfConfirmId: 1
+                  osId: 3
+                  memoryId: 1
+                  ssdId: 1
+                  hddId: 2
     
     SuccessWithPagination:
       description: 機器リストの取得に成功
