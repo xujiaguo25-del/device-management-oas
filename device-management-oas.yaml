@@ -191,6 +191,42 @@ paths:
                         type: string
                         example: "権限作成成功"      
 
+  /permissions/{id}:
+      delete:
+        summary: デバイス使用権限の削除
+        description: 権限と関連関係の検証後、指定された権限を削除します
+        tags: [権限-削除api]  
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: integer
+              format: int64
+              example: 1001
+        responses:
+          '200':
+            description: 削除成功
+            content:
+              application/json:
+                example: { "code": 200, "msg": "削除に成功しました", "data": null }
+          '403':
+            description: 削除権限なし
+            content:
+              application/json:
+                example: { "code": 403, "msg": "削除する権限がありません", "data": null }
+          '404':
+            description: 権限が存在しない
+            content:
+              application/json:
+                example: { "code": 404, "msg": "指定された権限は存在しません", "data": null }
+          '400':
+            description: 権限がリソースに関連づけられている
+            content:
+              application/json:
+                example: { "code": 400, "msg": "権限はユーザーまたはデバイスに関連づけられているため、削除できません", "data": null }
+
+
   /permissions/export:
     get:
       tags:
