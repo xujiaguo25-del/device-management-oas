@@ -227,7 +227,7 @@ components:
           type: string
           description: 所属開発室
           example: M10
-        jobNumber:
+        userId:
           type: string
           description: 従業員番号（所属ユーザ、外部キー）
           example: JS0014
