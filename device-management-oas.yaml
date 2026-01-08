@@ -639,28 +639,30 @@ components:
                 timestamp: "2024-01-08T10:30:00Z"
     
     SuccessWithData:
-      description: 設備詳細情報の取得に成功
+      description: 操作成功并返回数据
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                example: 200
-              data:
-                type: object
-                properties:
-                  deviceInfo:
-                    $ref: '#/components/schemas/Device'
-                  ipInfoList:
-                    type: array
-                    items:
-                    $ref: '#/components/schemas/DeviceIp'
-                  monitorInfoList:
-                    type: array
-                    items:
-                    $ref: '#/components/schemas/MonitorInfo'
+            $ref: '#/components/schemas/SingleResponse'
+          examples:
+            deviceData:
+              value:
+                code: 200
+                message: "成功"
+                timestamp: "2024-01-08T10:30:00Z"
+                data:
+                  type: object
+                  properties:
+                    deviceInfo:
+                      $ref: '#/components/schemas/Device'
+                    ipInfoList:
+                      type: array
+                      items:
+                      $ref: '#/components/schemas/DeviceIp'
+                    monitorInfoList:
+                      type: array
+                      items:
+                      $ref: '#/components/schemas/MonitorInfo'
     
     SuccessWithPagination:
       description: 機器リストの取得に成功
