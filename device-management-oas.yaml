@@ -13,6 +13,160 @@ tags:
 
 paths:
   /permissions:
+    get:
+      tags:
+        - 権限管理
+      summary: ページングによるデバイス権限情報の検索
+      description: 検索条件に基づいてデバイス権限情報をページングで取得
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの記録数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 20
+        - name: device_id
+          in: query
+          description: デバイスID
+          required: false
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: ユーザーID
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: 検索成功
+                  total:
+                    type: integer
+                    description: 総記録数
+                    example: 150
+                  page:
+                    type: integer
+                    description: 現在のページ番号
+                    example: 1
+                  size:
+                    type: integer
+                    description: 1ページあたりの記録数
+                    example: 10
+                  data:
+                    type: array
+                    description: デバイス権限情報リスト
+                    items:
+                      type: object
+                      properties:
+                        permission_id:
+                          type: string
+                          description: 権限ID
+                          example: "1"
+                        device_id:
+                          type: string
+                          description: デバイスID
+                        computer_name:
+                          type: string
+                          description: コンピュータ名
+                          example: "DESKTOP-1234"
+                        ip_address:
+                          type: array
+                          items:
+                            type: string
+                          description: IPアドレス
+                        user_id:
+                          type: string
+                          description: ユーザーID
+                          example: "JS0020"
+                        name:
+                          type: string
+                          description: ユーザー名
+                        dept_id:
+                          type: string
+                          description: 部署ID
+                        login_username:
+                          type: string
+                          description: ログインユーザー名
+                        domain_status:
+                          type: integer
+                          format: int64
+                          description: ドメイン状態
+                          example: 1
+                        domain_group:
+                          type: string
+                          description: ドメイングループ
+                        no_domain_reason:
+                          type: string
+                          description: ドメイン未設定理由
+                        smartit_status:
+                          type: integer
+                          format: int64
+                          description: SmartIT状態
+                          example: 2
+                        no_smartit_reason:
+                          type: string
+                          description: SmartIT未設定理由
+                        usb_status_:
+                          type: integer
+                          format: int64
+                          description: USB状態
+                          example: 1
+                        usb_reason:
+                          type: string
+                          description: USB権限理由
+                          example: "项目需要"
+                        usb_expire_date:
+                          type: string
+                          format: date
+                          description: USB権限有効期限
+                          example: "2024-12-31"
+                        antivirus_status:
+                          type: integer
+                          format: int64
+                          description: ウイルス対策ソフト状態
+                          example: 1
+                        no_symantec_reason:
+                          type: string
+                          description: Symantec未設定理由
+                        remark:
+                          type: string
+                          description: 備考
+                          example: "テストデバイス"
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 500
+                  message:
+                    type: string
+                    example: サーバー内部エラー
     post:
       tags:
         - 権限管理
@@ -43,18 +197,18 @@ paths:
         - 権限管理
       summary: 権限一覧エクスポート
       parameters:
-        # - name: page
-        #   in: query
-        #   description: ページ番号
-        #   required: false
-        #   schema:
-        #     type: integer
-        # - name: size
-        #   in: query
-        #   description: 1ページあたりの件数
-        #   required: false
-        #   schema:
-        #     type: integer
+        - name: page
+          in: query
+          description: ページ番号
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
       responses:
         '200':
           description: Excelファイル
