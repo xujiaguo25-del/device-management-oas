@@ -143,7 +143,7 @@ paths:
               examples:
                 wrongCurrent:
                   value: 
-                    code: 40001, 
+                    code: 40001
                     message: "現在のパスワードが正しくありません"
                     data: null
                     total: null
@@ -152,7 +152,7 @@ paths:
                     
                 weakNew:
                   value: 
-                    code: 40002,
+                    code: 40002
                     message: "新しいパスワードが強度要件を満たしていません"
                     data: null
                     total: null
@@ -161,7 +161,7 @@ paths:
                     
                 sameAsOld:
                   value: 
-                    code: 40003,
+                    code: 40003
                     message: "新しいパスワードは古いパスワードと同じにすることはできません"
                     data: null
                     total: null
@@ -265,7 +265,9 @@ components:
   schemas:
     LoginRequest:
       type: object
-      required: [userId, password]
+      required: 
+        - userId
+        - password
       properties:
         userId:
           type: string
@@ -345,12 +347,12 @@ components:
         page:
           type: integer
           nullable: true
-          description: 页码（エラー時固定null）
+          description: ページ（エラー時固定null）
           example: null
         size:
           type: integer
           nullable: true
-          description: 每页条数（エラー時固定null）
+          description: 1ページあたりの件数（エラー時固定null）
           example: null  
 
     LogoutResponse:
@@ -372,12 +374,12 @@ components:
         page:
           type: integer
           nullable: true
-          description: 页码（エラー時固定null）
+          description: ページ（エラー時固定null）
           example: null
         size:
           type: integer
           nullable: true
-          description: 每页条数（エラー時固定null）
+          description: 1ページあたりの件数（エラー時固定null）
           example: null
     
     ChangePasswordResponse:
@@ -397,12 +399,12 @@ components:
         page:
           type: integer
           nullable: true
-          description: 页码（エラー時固定null）
+          description: ページ（エラー時固定null）
           example: null
         size:
           type: integer
           nullable: true
-          description: 每页条数（エラー時固定null）
+          description: 1ページあたりの件数（エラー時固定null）
           example: null
     
     DictSuccessResponse:
@@ -430,26 +432,26 @@ components:
         page:
           type: integer
           nullable: true
-          description: 页码（エラー時固定null）
+          description: ページ（エラー時固定null）
           example: null
         size:
           type: integer
           nullable: true
-          description: 每页条数（エラー時固定null）
+          description: 1ページあたりの件数（エラー時固定null）
           example: null
 
     DictItem:
       type: object
-      description: 統合辞書テーブルのデータ（下拉框用：dictId=value、dictItemName=label）
+      description: 統合辞書テーブルのデータ（ドロップダウン用：dictId=value、dictItemName=label）
       properties:
         dictId:
           type: integer
           format: int64
-          description: 辞書ID（下拉框value値）
+          description: 辞書ID（ドロップダウンvalue値）
           example: 1
         dictItemName:
           type: string
-          description: 辞書項目名（下拉框label値）
+          description: 辞書項目名（ドロップダウンlabel値）
           example: "使用可"
         sort:
           type: integer
@@ -480,12 +482,12 @@ components:
         page:
           type: integer
           nullable: true
-          description: 页码（エラー時固定null）
+          description: ページ（エラー時固定null）
           example: null
         size:
           type: integer
           nullable: true
-          description: 每页条数（エラー時固定null）
+          description: 1ページあたりの件数（エラー時固定null）
           example: null
 
   responses:
@@ -496,7 +498,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example: 
-            code: 40100,
+            code: 40100
             message: "トークンが無効または期限切れです"
             data: null
             total: null
@@ -510,7 +512,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example: 
-            code: 50000,
+            code: 50000
             message: "サーバーが混雑しています。しばらくしてから再度お試しください"
             data: null
             total: null
