@@ -386,13 +386,12 @@ paths:
 
 components:
   schemas:
-    # 共通レスポンススキーマ
-    ApiResponse_PermissionDetail:
+    ApiResponseBase:
       type: object
       properties:
         code:
           type: string
-          description: レスポンスコード
+          description:  レスポンスコード
           example: "200"
         message:
           type: string
@@ -401,37 +400,46 @@ components:
         data:
           $ref: "#/components/schemas/DeviceUsagePermissionDTO"
 
-    ApiResponse_Void:
-      type: object
-      properties:
-        code:
-          type: string
-          description: レスポンスコード
-          example: "200"
-        message:
-          type: string
-          description: レスポンスメッセージ
-          example: "更新に成功しました"
-        data:
-          type: object
-          nullable: true
-          description: 空データ
+  # 権限詳細用のレスポンス
+    ApiResponse_PermissionDetail:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/DeviceUsagePermissionDTO"
 
+   # 空データに対するレスポンス
+    ApiResponse_Void:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              description: 空のデータ
+
+# 共通 API レスポンス
+    ApiResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              description: 応答データ
+              nullable: true
+
+    # エラー応答
     Error:
-      type: object
-      properties:
-        code:
-          type: string
-          description: エラーコード
-          example: "404"
-        message:
-          type: string
-          description: エラーメッセージ
-          example: "権限情報が存在しません"
-        timestamp:
-          type: string
-          format: date-time
-          description: エラー発生時刻
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+              description:  エラー発生時刻
 
     # DTOスキーマ
     DeviceUsagePermissionDTO:
@@ -504,30 +512,14 @@ components:
           description: 作成日時
         creater:
           type: string
-          description: 作成者
+          description: 作成者 
         updateTime:
           type: string
           format: date-time
           description: 更新日時
         updater:
           type: string
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: 状态码
-          example: "200"
-        message:
-          type: string
-          description: 消息
-          example: "成功"
-        data:
-          description: 响应数据
-          nullable: true
-      required:
-        - code
-        - message
+          description: 更新者 
 
     DevicePermissionDTO:
       type: object
