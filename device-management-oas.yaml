@@ -85,7 +85,9 @@ paths:
                           description: コンピュータ名
                           example: "DESKTOP-1234"
                         ip_address:
-                          type: string
+                          type: array
+                          items:
+                            type: string
                           description: IPアドレス
                         user_id:
                           type: string
