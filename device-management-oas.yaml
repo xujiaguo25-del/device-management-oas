@@ -121,50 +121,17 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/Device'
+                  $ref: '#/components/schemas/InsertData'
                   
           responses:
-            "200":
-              description: データの挿入に成功しました
-              content:
-                application/json:
-                  schema:
-                    type: object
-                    properties:
-                        code:
-                          type: integer
-                          example: 200
-                    
-                        data:
-                          type: array
-                          items:
-                            $ref: '#/components/schemas/Device'
-            "400":
-              description: パラメータ検証に失敗しました  
-              content:
-                  application/json:
-                    schema:
-                      type: object
-                      properties:
-                        code: 
-                              type: integer
-                              example: 400
-                        error:                      
-                          type: string
-                          example: "パラメータ検証に失敗しました" 
-            "500":
-              description: サーバーエラー
-              content:
-                  application/json:
-                    schema:
-                      type: object
-                      properties:
-                        code: 
-                          type: integer
-                          example: 500
-                        error:
-                          type: string
-                          example: "サーバーエラー"
+            '200':
+              $ref: '#/components/responses/InsertSuccess'
+            '400':
+              $ref: '#/components/responses/BadRequest'
+            '401':
+              $ref: '#/components/responses/Unauthorized'
+            '500':
+              $ref: '#/components/responses/InternalServerError'
 
 
   /devices/{id}:
@@ -265,65 +232,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Device'
+              $ref: '#/components/schemas/UpdateData'
               
       responses:
-        "200":
-          description: データの編集に成功しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                    code:
-                      type: integer
-                      example: 200
-                
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/Device'
-        "400":
-          description: パラメータ検証に失敗しました  
-          content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    code: 
-                          type: integer
-                          example: 400
-                    error:
-                      type: string
-                      example: "パラメータ検証に失敗しました"
-
-
-        "404":
-          description: リソースが存在しません
-          content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    code: 
-                          type: integer
-                          example: 404
-                    error:
-                      type: string
-                      example: "設備が存在しません"
-        "500":
-          description: サーバーエラー
-          content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    code: 
-                          type: integer
-                          example: 500
-                    error:
-                      type: string
-                      example: "サーバーエラー"   
+        '200':
+          $ref: '#/components/responses/UpdateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     
     
     delete:
@@ -398,6 +317,210 @@ paths:
                     example: "サーバー内部エラー"
 components:
   schemas:
+    ApiResponse:
+          type: object
+          properties:
+            code:
+              type: integer
+              description: ステータスコード
+              example: 200
+            message:
+              type: string
+              description: 応答メッセージ
+              example: "成功"
+          required:
+            - code
+            - message   
+
+    SingleResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              description: 単一データオブジェクト
+              oneOf:
+                - $ref: '#/components/schemas/Device'
+                - type: object
+                  properties:
+                    deviceInfo:
+                      $ref: '#/components/schemas/Device'
+                    ipInfoList:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/deviceIp'
+                    monitorInfoList:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/monitorInfo'
+
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object 
+          properties:
+            error:
+              type: array
+              description: エラー詳細リスト
+
+
+  # PUTリクエストで渡されるパラメータ
+    InsertData:
+      type: object
+      description: データ追加
+      properties:
+        name:
+          type: string
+          description: ユーザーの氏名
+          example: 林飞
+        deptId:
+          type: string
+          description: 部署番号
+          example: DA04
+
+        deviceId:        
+          type: string
+          description: 機器番号
+          example: HYRON-211217 PC-DC-058
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5090
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: HYRON-JS-LINFEI
+        LoginUserName:
+          type: string
+          description: ログインユーザ名
+          example: linfei
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        userId:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        selfConfirmId:
+          type: integer
+          description: 本人確認ID
+          example: 1
+        osId:
+          type: integer
+          description: OSID
+          example: 1
+        memoryId:
+          type: integer
+          description: メモリID
+          example: 1
+        ssdId:
+          type: integer
+          description: SSDID
+          example: 1
+        hddId:
+          type: integer
+          description: HDDID
+          example: 2
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.203.139
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-151127 PC-DC-004JD        
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+
+  # POSTリクエストで渡されるパラメータ      
+    UpdateData:
+      type: object
+      description: データ追加
+      properties:
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5090
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: HYRON-JS-LINFEI
+        LoginUserName:
+          type: string
+          description: ログインユーザ名
+          example: linfei
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        userId:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        selfConfirmId:
+          type: integer
+          description: 本人確認ID
+          example: 1
+        osId:
+          type: integer
+          description: OSID
+          example: 1
+        memoryId:
+          type: integer
+          description: メモリID
+          example: 1
+        ssdId:
+          type: integer
+          description: SSDID
+          example: 1
+        hddId:
+          type: integer
+          description: HDDID
+          example: 2
+
+        ipId:
+          type: integer
+          description: IP番号
+          example: 1
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.203.139
+
+        monitorId:
+          type: integer
+          description: モニター番号
+          example: 1          
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-151127 PC-DC-004JD   
+
+        updater:
+          type: string
+          description: 作成者
+          example: admin
+
   # 機器エンティティ
     Device:
       type: object
@@ -427,7 +550,7 @@ components:
           type: string
           description: 所属開発室
           example: M10
-        jobNumber:
+        userId:
           type: string
           description: 従業員番号（所属ユーザ、外部キー）
           example: JS0014
@@ -577,3 +700,129 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWTトークンを使用した認証
+
+
+
+  responses: 
+    InsertSuccess:
+      description: 挿入成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SingleResponse'
+          examples:
+            insertData:
+              value:
+                code: 200
+                message: "成功"
+                data:
+                  "name": "林飞"
+                  "deptId": "DA04"
+                  "deviceId": "HYRON-211217 PC-DC-058"
+                  "deviceModel": "dell-5090"
+                  "computerName": "HYRON-JS-LINFEI"
+                  "LoginUserName": "linfei"
+                  "project": "DA05支援"
+                  "devRoom": "M10"
+                  "userId": "JS0014"
+                  "remark": "D1005開発室"
+                  "selfConfirmId": 1
+                  "osId": 1
+                  "memoryId": 1
+                  "ssdId": 1
+                  "hddId": 2
+                  "ipAddress": "192.168.203.139"
+                  "monitorName": "HYRON-151127 PC-DC-004JD"
+                  "creater": "admin"
+
+    UpdateSuccess:
+      description: 更新成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SingleResponse'
+          examples:
+            insertData:
+              value:
+                code: 200
+                message: "成功"
+                data:
+                  "deviceModel": "dell-5000"
+                  "computerName": "DA04-LINF-PC"
+                  "loginUsername": "linf-nrtu"
+                  "project": "D204-NRTU"
+                  "devRoom": "M10"
+                  "userId": "JS0014"
+                  "remark": "D1006开发室"
+                  "selfConfirmId": 1
+                  "osId": 1
+                  "memoryId": 1
+                  "ssdId": 1
+                  "hddId": 2
+
+                  "ipId": 1
+                  "ipAddress": "192.168.1.102"
+                  "monitorId": 1
+                  "monitorName": "HYRON-241118 Minitor-131"
+
+
+                  "updater": "admin"
+
+    # 400 Error
+    BadRequest:
+      description: リクエストパラメータエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            default:
+              value:
+                code: 400
+                message: "パラメータ検証エラー"
+                error:
+                  - field: "deviceId"
+                    message: "deviceIDは必須です"
+                    code: "INVALID_PARAMETER"
+            pageParamError:
+              value:
+                code: 400
+                message: "ページングパラメータエラー"
+                error:
+                  - field: "page"
+                    message: "ページ番号は正の整数である必要があります"
+                    code: "INVALID_PAGE_NUMBER"
+
+    # 401 Error
+    Unauthorized:
+      description: 認証失敗
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 401
+                message: "認証失敗、再度ログインしてください"
+            tokenExpired:
+              value:
+                code: 401
+                message: "トークンが期限切れです"
+
+    # 500 Error
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 500
+                message: "サーバー内部エラー、後ほど再試行してください"
+            databaseError:
+              value:
+                code: 500
+                message: "データベース接続エラー"
