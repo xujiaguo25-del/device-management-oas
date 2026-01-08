@@ -5,6 +5,159 @@ info:
   version: 1.0.0
 tags: []
 paths:
+  /security-checks?size=10:
+    get:
+      summary: セキュリティチェック記録一覧の取得
+      deprecated: false
+      description: すべてのセキュリティチェック記録を取得し、デバイスIDおよびユーザーIDでの絞り込みとページング取得に対応します
+      tags: []
+      parameters:
+      - name: page
+        in: query
+        description: ページ番号
+        required: true
+        example: 1
+        schema:
+          type: integer
+          default: 1
+      - name: size
+        in: query
+        description: 1ページ当たりの件数
+        required: false
+        example: 10
+        schema:
+          type: integer
+          default: 10
+      - name: device_Id
+        in: query
+        description: デバイスID
+        required: false
+        example: デバイス001
+        schema:
+          type: string
+      - name: user_id
+        in: query
+        description: ユーザーID
+        required: false
+        example: ユーザー001
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 一覧取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                - sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-01-15'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-01-15 10:00:00'
+                  installed_software: true
+                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screen_saver_pwd: true
+                  usb_interface: false
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+                - sampling_id: record002
+                  user_id: EMP00456
+                  device_id: DEV2024002
+                  name: 佐藤花子
+                  report_id: SEC20240115002
+                  update_date: '2024-01-16'
+                  create_time: '2024-01-11 09:00:00'
+                  update_time: '2024-01-16 11:00:00'
+                  installed_software: false
+                  disposal_measures: なし
+                  screen_saver_pwd: true
+                  usb_interface: true
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+                total: 120
+                page: 1
+                size: 10
+      security: []
+  /security-checks:
+    post:
+      summary: 新規作成
+      deprecated: false
+      description: セキュリティチェック項目を新規作成します
+      tags: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SampleCheckDTO'
+            example:
+              sampling_id: record001
+              user_id: EMP00123
+              device_id: DEV2024001
+              name: 山田太郎
+              report_id: SEC20240115001
+              update_date: '2024-01-15'
+              create_time: '2024-01-10 09:00:00'
+              update_time: '2024-01-15 10:00:00'
+              installed_software: true
+              disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+              screen_saver_pwd: true
+              usb_interface: false
+              security_patch: true
+              antivirus_protection: true
+              boot_authentication: true
+        required: true
+      responses:
+        '200':
+          description: 追加に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 追加に成功しました
+                data:
+                  sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-01-15'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-01-15 10:00:00'
+                  installed_software: true
+                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screen_saver_pwd: true
+                  usb_interface: false
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+      security: []
   /security-checks/export:
     get:
       summary: レポート出力
