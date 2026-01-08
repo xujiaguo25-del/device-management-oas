@@ -516,7 +516,7 @@ components:
         - deviceId
         - monitorName
     
-    # ページネーションレスポンス（直接内联排序信息，去除SortInfo引用）
+    # ページネーションレスポンス
     DevicePageResponse:
       type: object
       properties:
@@ -620,7 +620,7 @@ components:
 
   responses:
     Success:
-      description: 操作成功
+      description: 
       content:
         application/json:
           schema:
@@ -643,7 +643,7 @@ components:
                 timestamp: "2024-01-08T10:30:00Z"
     
     SuccessWithData:
-      description: 操作成功并返回数据
+      description: 
       content:
         application/json:
           schema:
