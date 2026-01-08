@@ -3,6 +3,10 @@ info:
   title: 設備API
   description: 設備の追加・削除・更新・参照およびエクスポート機能のAPI定義
   version: 1.0.0
+
+security:
+  - bearerAuth: [] 
+
 servers:
   - url: /api
     description: デフォルトAPIサーバーアドレス
@@ -75,6 +79,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+    
+    post:
+      tags:
+        - devices
+      summary: 設備を新規追加
+      description: 新しい設備情報を追加します
+      operationId: insertDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessWithData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /devices/{id}:
     parameters:
       - name: id
@@ -137,23 +165,170 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - devices
+      summary: 設備情報を編集
+      description: 設備情報を修正します
+      operationId: updateDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessWithData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: 設備が存在しません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                deviceNotFound:
+                  value:
+                    code: 404
+                    message: "設備が存在しません"
+                    timestamp: "2024-01-08T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - devices
+      summary: デバイスを削除
+      description: デバイスIDに基づいて指定されたデバイスの記録を削除する
+      operationId: deleteDevice
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: デバイスが存在しません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                deviceNotFound:
+                  value:
+                    code: 404
+                    message: "設備が存在しません"
+                    timestamp: "2024-01-08T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /devices/export:
+    get:
+      tags:
+        - devices
+      summary: デバイス情報をエクスポート
+      description: すべてのデバイス情報をExcelファイルにエクスポートする
+      operationId: exportDevices
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            description: フィルター条件：ユーザー社員番号
+            example: "USR001"
+      responses:
+        '200':
+          description: デバイスリストのエクスポートに成功しました
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWTトークンを使用した認証
   schemas:
-    # 通用错误响应
-    ErrorResponse:
+    ApiResponse:
       type: object
       properties:
         code:
           type: integer
-          example: 400
-        error:
+          description: ステータスコード
+          example: 200
+        message:
           type: string
-          example: "パラメータ検証エラー"
+          description: 応答メッセージ
+          example: "成功"
+        timestamp:
+          type: string
+          format: date-time
+          description: 応答時間
+          example: "2024-01-08T10:30:00Z"
       required:
         - code
-        - error
+        - message   
+        - timestamp
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object 
+          properties:
+            error:
+              type: array
+              description: エラー詳細リスト
+              items:
+                $ref: '#/components/schemas/ErrorDetail'
     
-    # 字典基础模型
+    SingleResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              description: 単一データオブジェクト
+              oneOf:
+                - $ref: '#/components/schemas/Device'
+                - type: object
+                  properties:
+                    deviceInfo:
+                      $ref: '#/components/schemas/Device'
+                    ipInfoList:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/DeviceIp'
+                    monitorInfoList:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MonitorInfo'
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          description: エラーが発生したフィールド
+          example: "userId"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "ユーザーIDは必須です"  
+        code:
+          type: string
+          description: エラーコード
+          example: "INVALID_PARAMETER"  
+    
     DictItem:
       type: object
       description: システム辞書項目共通モデル
@@ -501,9 +676,165 @@ components:
           description: 空かどうか
           example: false
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWTトークンを使用した認証
+  responses:
+    Success:
+      description: 操作成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 200
+                message: "成功"
+                timestamp: "2024-01-08T10:30:00Z"
+            deleteSuccess:
+              value:
+                code: 200
+                message: "削除成功"
+                timestamp: "2024-01-08T10:30:00Z"
+            createSuccess:
+              value:
+                code: 200
+                message: "作成成功"
+                timestamp: "2024-01-08T10:30:00Z"
+    
+    SuccessWithData:
+      description: 操作成功并返回数据
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SingleResponse'
+          examples:
+            deviceData:
+              value:
+                code: 200
+                message: "成功"
+                timestamp: "2024-01-08T10:30:00Z"
+                data:
+                  deviceId: "HYRON-221129 PC-DC-089"
+                  deviceModel: "dell-5000"
+                  computerName: "DA04-LINF-PC"
+                  LoginUserName: "linf-nrtu"
+                  project: "DA05支援"
+                  devRoom: "M10"
+                  jobNumber: "JS0014"
+                  remark: "D1005開発室"
+                  selfConfirmId: 1
+                  osId: 3
+                  memoryId: 1
+                  ssdId: 1
+                  hddId: 2
+    
+    SuccessWithPagination:
+      description: 操作成功并返回分页数据
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DevicePageResponse'
+          examples:
+            devicesList:
+              value:
+                code: 200
+                message: "成功"
+                timestamp: "2024-01-08T10:30:00Z"
+                data:
+                  - deviceId: "HYRON-221129 PC-DC-089"
+                    deviceModel: "dell-5000"
+                    computerName: "DA04-LINF-PC"
+                  - deviceId: "HYRON-221129 PC-DC-090"
+                    deviceModel: "dell-5001"
+                    computerName: "DA04-LINF-PC02"
+                pagination:
+                  total: 100
+                  page: 1
+                  size: 10
+                  totalPages: 10
+    
+    BadRequest:
+      description: リクエストパラメータエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            default:
+              value:
+                code: 400
+                message: "パラメータ検証エラー"
+                timestamp: "2024-01-08T10:30:00Z"
+                error:
+                  - field: "userId"
+                    message: "ユーザーIDは必須です"
+                    code: "INVALID_PARAMETER"
+            pageParamError:
+              value:
+                code: 400
+                message: "ページングパラメータエラー"
+                timestamp: "2024-01-08T10:30:00Z"
+                error:
+                  - field: "page"
+                    message: "ページ番号は正の整数である必要があります"
+                    code: "INVALID_PAGE_NUMBER"
+    
+    Unauthorized:
+      description: 認証失敗
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 401
+                message: "認証失敗、再度ログインしてください"
+                timestamp: "2024-01-08T10:30:00Z"
+            tokenExpired:
+              value:
+                code: 401
+                message: "トークンが期限切れです"
+                timestamp: "2024-01-08T10:30:00Z"
+    
+    NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 404
+                message: "リソースが見つかりません"
+                timestamp: "2024-01-08T10:30:00Z"
+            deviceNotFound:
+              value:
+                code: 404
+                message: "設備が存在しません"
+                timestamp: "2024-01-08T10:30:00Z"
+            userNotFound:
+              value:
+                code: 404
+                message: "ユーザーが存在しません"
+                timestamp: "2024-01-08T10:30:00Z"
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 500
+                message: "サーバー内部エラー、後ほど再試行してください"
+                timestamp: "2024-01-08T10:30:00Z"
+                requestId: "req_123456789"
+            databaseError:
+              value:
+                code: 500
+                message: "データベース接続エラー"
+                timestamp: "2024-01-08T10:30:00Z"
+                requestId: "req_123456790"
