@@ -5,7 +5,66 @@ info:
   version: 1.0.0
 tags: []
 paths:
-  /sampling-checks/{sampling_id}:
+  /security-checks/{sampling_id}:
+    get:
+      summary: セキュリティチェック詳細情報の取得
+      deprecated: false
+      description: セキュリティチェック記録の詳細情報を取得します
+      operationId: query-checks-by-id
+      tags: []
+      parameters:
+      - name: sampling_id
+        in: path
+        description: セキュリティチェック記録ID
+        example: record001
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 詳細取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                  sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-01-15'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-01-15 10:00:00'
+                  installed_software: true
+                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screen_saver_pwd: true
+                  usb_interface: false
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+        '404':
+          description: 対象が存在しません
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: 対応するセキュリティチェック記録が見つかりません
+                data: {}
+      security: []
     put:
       summary: 更新
       deprecated: false
@@ -232,5 +291,3 @@ servers:
 - url: http://localhost:8080/api
   description: 開発環境
 security: []
-
-
