@@ -1,187 +1,69 @@
 openapi: 3.0.1
 info:
   title: セキュリティチェックAPI
-  description: 更新・削除
+  description: セキュリティチェック機能のAPI定義
   version: 1.0.0
 tags: []
 paths:
-  /security-checks?size=10:
-    get:
-      summary: セキュリティチェック一覧取得
-      deprecated: false
-      description: 任意の条件でチェック記録をフィルタリングし、ページ分割して返却する
-      tags: []
-      parameters:
-        - name: page
-          in: query
-          description: ページ番号
-          required: true
-          example: 1
-          schema:
-            type: integer
-            default: 1
-        - name: size
-          in: query
-          description: 1ページあたりのデータ件数
-          required: false
-          example: 10
-          schema:
-            type: integer
-            default: 10
-        - name: device_Id
-          in: query
-          description: デバイスID
-          required: false
-          example: デバイス001
-          schema:
-            type: string
-        - name: user_id
-          in: query
-          description: ユーザーID
-          required: false
-          example: ユーザー001
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SampleCheckDTO'
-          headers: {}
-      security: []
-  /security-checks:
-    post:
-      summary: 新規登録
-      deprecated: false
-      description: セキュリティチェック項目を新規に登録する
-      tags: []
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SampleCheckDTO'
-            example:
-              user_id: EMP00123
-              device_id: DEV2024001
-              name: 山田 太郎
-              report_id: SEC20240115001
-              update_date: '2024-01-15'
-              installed_software: true
-              disposal_measures: 未認可のソフトウェアをアンインストールし、システムを再起動した
-              screen_saver_pwd: true
-              usb_interface: false
-              security_patch: true
-              antivirus_protection: true
-              boot_authentication: true
-        required: true
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: string
-          headers: {}
-      security: []
   /security-checks/{sampling_id}:
     get:
       summary: セキュリティチェック詳細情報の取得
       deprecated: false
-      description: 指定されたIDのセキュリティチェック詳細情報を取得する
+      description: セキュリティチェック記録の詳細情報を取得します
       operationId: query-checks-by-id
       tags: []
       parameters:
-        - name: sampling_id
-          in: path
-          description: ''
-          required: true
-          schema:
-            type: string
+      - name: sampling_id
+        in: path
+        description: セキュリティチェック記録ID
+        example: record001
+        required: true
+        schema:
+          type: string
       responses:
         '200':
-          description: ''
+          description: 詳細取得成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SampleCheckDTO'
-          headers: {}
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                  sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-01-15'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-01-15 10:00:00'
+                  installed_software: true
+                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screen_saver_pwd: true
+                  usb_interface: false
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
         '404':
           description: 対象が存在しません
-          headers: {}
-      security: []
-  /security-checks/export:
-    get:
-      summary: レポート出力
-      deprecated: false
-      description: ''
-      tags: []
-      parameters:
-        - name: reportCode
-          in: query
-          description: レポート番号（レポート番号に基づいてフィルタリング）
-          required: true
-          example: ISMSFM1601-1
-          schema:
-            type: string
-      responses:
-        '200':
-          description: レポートファイルを返却。ファイル名はバックエンドで動的に生成される。
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
-                properties: {}
-          headers: {}
-      security: []
-  /sampling-checks/{sampling_id}:
-    put:
-      summary: 更新
-      deprecated: false
-      description: ''
-      tags: []
-      parameters:
-        - name: sampling_id
-          in: path
-          description: ''
-          required: true
-          example: ''
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SampleCheckDTO'
-            examples: {}
-        required: true
-      responses:
-        '200':
-          description: 更新成功
-          headers: {}
-      security: []
-    delete:
-      summary: 削除
-      deprecated: false
-      description: ''
-      tags: []
-      parameters:
-        - name: sampling_id
-          in: path
-          description: ''
-          required: true
-          example: ''
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 削除成功
-          headers: {}
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: 対応するセキュリティチェック記録が見つかりません
+                data: {}
       security: []
 components:
   schemas:
@@ -189,14 +71,14 @@ components:
       title: SampleCheckDTO
       type: object
       required:
-        - sampling_id
-        - user_id
-        - device_id
-        - name
-        - report_id
-        - update_date
-        - create_time
-        - update_time
+      - sampling_id
+      - user_id
+      - device_id
+      - name
+      - report_id
+      - update_date
+      - create_time
+      - update_time
       properties:
         sampling_id:
           type: string
@@ -252,9 +134,57 @@ components:
           type: string
           maxLength: 100
           nullable: true
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: ステータスコード
+        message:
+          type: string
+          description: メッセージ
+        data:
+          description: 業務データ
+        total:
+          type: integer
+          format: int64
+          nullable: true
+        page:
+          type: integer
+          nullable: true
+        size:
+          type: integer
+          nullable: true
+      required:
+      - code
+      - message
+      example:
+        code: 200
+        message: 取得に成功しました
+        data:
+          sampling_id: record001
+          user_id: EMP00123
+          device_id: DEV2024001
+          name: 山田太郎
+          report_id: SEC20240115001
+          update_date: '2024-01-15'
+          create_time: '2024-01-10 09:00:00'
+          update_time: '2024-01-15 10:00:00'
+          installed_software: true
+          disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+          screen_saver_pwd: true
+          usb_interface: false
+          security_patch: true
+          antivirus_protection: true
+          boot_authentication: true
+        total: 120
+        page: 1
+        size: 10
   responses: {}
   securitySchemes: {}
 servers:
-  - url: http://localhost:8080/api
-    description: 開発環境
+- url: http://localhost:8080/api
+  description: 開発環境
 security: []
+
+
