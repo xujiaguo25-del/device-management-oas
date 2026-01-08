@@ -154,19 +154,6 @@ paths:
                           type: string
                           description: 備考
                           example: "テストデバイス"
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 500
-                  message:
-                    type: string
-                    example: サーバー内部エラー
     post:
       tags:
         - 権限管理
@@ -185,12 +172,17 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: '#/components/schemas/ApiResponseBase'
                   - properties:
-                      data: 
+                      code: 
+                        type: integer
+                        example: 200
+                      message: 
                         type: string
-                        example: "権限作成成功"      
-
+                        example: "権限作成成功"    
+                      data:
+                           $ref: '#/components/schemas/DevicePermissionDTO'
+                                    
   /permissions/{id}:
     get:
       tags:
@@ -212,14 +204,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse_PermissionDetail"
+               allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code: 
+                        type: integer
+                        example: 200
+                      message: 
+                        type: string
+                        example: "権限詳細取得成功"
+                      data: 
+                        $ref: "#/components/schemas/DevicePermissionDetailDTO"
         "404":
           description: 権限が存在しません
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                allOf:
+                 - $ref: "#/components/schemas/ApiResponseBase"
+                 - properties:
+                      code: 
+                        type: integer
+                        example: 404
+                      message: 
+                        type: string
+                        example: "権限が存在しません"
     put:
       tags:
         - 権限管理
@@ -307,19 +316,44 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse_Void"
+                allOf:
+                 - $ref: "#/components/schemas/ApiResponseBase"
+                 - properties:
+                      code: 
+                        type: integer
+                        example: 200
+                      message: 
+                        type: string
+                        example: "権限更新成功"
         "400":
           description: 無効なリクエストデータ
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+               allOf:
+                - $ref: "#/components/schemas/ApiResponseBase"
+                - properties:
+                    code: 
+                      type: integer
+                      example: 400
+                    message: 
+                      type: string
+                      example: "無効なリクエストデータ"
+
         "404":
           description: 権限が存在しません
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+             schema:
+               allOf:
+                - $ref: "#/components/schemas/ApiResponseBase"
+                - properties:
+                    code: 
+                      type: integer
+                      example: 404
+                    message: 
+                      type: string
+                      example: "権限が存在しません"
 
     delete:
         summary: デバイス使用権限の削除
@@ -339,42 +373,77 @@ paths:
             description: 削除成功
             content:
               application/json:
-                example: { "code": 200, "msg": "削除に成功しました", "data": null }
+               schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code: 
+                        type: integer
+                        example: 200
+                      message: 
+                        type: string
+                        example: "削除成功"
           '403':
             description: 削除権限なし
             content:
               application/json:
-                example: { "code": 403, "msg": "削除する権限がありません", "data": null }
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code: 
+                        type: integer
+                        example: 403
+                      message: 
+                        type: string
+                        example: "削除権限なし"
           '404':
             description: 権限が存在しない
             content:
               application/json:
-                example: { "code": 404, "msg": "指定された権限は存在しません", "data": null }
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code: 
+                        type: integer
+                        example: 404
+                      message: 
+                        type: string
+                        example: "権限が存在しない"
           '400':
             description: 権限がリソースに関連づけられている
             content:
               application/json:
-                example: { "code": 400, "msg": "権限はユーザーまたはデバイスに関連づけられているため、削除できません", "data": null }
-
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code: 
+                        type: integer
+                        example: 400
+                      message: 
+                        type: string
+                        example: "権限がリソースに関連づけられている" 
 
   /permissions/export:
     get:
       tags:
         - 権限管理
       summary: 権限一覧エクスポート
-      parameters:
-        - name: page
-          in: query
-          description: ページ番号
-          required: false
-          schema:
-            type: integer
-        - name: size
-          in: query
-          description: 1ページあたりの件数
-          required: false
-          schema:
-            type: integer
+      # parameters:
+      #   - name: page
+      #     in: query
+      #     description: ページ番号
+      #     required: false
+      #     schema:
+      #       type: integer
+      #   - name: size
+      #     in: query
+      #     description: 1ページあたりの件数
+      #     required: false
+      #     schema:
+      #       type: integer
       responses:
         '200':
           description: Excelファイル
@@ -386,63 +455,57 @@ paths:
 
 components:
   schemas:
+    # ApiResponseBase:
+    #    allOf:
+    #     - $ref: '#/components/schemas/ApiResponse'
+    #     - type: object
+    #       properties:
+    #         data:
+    #           $ref: "#/components/schemas/DeviceUsagePermissionDTO"
+
+  # # 権限詳細用のレスポンス
+  #   PermissionDetailResponse:
+  #     allOf:
+  #       - $ref: '#/components/schemas/ApiResponseBase'
+  #       - type: object
+  #         properties:
+  #           data:
+  #             $ref: "#/components/schemas/DeviceUsagePermissionDTO"
+
+# 共通 API レスポンス
     ApiResponseBase:
       type: object
       properties:
         code:
-          type: string
-          description:  レスポンスコード
-          example: "200"
+          type: integer
+          description: ステータスコード
+          example: 200
         message:
           type: string
-          description: レスポンスメッセージ
-          example: "検索に成功しました"
+          description: メッセージ
+          example: "操作成功"
         data:
-          $ref: "#/components/schemas/DeviceUsagePermissionDTO"
+           type: object
+           description: 応答データ
+           nullable: true
+          # example: null
+      required:
+        - code
+        - message
 
-  # 権限詳細用のレスポンス
-    ApiResponse_PermissionDetail:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponseBase'
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/DeviceUsagePermissionDTO"
-
-   # 空データに対するレスポンス
-    ApiResponse_Void:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponseBase'
-        - type: object
-          properties:
-            data:
-              type: object
-              nullable: true
-              description: 空のデータ
-
-# 共通 API レスポンス
-    ApiResponse:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponseBase'
-        - type: object
-          properties:
-            data:
-              description: 応答データ
-              nullable: true
-
-    # エラー応答
-    Error:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponseBase'
-        - type: object
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-              description:  エラー発生時刻
+    # # エラー応答
+    # Error:
+    #   allOf:
+    #     - $ref: '#/components/schemas/ApiResponseBase'
+    #     - type: object
+    #       properties:
+    #         timestamp:
+    #           type: string
+    #           format: date-time
+    #           description:  エラー発生時刻
 
     # DTOスキーマ
-    DeviceUsagePermissionDTO:
+    DevicePermissionDetailDTO:
       type: object
       properties:
         permissionId:
