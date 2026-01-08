@@ -324,7 +324,8 @@ paths:
     delete:
         summary: デバイス使用権限の削除
         description: 権限と関連関係の検証後、指定された権限を削除します
-        tags: [権限-削除api]  
+        tags: 
+        - 権限管理
         parameters:
           - name: id
             in: path
@@ -392,7 +393,7 @@ components:
         code:
           type: string
           description: レスポンスコード
-          example: "SUCCESS"
+          example: "200"
         message:
           type: string
           description: レスポンスメッセージ
@@ -406,7 +407,7 @@ components:
         code:
           type: string
           description: レスポンスコード
-          example: "SUCCESS"
+          example: "200"
         message:
           type: string
           description: レスポンスメッセージ
@@ -422,7 +423,7 @@ components:
         code:
           type: string
           description: エラーコード
-          example: "NOT_FOUND"
+          example: "404"
         message:
           type: string
           description: エラーメッセージ
@@ -516,7 +517,7 @@ components:
         code:
           type: integer
           description: 状态码
-          example: 200
+          example: "200"
         message:
           type: string
           description: 消息
