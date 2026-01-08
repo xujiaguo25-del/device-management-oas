@@ -86,6 +86,7 @@ paths:
         schema:
           type: string
           example: HYRON-221129 PC-DC-089
+          
     get:
       tags:
         - devices
@@ -449,12 +450,15 @@ components:
       properties:
         deviceId:
           type: string
-          description: 機器番号（外部キー）
+          description: 機器番号(外部キー)
           example: HYRON-221129 PC-DC-089
         ipAddress:
           type: string
-          description: IPアドレス（ユニーク）
-          example: 173.28.100.112
+          format: ipv4  # 或 ipv6
+          pattern: '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+          description: IPv4アドレス
+          example: "192.168.1.1"
+
         createTime:
           type: string
           format: date-time
@@ -484,7 +488,7 @@ components:
       properties:
         deviceId:
           type: string
-          description: 機器番号（外部キー）
+          description: 機器番号(外部キー)
           example: HYRON-221129 PC-DC-089
         monitorName:
           type: string
