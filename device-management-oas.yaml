@@ -158,7 +158,196 @@ paths:
                   antivirus_protection: true
                   boot_authentication: true
       security: []
- 
+  /security-checks/export:
+    get:
+      summary: レポート出力
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+      - name: reportCode
+        in: query
+        description: レポート番号（レポート番号で絞り込み）
+        required: true
+        example: ISMSFM1601-1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: レポートファイルを返却します。ファイル名はサーバ側で動的に生成されます
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                properties: {}
+          headers: {}
+      security: []
+  /security-checks/{sampling_id}:
+    get:
+      summary: セキュリティチェック詳細情報の取得
+      deprecated: false
+      description: セキュリティチェック記録の詳細情報を取得します
+      operationId: query-checks-by-id
+      tags: []
+      parameters:
+      - name: sampling_id
+        in: path
+        description: セキュリティチェック記録ID
+        example: record001
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 詳細取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                  sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-01-15'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-01-15 10:00:00'
+                  installed_software: true
+                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screen_saver_pwd: true
+                  usb_interface: false
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+        '404':
+          description: 対象が存在しません
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: 対応するセキュリティチェック記録が見つかりません
+                data: {}
+      security: []
+    put:
+      summary: 更新
+      deprecated: false
+      description: セキュリティチェック記録を更新します
+      tags: []
+      parameters:
+      - name: sampling_id
+        in: path
+        description: セキュリティチェック記録ID
+        required: true
+        example: record001
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SampleCheckDTO'
+            example:
+              sampling_id: record001
+              user_id: EMP00123
+              device_id: DEV2024001
+              name: 山田太郎
+              report_id: SEC20240115001
+              update_date: '2024-02-01'
+              create_time: '2024-01-10 09:00:00'
+              update_time: '2024-02-01 18:00:00'
+              installed_software: false
+              disposal_measures: アンインストール済み、再起動済み
+              screen_saver_pwd: true
+              usb_interface: true
+              security_patch: true
+              antivirus_protection: true
+              boot_authentication: true
+              creater: システム管理者
+              updater: 山田太郎
+        required: true
+      responses:
+        '200':
+          description: 更新に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 更新に成功しました
+                data:
+                  sampling_id: record001
+                  user_id: EMP00123
+                  device_id: DEV2024001
+                  name: 山田太郎
+                  report_id: SEC20240115001
+                  update_date: '2024-02-01'
+                  create_time: '2024-01-10 09:00:00'
+                  update_time: '2024-02-01 18:00:00'
+                  installed_software: false
+                  disposal_measures: アンインストール済み、再起動済み
+                  screen_saver_pwd: true
+                  usb_interface: true
+                  security_patch: true
+                  antivirus_protection: true
+                  boot_authentication: true
+                  creater: システム管理者
+                  updater: 山田太郎
+      security: []
+    delete:
+      summary: 削除
+      deprecated: false
+      description: セキュリティチェック記録を1件削除します
+      tags: []
+      parameters:
+      - name: sampling_id
+        in: path
+        description: セキュリティチェック記録ID
+        required: true
+        example: record001
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 削除に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 削除に成功しました
+                data: {}
+      security: []
 components:
   schemas:
     SampleCheckDTO:
@@ -280,5 +469,3 @@ servers:
 - url: http://localhost:8080/api
   description: 開発環境
 security: []
-
-
