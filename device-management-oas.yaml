@@ -185,15 +185,8 @@ paths:
               examples:
                 successExample:
                   $ref: '#/components/examples/DictSuccessExample'
-        '400':
-          description: パラメータ不正
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                paramErrorExample:
-                  $ref: '#/components/examples/DictParamErrorExample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           description: サーバー内部エラー
           content:
@@ -234,16 +227,6 @@ components:
               - dictId: 2
                 dictItemName: "一般ユーザー"
                 sort: 2
-        total: null
-        page: null
-        size: null
-
-    DictParamErrorExample:
-      summary: パラメータ不正例
-      value:
-        code: 40001
-        message: "dictTypeCodeは文字列で指定してください"
-        data: null
         total: null
         page: null
         size: null
@@ -431,7 +414,7 @@ components:
           description: ソート番号（昇順でソート済）
           example: 1
 
-    # 変更：辞書タイプグループ構造（typeCode + 対応するアイテムリスト）
+    # 辞書タイプグループ構造（typeCode + 対応するアイテムリスト）
     DictTypeGroup:
       type: object
       description: 辞書タイプグループ、タイプコードと該当タイプの全ての辞書アイテムを含む
