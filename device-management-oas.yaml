@@ -1,18 +1,18 @@
 openapi: 3.0.0
 info:
-  title: 設備API
-  description: 設備の追加・削除・更新・参照およびエクスポート機能のAPI定義
+  title: device-management-oas
   version: 1.0.0
 
 security:
   - bearerAuth: [] 
 
 servers:
-  - url: /api
-    description: デフォルトAPIサーバーアドレス
+  - url: http://localhost:8080/api
+
 tags:
   - name: devices
     description: 設備管理モジュール
+
 paths:
   /devices:
     get:
@@ -45,6 +45,12 @@ paths:
           schema:
             type: string
             example: JS0014
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePageResponse'
       responses:
         '200':
           $ref: '#/components/responses/SuccessWithPagination'
@@ -56,27 +62,27 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     
     post:
-          tags:
-            - devices
-          summary: 設備を新規追加
-          description: 新しい設備情報を追加します
-          operationId: insertDevice
-          requestBody:
-            required: true
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InsertData'
-                  
-          responses:
-            '200':
-              $ref: '#/components/responses/InsertSuccess'
-            '400':
-              $ref: '#/components/responses/BadRequest'
-            '401':
-              $ref: '#/components/responses/Unauthorized'
-            '500':
-              $ref: '#/components/responses/InternalServerError'
+      tags:
+        - devices
+      summary: 設備を新規追加
+      description: 新しい設備情報を追加します
+      operationId: insertDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsertDeviceFullDTO'
+
+      responses:
+        '200':
+          $ref: '#/components/responses/InsertSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
   /devices/{id}:
@@ -88,12 +94,25 @@ paths:
         schema:
           type: string
           example: HYRON-221129 PC-DC-089
+      - name: userId
+        in: query
+        description: ユーザーID（フィルタ条件）
+        required: false
+        schema:
+          type: string
+          example: JS0014
           
     get:
       tags:
         - devices
       summary: 設備詳細照会
       description: 設備IDに基づき設備詳細情報を照会
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
       responses:
         '200':
           $ref: '#/components/responses/SuccessWithDetail'
@@ -106,6 +125,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
          
+
     put:
       tags:
         - devices
@@ -117,8 +137,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateData'
-              
+              $ref: '#/components/schemas/UpdateDeviceFullDTO'
+
       responses:
         '200':
           $ref: '#/components/responses/UpdateSuccess'
@@ -135,6 +155,7 @@ paths:
       summary: 設備を削除
       description: 設備IDに基づいて指定された設備の記録を削除する
       operationId: deleteDevice
+
       responses:
         '200':
           $ref: '#/components/responses/Success'
@@ -151,6 +172,10 @@ paths:
                   value:
                     code: 404
                     message: "設備が存在しません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
                     
         '500':
           $ref: '#/components/responses/InternalServerError'
@@ -162,14 +187,6 @@ paths:
       summary: 設備情報をエクスポート
       description: すべての設備情報をExcelファイルにエクスポートする
       operationId: exportDevices
-      parameters:
-        - name: userId
-          in: query
-          required: false
-          schema:
-            type: string
-            description: フィルター条件：ユーザー社員番号
-            example: "USR001"
       responses:
         '200':
           description: 設備リストのエクスポートに成功しました
@@ -200,20 +217,26 @@ components:
         code:
           type: integer
           description: ステータスコード
-          example: 200
         message:
           type: string
           description: 応答メッセージ
-          example: "成功"
-        timestamp:
-          type: string
-          format: date-time
-          description: 応答時間
-          example: "2024-01-08T10:30:00Z"
+        data:
+          description: レスポンスデータ（型はエンドポイントにより異なる）
+        total:
+          type: integer
+          nullable: true
+          description: 総件数（ページング時以外はnull）
+        page:
+          type: integer
+          nullable: true
+          description: 現在のページ（ページング時以外はnull）
+        size:
+          type: integer
+          nullable: true
+          description: 1ページあたりの件数（ページング時以外はnull）
       required:
         - code
-        - message   
-        - timestamp
+        - message
 
     ErrorResponse:
       allOf:
@@ -223,75 +246,26 @@ components:
             error:
               type: array
               description: エラー詳細リスト
-              items:
-                $ref: '#/components/schemas/ErrorDetail'
+
     
-    ErrorDetail:
-      type: object
-      properties:
-        field:
-          type: string
-          description: エラーが発生したフィールド
-          example: "userId"
-        message:
-          type: string
-          description: エラーメッセージ
-          example: "ユーザーIDは必須です"  
-        code:
-          type: string
-          description: エラーコード
-          example: "INVALID_PARAMETER"  
-    
+    # 辞書アイテム
     DictItem:
       type: object
-      description: システム辞書項目共通モデル
+      description: 統合辞書テーブルのデータ（ドロップダウン用：dictId=value、dictItemName=label）
       properties:
         dictId:
           type: integer
-          description: 辞書ID（データベースPK）
-          example: 3
-        dictTypeName:
-          type: string
-          description: 辞書タイプ名
-          example: 用户类型、操作系统类型、SSD容量等
-        dictTypeCode:
-          type: string
-          description: 辞書タイプコード
-          example: USER_TYPE、OS_TYPE、SSED_SIZE等
+          format: int64
+          description: 辞書ID（ドロップダウンvalue値）
+          example: 1
         dictItemName:
           type: string
-          description: 辞書項目名
-          example: 普通用户、MacOS、512GB等
+          description: 辞書項目名（ドロップダウンlabel値）
+          example: "使用可"
         sort:
           type: integer
-          description: 表示順序
-          example: 3
-        isEnabled:
-          type: boolean
-          description: 有効フラグ
-          example: true
-        createTime:
-          type: string
-          format: date-time
-          description: 作成日時
-          example: "2026-01-06T04:56:41.666516"
-        creater:
-          type: string
-          description: 作成者
-          example: admin
-        updateTime:
-          type: string
-          format: date-time
-          description: 更新日時
-          example: "2026-01-06T04:57:43.063064"
-        updater:
-          type: string
-          description: 更新者
-          example: admin
-      required:
-        - dictId
-        - dictTypeName
-        - dictItemName
+          description: ソート番号（昇順でソート済）
+          example: 1
     
     # ユーザー情報
     UserInfo:
@@ -320,11 +294,11 @@ components:
     # 設備オブジェクト
     Device:
       type: object
-      description: 設備オブジェクト
+      description: 機器オブジェクト
       properties:
         deviceId:
           type: string
-          description: 設備番号（プライマリキー）
+          description: 機器番号（プライマリキー）
           example: HYRON-221129 PC-DC-089
         deviceModel:
           type: string
@@ -379,7 +353,7 @@ components:
           description: モニター情報リスト
           items:
             $ref: '#/components/schemas/MonitorInfo'
-        DeviceIps:
+        deviceIps:
           type: array
           description: IP情報リスト
           items:
@@ -414,10 +388,6 @@ components:
       type: object
       description: 設備のIP情報
       properties:
-        deviceId:
-          type: string
-          description: 設備番号(外部キー)
-          example: HYRON-221129 PC-DC-089
         ipAddress:
           type: string
           format: ipv4  # 或 ipv6
@@ -452,10 +422,6 @@ components:
       type: object
       description: モニター情報
       properties:
-        deviceId:
-          type: string
-          description: 設備番号(外部キー)
-          example: HYRON-221129 PC-DC-089
         monitorName:
           type: string
           description: モニター名
@@ -585,7 +551,7 @@ components:
           example: false
 
     # PUTリクエストで渡されるパラメータ
-    InsertData:
+    InsertDeviceFullDTO:
       type: object
       description: データ追加
       properties:
@@ -664,7 +630,7 @@ components:
           example: admin
 
   # POSTリクエストで渡されるパラメータ      
-    UpdateData:
+    UpdateDeviceFullDTO:
       type: object
       description: データ追加
       properties:
@@ -773,84 +739,55 @@ components:
               code:
                 type: integer
                 example: 200
+              message:
+                type: string
+                example: "設備詳細情報の取得に成功"
               data:
                 type: object
                 properties:
                   deviceInfo:
                     $ref: '#/components/schemas/Device'
-                  ipInfoList:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/DeviceIp'
-                  monitorInfoList:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/MonitorInfo'
+
 
     InsertSuccess:
       description: 挿入成功
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
-          examples:
-            insertData:
-              value:
-                code: 200
-                message: "成功"
-                data:
-                  "name": "林飞"
-                  "deptId": "DA04"
-                  "deviceId": "HYRON-211217 PC-DC-058"
-                  "deviceModel": "dell-5090"
-                  "computerName": "HYRON-JS-LINFEI"
-                  "LoginUserName": "linfei"
-                  "project": "DA05支援"
-                  "devRoom": "M10"
-                  "userId": "JS0014"
-                  "remark": "D1005開発室"
-                  "selfConfirmId": 1
-                  "osId": 1
-                  "memoryId": 1
-                  "ssdId": 1
-                  "hddId": 2
-                  "ipAddress": "192.168.203.139"
-                  "monitorName": "HYRON-151127 PC-DC-004JD"
-                  "creater": "admin"
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 挿入成功
+                    example: 200
+                  message:
+                    type: string
+                    description: 挿入成功
+                    example: "挿入成功"
+                  data:
+                    $ref: '#/components/schemas/InsertDeviceFullDTO'
 
     UpdateSuccess:
       description: 更新成功
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
-          examples:
-            insertData:
-              value:
-                code: 200
-                message: "成功"
-                data:
-                  "deviceModel": "dell-5000"
-                  "computerName": "DA04-LINF-PC"
-                  "loginUsername": "linf-nrtu"
-                  "project": "D204-NRTU"
-                  "devRoom": "M10"
-                  "userId": "JS0014"
-                  "remark": "D1006开发室"
-                  "selfConfirmId": 1
-                  "osId": 1
-                  "memoryId": 1
-                  "ssdId": 1
-                  "hddId": 2
-
-                  "ipId": 1
-                  "ipAddress": "192.168.1.102"
-                  "monitorId": 1
-                  "monitorName": "HYRON-241118 Minitor-131"
-
-
-                  "updater": "admin"
-
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 更新成功
+                    example: 200
+                  message:
+                    type: string
+                    description: 更新成功
+                    example: "更新成功"
+                  data:
+                    $ref: '#/components/schemas/UpdateDeviceFullDTO'
 
     SuccessWithPagination:
       description: 設備リストの取得に成功
@@ -903,10 +840,18 @@ components:
               value:
                 code: 401
                 message: "認証失敗、再度ログインしてください"
+                data: null
+                total: null
+                page: null
+                size: null
             tokenExpired:
               value:
                 code: 401
                 message: "トークンが期限切れです"
+                data: null
+                total: null
+                page: null
+                size: null
                 
     
     NotFound:
@@ -920,14 +865,26 @@ components:
               value:
                 code: 404
                 message: "リソースが見つかりません"
+                data: null
+                total: null
+                page: null
+                size: null
             deviceNotFound:
               value:
                 code: 404
                 message: "設備が存在しません"
+                data: null
+                total: null
+                page: null
+                size: null
             userNotFound:
               value:
                 code: 404
                 message: "ユーザーが存在しません"
+                data: null
+                total: null
+                page: null
+                size: null
                 
 
     InternalServerError:
@@ -941,9 +898,15 @@ components:
               value:
                 code: 500
                 message: "サーバー内部エラー、後ほど再試行してください"
-                requestId: "req_123456789"
+                data: null
+                total: null
+                page: null
+                size: null
             databaseError:
               value:
                 code: 500
                 message: "データベース接続エラー"
-                requestId: "req_123456790"
+                data: null
+                total: null
+                page: null
+                size: null
