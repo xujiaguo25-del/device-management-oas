@@ -364,8 +364,6 @@ components:
       - name
       - reportId
       - updateDate
-      - createTime
-      - updateTime
       properties:
         samplingId:
           type: string
