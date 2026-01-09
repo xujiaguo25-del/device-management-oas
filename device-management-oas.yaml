@@ -749,6 +749,24 @@ components:
                     $ref: '#/components/schemas/Device'
 
 
+    SuccessWithPagination:
+      description: 設備リストの取得に成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 200
+              message:
+                type: string
+                example: "設備リストの取得に成功"
+              data:
+                $ref: '#/components/schemas/DevicePageResponse'
+
+
+
     InsertSuccess:
       description: 挿入成功
       content:
@@ -789,22 +807,7 @@ components:
                   data:
                     $ref: '#/components/schemas/UpdateDeviceFullDTO'
 
-    SuccessWithPagination:
-      description: 設備リストの取得に成功
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                example: 200
-              message:
-                type: string
-                example: "設備リストの取得に成功"
-              data:
-                $ref: '#/components/schemas/DevicePageResponse'
-    
+
     BadRequest:
       description: リクエストパラメータエラー
       content:
@@ -820,6 +823,10 @@ components:
                   - field: "deviceId"
                     message: "設備IDは必須です"
                     code: "INVALID_PARAMETER"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
             pageParamError:
               value:
                 code: 400
@@ -828,6 +835,10 @@ components:
                   - field: "page"
                     message: "ページ番号は正の整数である必要があります"
                     code: "INVALID_PAGE_NUMBER"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
     
     Unauthorized:
       description: 認証失敗
