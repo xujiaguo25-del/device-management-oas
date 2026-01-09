@@ -7,7 +7,7 @@ tags:
   - name: セキュリティチェック
     description: セキュリティチェック関連のAPI
 paths:
-  /security-checks?size=10:
+  /security-checks:
     get:
       summary: セキュリティチェック記録一覧の取得
       deprecated: false
@@ -31,14 +31,14 @@ paths:
         schema:
           type: integer
           default: 10
-      - name: device_Id
+      - name: deviceId
         in: query
         description: デバイスID
         required: false
         example: デバイス001
         schema:
           type: string
-      - name: user_id
+      - name: userId
         in: query
         description: ユーザーID
         required: false
@@ -65,41 +65,40 @@ paths:
                 code: 200
                 message: 取得に成功しました
                 data:
-                - sampling_id: record001
-                  user_id: EMP00123
-                  device_id: DEV2024001
+                - samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
                   name: 山田太郎
-                  report_id: SEC20240115001
-                  update_date: '2024-01-15'
-                  create_time: '2024-01-10 09:00:00'
-                  update_time: '2024-01-15 10:00:00'
-                  installed_software: true
-                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
-                  screen_saver_pwd: true
-                  usb_interface: false
-                  security_patch: true
-                  antivirus_protection: true
-                  boot_authentication: true
-                - sampling_id: record002
-                  user_id: EMP00456
-                  device_id: DEV2024002
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+                - samplingId: record002
+                  userId: EMP00456
+                  deviceId: DEV2024002
                   name: 佐藤花子
-                  report_id: SEC20240115002
-                  update_date: '2024-01-16'
-                  create_time: '2024-01-11 09:00:00'
-                  update_time: '2024-01-16 11:00:00'
-                  installed_software: false
-                  disposal_measures: なし
-                  screen_saver_pwd: true
-                  usb_interface: true
-                  security_patch: true
-                  antivirus_protection: true
-                  boot_authentication: true
+                  reportId: SEC20240115002
+                  updateDate: '2024-01-16'
+                  createTime: '2024-01-11 09:00:00'
+                  updateTime: '2024-01-16 11:00:00'
+                  installedSoftware: false
+                  disposalMeasures: なし
+                  screenSaverPwd: true
+                  usbInterface: true
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
                 total: 120
                 page: 1
                 size: 10
       security: []
-  /security-checks:
     post:
       summary: 新規作成
       deprecated: false
@@ -112,21 +111,21 @@ paths:
             schema:
               $ref: '#/components/schemas/SampleCheckDTO'
             example:
-              sampling_id: record001
-              user_id: EMP00123
-              device_id: DEV2024001
+              samplingId: record001
+              userId: EMP00123
+              deviceId: DEV2024001
               name: 山田太郎
-              report_id: SEC20240115001
-              update_date: '2024-01-15'
-              create_time: '2024-01-10 09:00:00'
-              update_time: '2024-01-15 10:00:00'
-              installed_software: true
-              disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
-              screen_saver_pwd: true
-              usb_interface: false
-              security_patch: true
-              antivirus_protection: true
-              boot_authentication: true
+              reportId: SEC20240115001
+              updateDate: '2024-01-15'
+              createTime: '2024-01-10 09:00:00'
+              updateTime: '2024-01-15 10:00:00'
+              installedSoftware: true
+              disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+              screenSaverPwd: true
+              usbInterface: false
+              securityPatch: true
+              antivirusProtection: true
+              bootAuthentication: true
         required: true
       responses:
         '200':
@@ -146,21 +145,21 @@ paths:
                 code: 200
                 message: 追加に成功しました
                 data:
-                  sampling_id: record001
-                  user_id: EMP00123
-                  device_id: DEV2024001
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
                   name: 山田太郎
-                  report_id: SEC20240115001
-                  update_date: '2024-01-15'
-                  create_time: '2024-01-10 09:00:00'
-                  update_time: '2024-01-15 10:00:00'
-                  installed_software: true
-                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
-                  screen_saver_pwd: true
-                  usb_interface: false
-                  security_patch: true
-                  antivirus_protection: true
-                  boot_authentication: true
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
       security: []
   /security-checks/export:
     get:
@@ -185,10 +184,7 @@ paths:
               schema:
                 type: string
                 format: binary
-                properties: {}
-          headers: {}
-      security: []
-  /security-checks/{sampling_id}:
+  /security-checks/{samplingId}:
     get:
       summary: セキュリティチェック詳細情報の取得
       deprecated: false
@@ -197,7 +193,7 @@ paths:
       tags:
         - セキュリティチェック
       parameters:
-      - name: sampling_id
+      - name: samplingId
         in: path
         description: セキュリティチェック記録ID
         example: record001
@@ -222,21 +218,21 @@ paths:
                 code: 200
                 message: 取得に成功しました
                 data:
-                  sampling_id: record001
-                  user_id: EMP00123
-                  device_id: DEV2024001
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
                   name: 山田太郎
-                  report_id: SEC20240115001
-                  update_date: '2024-01-15'
-                  create_time: '2024-01-10 09:00:00'
-                  update_time: '2024-01-15 10:00:00'
-                  installed_software: true
-                  disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
-                  screen_saver_pwd: true
-                  usb_interface: false
-                  security_patch: true
-                  antivirus_protection: true
-                  boot_authentication: true
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
         '404':
           description: 対象が存在しません
           content:
@@ -256,7 +252,7 @@ paths:
       tags:
         - セキュリティチェック
       parameters:
-      - name: sampling_id
+      - name: samplingId
         in: path
         description: セキュリティチェック記録ID
         required: true
@@ -269,21 +265,21 @@ paths:
             schema:
               $ref: '#/components/schemas/SampleCheckDTO'
             example:
-              sampling_id: record001
-              user_id: EMP00123
-              device_id: DEV2024001
+              samplingId: record001
+              userId: EMP00123
+              deviceId: DEV2024001
               name: 山田太郎
-              report_id: SEC20240115001
-              update_date: '2024-02-01'
-              create_time: '2024-01-10 09:00:00'
-              update_time: '2024-02-01 18:00:00'
-              installed_software: false
-              disposal_measures: アンインストール済み、再起動済み
-              screen_saver_pwd: true
-              usb_interface: true
-              security_patch: true
-              antivirus_protection: true
-              boot_authentication: true
+              reportId: SEC20240115001
+              updateDate: '2024-02-01'
+              createTime: '2024-01-10 09:00:00'
+              updateTime: '2024-02-01 18:00:00'
+              installedSoftware: false
+              disposalMeasures: アンインストール済み、再起動済み
+              screenSaverPwd: true
+              usbInterface: true
+              securityPatch: true
+              antivirusProtection: true
+              bootAuthentication: true
               creater: システム管理者
               updater: 山田太郎
         required: true
@@ -305,21 +301,21 @@ paths:
                 code: 200
                 message: 更新に成功しました
                 data:
-                  sampling_id: record001
-                  user_id: EMP00123
-                  device_id: DEV2024001
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
                   name: 山田太郎
-                  report_id: SEC20240115001
-                  update_date: '2024-02-01'
-                  create_time: '2024-01-10 09:00:00'
-                  update_time: '2024-02-01 18:00:00'
-                  installed_software: false
-                  disposal_measures: アンインストール済み、再起動済み
-                  screen_saver_pwd: true
-                  usb_interface: true
-                  security_patch: true
-                  antivirus_protection: true
-                  boot_authentication: true
+                  reportId: SEC20240115001
+                  updateDate: '2024-02-01'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-02-01 18:00:00'
+                  installedSoftware: false
+                  disposalMeasures: アンインストール済み、再起動済み
+                  screenSaverPwd: true
+                  usbInterface: true
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
                   creater: システム管理者
                   updater: 山田太郎
       security: []
@@ -330,7 +326,7 @@ paths:
       tags:
         - セキュリティチェック
       parameters:
-      - name: sampling_id
+      - name: samplingId
         in: path
         description: セキュリティチェック記録ID
         required: true
@@ -362,65 +358,65 @@ components:
       title: SampleCheckDTO
       type: object
       required:
-      - sampling_id
-      - user_id
-      - device_id
+      - samplingId
+      - userId
+      - deviceId
       - name
-      - report_id
-      - update_date
-      - create_time
-      - update_time
+      - reportId
+      - updateDate
+      - createTime
+      - updateTime
       properties:
-        sampling_id:
+        samplingId:
           type: string
           maxLength: 50
-        user_id:
+        userId:
           type: string
           maxLength: 50
-        device_id:
+        deviceId:
           type: string
           maxLength: 50
-        installed_software:
+        installedSoftware:
           type: boolean
           nullable: true
-        disposal_measures:
+        disposalMeasures:
           type: string
           maxLength: 65535
           nullable: true
         name:
           type: string
           maxLength: 100
-        report_id:
+        reportId:
           type: string
           maxLength: 50
-        update_date:
+        updateDate:
           type: string
           format: date
-        screen_saver_pwd:
+        screenSaverPwd:
           type: boolean
           nullable: true
-        usb_interface:
+        usbInterface:
           type: boolean
           nullable: true
-        security_patch:
+        securityPatch:
           type: boolean
           nullable: true
-        antivirus_protection:
+        antivirusProtection:
           type: boolean
           nullable: true
-        boot_authentication:
+        bootAuthentication:
           type: boolean
           nullable: true
-        create_time:
+        createTime:
           type: string
-          default: CURRENT_TIMESTAMP
+          description: 未指定时由システムで現在時刻が設定されます
         creater:
           type: string
           maxLength: 100
           nullable: true
-        update_time:
+        updateTime:
           type: string
-          default: CURRENT_TIMESTAMP
+          description: 未指定時由システムで現在時刻が設定されます
         updater:
           type: string
           maxLength: 100
@@ -453,21 +449,23 @@ components:
         code: 200
         message: 取得に成功しました
         data:
-          sampling_id: record001
-          user_id: EMP00123
-          device_id: DEV2024001
+          samplingId: record001
+          userId: EMP00123
+          deviceId: DEV2024001
           name: 山田太郎
-          report_id: SEC20240115001
-          update_date: '2024-01-15'
-          create_time: '2024-01-10 09:00:00'
-          update_time: '2024-01-15 10:00:00'
-          installed_software: true
-          disposal_measures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
-          screen_saver_pwd: true
-          usb_interface: false
-          security_patch: true
-          antivirus_protection: true
-          boot_authentication: true
+          reportId: SEC20240115001
+          updateDate: '2024-01-15'
+          createTime: '2024-01-10 09:00:00'
+          updateTime: '2024-01-15 10:00:00'
+          installedSoftware: true
+          disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+          screenSaverPwd: true
+          usbInterface: false
+          securityPatch: true
+          antivirusProtection: true
+          bootAuthentication: true
+          updater: 山田太郎
+          creater: システム管理者
         total: 120
         page: 1
         size: 10
