@@ -36,13 +36,13 @@ paths:
             default: 10
             minimum: 1
             maximum: 20
-        - name: device_id
+        - name: deviceId
           in: query
           description: デバイスID
           required: false
           schema:
             type: string
-        - name: user_id
+        - name: userId
           in: query
           description: ユーザーID
           required: false
@@ -57,7 +57,7 @@ paths:
                 type: object
                 properties:
                   code:
-                    type: string
+                    type: integer
                     example: 200
                   message:
                     type: string
@@ -80,74 +80,74 @@ paths:
                     items:
                       type: object
                       properties:
-                        permission_id:
+                        permissionId:
                           type: string
                           description: 権限ID
                           example: "1"
-                        device_id:
+                        deviceId:
                           type: string
                           description: デバイスID
-                        computer_name:
+                        computerName:
                           type: string
                           description: コンピュータ名
                           example: "DESKTOP-1234"
-                        ip_address:
+                        ipAddress:
                           type: array
                           items:
                             type: string
                           description: IPアドレス
-                        user_id:
+                        userId:
                           type: string
                           description: ユーザーID
                           example: "JS0020"
                         name:
                           type: string
                           description: ユーザー名
-                        dept_id:
+                        deptId:
                           type: string
                           description: 部署ID
-                        login_username:
+                        loginUsername:
                           type: string
                           description: ログインユーザー名
-                        domain_status:
+                        domainStatus:
                           type: integer
                           format: int64
                           description: ドメイン状態
                           example: 1
-                        domain_group:
+                        domainGroup:
                           type: string
                           description: ドメイングループ
-                        no_domain_reason:
+                        noDomainReason:
                           type: string
                           description: ドメイン未設定理由
-                        smartit_status:
+                        smartitStatus:
                           type: integer
                           format: int64
                           description: SmartIT状態
                           example: 2
-                        no_smartit_reason:
+                        noSmartitReason:
                           type: string
                           description: SmartIT未設定理由
-                        usb_status_:
+                        usbStatus:
                           type: integer
                           format: int64
                           description: USB状態
                           example: 1
-                        usb_reason:
+                        usbReason:
                           type: string
                           description: USB権限理由
                           example: "项目需要"
-                        usb_expire_date:
+                        usbExpireDate:
                           type: string
                           format: date
                           description: USB権限有効期限
                           example: "2024-12-31"
-                        antivirus_status:
+                        antivirusStatus:
                           type: integer
                           format: int64
                           description: ウイルス対策ソフト状態
                           example: 1
-                        no_symantec_reason:
+                        noSymantecReason:
                           type: string
                           description: Symantec未設定理由
                         remark:
@@ -183,7 +183,7 @@ paths:
                       data:
                            $ref: '#/components/schemas/DevicePermissionDTO'
                                     
-  /permissions/{id}:
+  /permissions/{permissionId}:
     get:
       tags:
         - 権限管理
@@ -235,81 +235,87 @@ paths:
       summary: 権限情報更新
       description: 権限情報を更新（フィールド単位）
       operationId: updatePermissionByFields
-      parameters:
-        - name: permissionId
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "PERM001"
-        - name: smartitStatusId
-          in: query
-          required: false
-          description: SmartITステータスID
-          schema:
-            type: string
-        - name: noSmartitReason
-          in: query
-          required: false
-          description: SmartIT未インストール理由
-          schema:
-            type: string
-        - name: usbStatusId
-          in: query
-          required: false
-          description: USBステータスID
-          schema:
-            type: string
-        - name: usbReason
-          in: query
-          required: false
-          description: USB使用許可理由
-          schema:
-            type: string
-        - name: usbExpireDate
-          in: query
-          required: false
-          description: USB使用有効期限
-          schema:
-            type: string
-            format: date
-            example: "2025-12-31"
-        - name: antivirusStatusId
-          in: query
-          required: false
-          description: アンチウイルスステータスID
-          schema:
-            type: string
-        - name: noSymantecReason
-          in: query
-          required: false
-          description: Symantec未導入理由
-          schema:
-            type: string
-        - name: domainStatusId
-          in: query
-          required: false
-          description: ドメインステータスID
-          schema:
-            type: string
-        - name: domainGroup
-          in: query
-          required: false
-          description: ドメイン内グループ名
-          schema:
-            type: string
-        - name: noDomainReason
-          in: query
-          required: false
-          description: ドメイン未参加理由
-          schema:
-            type: string
-        - name: remark
-          in: query
-          required: false
-          description: 備考
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissionUpdateDTO'
+      # parameters:
+      #   - name: permissionId
+      #     in: path
+      #     required: true
+      #     schema:
+      #       type: string
+      #       example: "PERM001"
+      #   - name: smartitStatusId
+      #     in: query
+      #     required: false
+      #     description: SmartITステータスID
+      #     schema:
+      #       type: string
+      #   - name: noSmartitReason
+      #     in: query
+      #     required: false
+      #     description: SmartIT未インストール理由
+      #     schema:
+      #       type: string
+      #   - name: usbStatusId
+      #     in: query
+      #     required: false
+      #     description: USBステータスID
+      #     schema:
+      #       type: string
+      #   - name: usbReason
+      #     in: query
+      #     required: false
+      #     description: USB使用許可理由
+      #     schema:
+      #       type: string
+      #   - name: usbExpireDate
+      #     in: query
+      #     required: false
+      #     description: USB使用有効期限
+      #     schema:
+      #       type: string
+      #       format: date
+      #       example: "2025-12-31"
+      #   - name: antivirusStatusId
+      #     in: query
+      #     required: false
+      #     description: アンチウイルスステータスID
+      #     schema:
+      #       type: string
+      #   - name: noSymantecReason
+      #     in: query
+      #     required: false
+      #     description: Symantec未導入理由
+      #     schema:
+      #       type: string
+      #   - name: domainStatusId
+      #     in: query
+      #     required: false
+      #     description: ドメインステータスID
+      #     schema:
+      #       type: string
+      #   - name: domainGroup
+      #     in: query
+      #     required: false
+      #     description: ドメイン内グループ名
+      #     schema:
+      #       type: string
+      #   - name: noDomainReason
+      #     in: query
+      #     required: false
+      #     description: ドメイン未参加理由
+      #     schema:
+      #       type: string
+      #   - name: remark
+          # in: query
+          # required: false
+          # description: 備考
+          # schema:
+          #   type: string
       responses:
         "200":
           description: 権限更新成功
@@ -361,7 +367,7 @@ paths:
         tags: 
         - 権限管理
         parameters:
-          - name: id
+          - name: permissionId
             in: path
             required: true
             schema:
@@ -584,12 +590,13 @@ components:
           type: string
           description: 更新者 
 
+    #permissionIdはサービス内で生成されるuuidです
     DevicePermissionDTO:
       type: object
       properties:
-        permissionId:
-          type: string
-          example: ""
+        # permissionId:
+        #   type: string
+        #   example: ""
         deviceId:
           type: string
           example: "123123"
@@ -626,15 +633,68 @@ components:
         remark:
           type: string
           example: "備考"
-        createTime:
+        # createTime:
+        #   type: string
+        #   example: ""
+        # creater:
+        #   type: string
+        #   example: ""
+        # updateTime:
+        #   type: string
+        #   example: ""
+        # updater:
+        #   type: string
+        #   example: ""
+      required:
+        - deviceId
+        - domainStatus
+        - smartitStatus
+        - usbStatus
+        - antivirusStatus
+
+    DevicePermissionUpdateDTO:
+       type: object
+       properties:
+        # permissionId:
+        #   type: string
+        #   example: ""
+        domainStatus:
           type: string
-          example: ""
-        creater:
+          example: "39"
+        domainGroup:
           type: string
-          example: ""
-        updateTime:
+          example: "hyronjs"
+        noDomainReason:
           type: string
-          example: ""
-        updater:
+          example: "設備使用権限管理システムへの登録が必要です。"
+        smartitStatus:
           type: string
-          example: ""
+          example: "41"
+        noSmartitReason:
+          type: string
+          example: "SmartITへの登録が必要です。"
+        usbStatus:
+          type: string
+          example: "44"
+        usbReason:
+          type: string
+          example: "USB接続が必要です。"
+        usbExpireDate:
+          type: string
+          example: "2022-12-31"
+        antivirusStatus:
+          type: string
+          example: "47"
+        noSymantecReason:
+          type: string
+          example: "Symantec Antivirusのインストールが必要です。"
+        remark:
+          type: string
+          example: "備考"
+       required:
+          - domainStatus
+          - smartitStatus
+          - usbStatus
+          - antivirusStatus
+
+
