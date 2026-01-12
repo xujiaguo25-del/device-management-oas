@@ -1639,7 +1639,7 @@ components:
           description: 作成日時
         creater:
           type: string
-          description: 作成者   
+           description: 作成者 
         updateTime:
           type: string
           format: date-time
