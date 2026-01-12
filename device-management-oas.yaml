@@ -1033,13 +1033,13 @@ paths:
               $ref: '#/components/schemas/DevicePageResponse'
       responses:
         '200':
-          $ref: '#/components/responses/SuccessWithPagination'
+          $ref: '#/components/responses/DeviceSuccessWithPagination'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/DeviceBadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 
     post:
       tags:
@@ -1056,13 +1056,13 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/InsertSuccess'
+          $ref: '#/components/responses/DeviceInsertSuccess'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/DeviceBadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 
 
   /devices/{id}:
@@ -1095,15 +1095,15 @@ paths:
               $ref: '#/components/schemas/Device'
       responses:
         '200':
-          $ref: '#/components/responses/SuccessWithDetail'
+          $ref: '#/components/responses/DeviceSuccessWithDetail'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/DeviceBadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/DeviceNotFound'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 
 
     put:
@@ -1121,13 +1121,13 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/UpdateSuccess'
+          $ref: '#/components/responses/DeviceUpdateSuccess'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/DeviceBadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 
     delete:
       tags:
@@ -1138,7 +1138,7 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/Success'
+          $ref: '#/components/responses/DeviceSuccess'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1158,7 +1158,7 @@ paths:
                     size: null
 
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 
   /devices/export:
     get:
@@ -1178,7 +1178,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/DeviceInternalServerError'
 # =========================device
 components:
   securitySchemes:
@@ -2216,7 +2216,7 @@ components:
             page: null
             size: null
 
-    Success:
+    DeviceSuccess:
       description: 操作成功
       content:
         application/json:
@@ -2238,7 +2238,7 @@ components:
                 code: 200
                 message: "作成成功"
 
-    SuccessWithDetail:
+    DeviceSuccessWithDetail:
       description: 設備詳細情報の取得に成功
       content:
         application/json:
@@ -2258,7 +2258,7 @@ components:
                     $ref: '#/components/schemas/Device'
 
 
-    SuccessWithPagination:
+    DeviceSuccessWithPagination:
       description: 設備リストの取得に成功
       content:
         application/json:
@@ -2274,9 +2274,7 @@ components:
               data:
                 $ref: '#/components/schemas/DevicePageResponse'
 
-
-
-    InsertSuccess:
+    DeviceInsertSuccess:
       description: 挿入成功
       content:
         application/json:
@@ -2296,7 +2294,7 @@ components:
                   data:
                     $ref: '#/components/schemas/InsertDeviceFullDTO'
 
-    UpdateSuccess:
+    DeviceUpdateSuccess:
       description: 更新成功
       content:
         application/json:
@@ -2316,7 +2314,7 @@ components:
                   data:
                     $ref: '#/components/schemas/UpdateDeviceFullDTO'
 
-    BadRequest:
+    DeviceBadRequest:
       description: リクエストパラメータエラー
       content:
         application/json:
@@ -2349,7 +2347,7 @@ components:
                     size: null
 
     
-    NotFound:
+    DeviceNotFound:
       description: リソースが見つかりません
       content:
         application/json:
@@ -2382,7 +2380,7 @@ components:
                 size: null
 
 
-    InternalServerError:
+    DeviceInternalServerError:
       description: サーバー内部エラー
       content:
         application/json:
