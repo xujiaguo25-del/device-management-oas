@@ -2,18 +2,561 @@ openapi: 3.0.0
 info:
   title: device-management-oas
   version: 1.0.0
-
-security:
-  - bearerAuth: [] 
-
 servers:
   - url: http://localhost:8080/api
 
-tags:
-  - name: devices
-    description: 設備管理モジュール
-
 paths:
+  /auth/login:
+    post:
+      tags:
+        - 認証API
+      summary: ユーザーログイン
+      description: ユーザID（user_id）とパスワードでシステムにログインし、JWTトークンを取得
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功、トークンとユーザー情報を返却
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: リクエストパラメータエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                パラメータ不足:
+                  value:
+                    code: 400
+                    message: "userIdとpasswordは必須です"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ユーザーが存在しない:
+                  value:
+                    code: 401
+                    message: "ユーザーが存在しません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+                パスワードが誤り:
+                  value:
+                    code: 401
+                    message: "パスワードが正しくありません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - 認証API
+      summary: ユーザーログアウト
+      description: 現在のユーザーセッションを終了（クライアントはローカルトークンを削除する必要あり）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                トークンが無効:
+                  value:
+                    code: 401
+                    message: "トークンが無効です"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+                トークン期限切れ:
+                  value:
+                    code: 401
+                    message: "トークンの有効期限が切れています"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+
+  /auth/change-password:
+    post:
+      summary: パスワード変更
+      description: ログイン済みのユーザーが userId を使用して自身のログインパスワードを変更します。有効な JWT が必要です。
+      tags:
+        - 認証API
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: パスワードの更新が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordResponse'
+        '400':
+          description: ビジネスロジックの検証に失敗しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                wrongCurrent:
+                  value:
+                    code: 40001
+                    message: "現在のパスワードが正しくありません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+                weakNew:
+                  value:
+                    code: 40002
+                    message: "新しいパスワードが強度要件を満たしていません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+                sameAsOld:
+                  value:
+                    code: 40003
+                    message: "新しいパスワードは古いパスワードと同じにすることはできません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /dict/items:
+    get:
+      summary: 辞書項目の取得
+      description: 登録されている辞書項目を取得します（sortフィールドで昇順ソート済）。
+      tags:
+        - 共通API
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dictTypeCode
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 辞書タイプコードでフィルタリング
+          example: "USB_STATUS"
+      responses:
+        '200':
+          description: 辞書項目の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictSuccessResponse'
+              examples:
+                successExample:
+                  $ref: '#/components/examples/DictSuccessExample'
+        '400':
+          description: パラメータ不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                paramErrorExample:
+                  $ref: '#/components/examples/DictParamErrorExample'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverErrorExample:
+                  $ref: '#/components/examples/DictServerErrorExample'
+
+  /security-checks:
+    get:
+      summary: セキュリティチェック記録一覧の取得
+      deprecated: false
+      description: すべてのセキュリティチェック記録を取得し、デバイスIDおよびユーザーIDでの絞り込みとページング取得に対応します
+      tags:
+        - セキュリティチェック
+      parameters:
+      - name: page
+        in: query
+        description: ページ番号
+        required: true
+        example: 1
+        schema:
+          type: integer
+          default: 1
+      - name: size
+        in: query
+        description: 1ページ当たりの件数
+        required: false
+        example: 10
+        schema:
+          type: integer
+          default: 10
+      - name: deviceId
+        in: query
+        description: デバイスID
+        required: false
+        example: デバイス001
+        schema:
+          type: string
+      - name: userId
+        in: query
+        description: ユーザーID
+        required: false
+        example: ユーザー001
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 一覧取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                - samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
+                  name: 山田太郎
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+                - samplingId: record002
+                  userId: EMP00456
+                  deviceId: DEV2024002
+                  name: 佐藤花子
+                  reportId: SEC20240115002
+                  updateDate: '2024-01-16'
+                  createTime: '2024-01-11 09:00:00'
+                  updateTime: '2024-01-16 11:00:00'
+                  installedSoftware: false
+                  disposalMeasures: なし
+                  screenSaverPwd: true
+                  usbInterface: true
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+                total: 120
+                page: 1
+                size: 10
+      security: []
+    post:
+      summary: 新規作成
+      deprecated: false
+      description: セキュリティチェック項目を新規作成します
+      tags:
+        - セキュリティチェック
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SampleCheckDTO'
+            example:
+              samplingId: record001
+              userId: EMP00123
+              deviceId: DEV2024001
+              name: 山田太郎
+              reportId: SEC20240115001
+              updateDate: '2024-01-15'
+              createTime: '2024-01-10 09:00:00'
+              updateTime: '2024-01-15 10:00:00'
+              installedSoftware: true
+              disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+              screenSaverPwd: true
+              usbInterface: false
+              securityPatch: true
+              antivirusProtection: true
+              bootAuthentication: true
+        required: true
+      responses:
+        '200':
+          description: 追加に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 追加に成功しました
+                data:
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
+                  name: 山田太郎
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+      security: []
+  /security-checks/export:
+    get:
+      summary: レポート出力
+      deprecated: false
+      description: ''
+      tags:
+        - セキュリティチェック
+      parameters:
+      - name: reportCode
+        in: query
+        description: レポート番号（レポート番号で絞り込み）
+        required: true
+        example: ISMSFM1601-1
+        schema:
+          type: string
+      responses:
+        '200':
+          description: レポートファイルを返却します。ファイル名はサーバ側で動的に生成されます
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /security-checks/{samplingId}:
+    get:
+      summary: セキュリティチェック詳細情報の取得
+      deprecated: false
+      description: セキュリティチェック記録の詳細情報を取得します
+      operationId: query-checks-by-id
+      tags:
+        - セキュリティチェック
+      parameters:
+      - name: samplingId
+        in: path
+        description: セキュリティチェック記録ID
+        example: record001
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 詳細取得成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 取得に成功しました
+                data:
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
+                  name: 山田太郎
+                  reportId: SEC20240115001
+                  updateDate: '2024-01-15'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-01-15 10:00:00'
+                  installedSoftware: true
+                  disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
+                  screenSaverPwd: true
+                  usbInterface: false
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+        '404':
+          description: 対象が存在しません
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 404
+                message: 対応するセキュリティチェック記録が見つかりません
+                data: {}
+      security: []
+    put:
+      summary: 更新
+      deprecated: false
+      description: セキュリティチェック記録を更新します
+      tags:
+        - セキュリティチェック
+      parameters:
+      - name: samplingId
+        in: path
+        description: セキュリティチェック記録ID
+        required: true
+        example: record001
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SampleCheckDTO'
+            example:
+              samplingId: record001
+              userId: EMP00123
+              deviceId: DEV2024001
+              name: 山田太郎
+              reportId: SEC20240115001
+              updateDate: '2024-02-01'
+              createTime: '2024-01-10 09:00:00'
+              updateTime: '2024-02-01 18:00:00'
+              installedSoftware: false
+              disposalMeasures: アンインストール済み、再起動済み
+              screenSaverPwd: true
+              usbInterface: true
+              securityPatch: true
+              antivirusProtection: true
+              bootAuthentication: true
+              creater: システム管理者
+              updater: 山田太郎
+        required: true
+      responses:
+        '200':
+          description: 更新に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SampleCheckDTO'
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 更新に成功しました
+                data:
+                  samplingId: record001
+                  userId: EMP00123
+                  deviceId: DEV2024001
+                  name: 山田太郎
+                  reportId: SEC20240115001
+                  updateDate: '2024-02-01'
+                  createTime: '2024-01-10 09:00:00'
+                  updateTime: '2024-02-01 18:00:00'
+                  installedSoftware: false
+                  disposalMeasures: アンインストール済み、再起動済み
+                  screenSaverPwd: true
+                  usbInterface: true
+                  securityPatch: true
+                  antivirusProtection: true
+                  bootAuthentication: true
+                  creater: システム管理者
+                  updater: 山田太郎
+      security: []
+    delete:
+      summary: 削除
+      deprecated: false
+      description: セキュリティチェック記録を1件削除します
+      tags:
+        - セキュリティチェック
+      parameters:
+      - name: samplingId
+        in: path
+        description: セキュリティチェック記録ID
+        required: true
+        example: record001
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 削除に成功しました
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                  required:
+                  - data
+              example:
+                code: 200
+                message: 削除に成功しました
+                data: {}
+      security: []
+
   /devices:
     get:
       tags:
@@ -101,7 +644,7 @@ paths:
         schema:
           type: string
           example: JS0014
-          
+
     get:
       tags:
         - devices
@@ -124,7 +667,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-         
+
 
     put:
       tags:
@@ -176,7 +719,7 @@ paths:
                     total: null
                     page: null
                     size: null
-                    
+
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -201,16 +744,115 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 components:
-  
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWTトークンを使用した認証
-  
+
+  examples:
+    DictSuccessExample:
+      summary: 取得成功例
+      value:
+        code: 200
+        message: "成功"
+        data:
+          - dictId: 1
+            dictItemName: "使用可"
+            sort: 1
+          - dictId: 2
+            dictItemName: "使用不可"
+            sort: 2
+        total: null
+        page: null
+        size: null
+
+    DictParamErrorExample:
+      summary: パラメータ不正例
+      value:
+        code: 40001
+        message: "dictTypeCodeは文字列で指定してください"
+        data: null
+        total: null
+        page: null
+        size: null
+
+    DictServerErrorExample:
+      summary: サーバー内部エラー例
+      value:
+        code: 50000
+        message: "システムエラーが発生しました"
+        data: null
+        total: null
+        page: null
+        size: null
+
   schemas:
-    
+    SampleCheckDTO:
+      title: SampleCheckDTO
+      type: object
+      required:
+      - samplingId
+      - userId
+      - deviceId
+      - name
+      - reportId
+      - updateDate
+      properties:
+        samplingId:
+          type: string
+          maxLength: 50
+        userId:
+          type: string
+          maxLength: 50
+        deviceId:
+          type: string
+          maxLength: 50
+        installedSoftware:
+          type: boolean
+          nullable: true
+        disposalMeasures:
+          type: string
+          maxLength: 65535
+          nullable: true
+        name:
+          type: string
+          maxLength: 100
+        reportId:
+          type: string
+          maxLength: 50
+        updateDate:
+          type: string
+          format: date
+        screenSaverPwd:
+          type: boolean
+          nullable: true
+        usbInterface:
+          type: boolean
+          nullable: true
+        securityPatch:
+          type: boolean
+          nullable: true
+        antivirusProtection:
+          type: boolean
+          nullable: true
+        bootAuthentication:
+          type: boolean
+          nullable: true
+        createTime:
+          type: string
+          description: 未指定时由システムで現在時刻が設定されます
+        creater:
+          type: string
+          maxLength: 100
+          nullable: true
+        updateTime:
+          type: string
+          description: 未指定時由システムで現在時刻が設定されます
+        updater:
+          type: string
+          maxLength: 100
+          nullable: true
     ApiResponse:
       type: object
       properties:
@@ -238,16 +880,147 @@ components:
         - code
         - message
 
+    LoginRequest:
+      type: object
+      required:
+        - userId
+        - password
+      properties:
+        userId:
+          type: string
+          description: ユーザID（`users`テーブルの`user_id`フィールドに対応）
+          example: "ADMIN001"
+        password:
+          type: string
+          description: ユーザーパスワード
+          example: "T+vWQMZO0qaTX+mfzbgrYA=="
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - userId
+        - currentPassword
+        - newPassword
+      properties:
+        userId:
+          type: string
+          description: ユーザー主キー（user_id）
+          example: admin001
+        currentPassword:
+          type: string
+          format: password
+          description: 現在のパスワード
+          example: "T+vWQMZO0qaTX+mfzbgrYA=="
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+          pattern: '^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?])[A-Za-z\d@$!%*?]{8,}$'
+          description: 新しいパスワードは、文字、数字、特殊文字を含む必要があります
+          example: "Y7bZjOtwGJorGjrKfLV2yQ=="
+
+    # エラーレスポンス（dataはnull）
     ErrorResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        - type: object 
+        - type: object
           properties:
-            error:
-              type: array
-              description: エラー詳細リスト
+            data:
+              type: object
+              nullable: true
+      example:
+        code: 400
+        message: "エラーメッセージ"
+        data: null
+        total: null
+        page: null
+        size: null
+    # ログイン成功データ
+    LoginData:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWTアクセストークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        userInfo:
+          type: object
+          properties:
+            userId:
+              type: string
+              description: ユーザID
+              example: "ADMIN001"
+            name:
+              type: string
+              description: ユーザー氏名（`users`テーブルの`name`フィールドに対応）
+              example: "システム管理者"
+            userType:
+              type: string
+              description: ユーザータイプ（`dict`テーブルの`USER_TYPE`辞書項目に関連）
+              example: "管理者"
+            deptId:
+              type: string
+              description: 部門番号（`users`テーブルの`dept_id`フィールドに対応）
+              example: "dept_001"
 
-    
+    # ログインレスポンス（ApiResponseを継承）
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LoginData'
+          example:
+            code: 200
+            message: "ログイン成功"
+            data:
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              userInfo:
+                userId: "ADMIN001"
+                name: "システム管理者"
+                userType: "管理者"
+                deptId: "dept_001"
+            total: null
+            page: null
+            size: null
+
+    # ログアウトレスポンス
+    LogoutResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              example: null
+          example:
+            code: 200
+            message: "ログアウト成功"
+            data: null
+            total: null
+            page: null
+            size: null
+
+    # パスワード変更レスポンス
+    ChangePasswordResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              example: null
+          example:
+            code: 200
+            message: "パスワードが更新されました。再度ログインしてください。"
+            data: null
+            total: null
+            page: null
+            size: null
+
     # 辞書アイテム
     DictItem:
       type: object
@@ -266,7 +1039,31 @@ components:
           type: integer
           description: ソート番号（昇順でソート済）
           example: 1
-    
+
+    # 辞書レスポンス（dataが配列型）
+    DictSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DictItem'
+          example:
+            code: 200
+            message: "成功"
+            data:
+              - dictId: 1
+                dictItemName: "使用可"
+                sort: 1
+              - dictId: 2
+                dictItemName: "使用不可"
+                sort: 2
+            total: null
+            page: null
+            size: null
+
     # ユーザー情報
     UserInfo:
       type: object
@@ -286,7 +1083,6 @@ components:
           example: 潘小琴
         userType:
           $ref: '#/components/schemas/DictItem'
-          description: ユーザー種別（辞書参照：USER_TYPE）
       required:
         - userId
         - userName
@@ -330,24 +1126,16 @@ components:
           example: D1005開発室
         userInfo:
           $ref: '#/components/schemas/UserInfo'
-          description: ユーザー情報
         selfConfirm:
           $ref: '#/components/schemas/DictItem'
-          description: 本人確認状態（辞書参照：CONFIRM_STATUS）
         os:
           $ref: '#/components/schemas/DictItem'
-          description: OSタイプ（辞書参照：OS_TYPE）
         memory:
           $ref: '#/components/schemas/DictItem'
-          description: メモリサイズ（辞書参照：MEMORY_SIZE）
         ssd:
           $ref: '#/components/schemas/DictItem'
-          nullable: true
-          description: SSD容量（辞書参照：SSD_SIZE、オプション）
         hdd:
           $ref: '#/components/schemas/DictItem'
-          nullable: true
-          description: HDD容量（辞書参照：HDD_SIZE、オプション）
         monitors:
           type: array
           description: モニター情報リスト
@@ -382,6 +1170,8 @@ components:
         - selfConfirm
         - os
         - memory
+
+
     
     # 設備IP情報エンティティ
     DeviceIp:
@@ -564,7 +1354,7 @@ components:
           description: 部署番号
           example: DA04
 
-        deviceId:        
+        deviceId:
           type: string
           description: 機器番号
           example: HYRON-211217 PC-DC-058
@@ -623,13 +1413,13 @@ components:
         monitorName:
           type: string
           description: モニター名
-          example: HYRON-151127 PC-DC-004JD        
+          example: HYRON-151127 PC-DC-004JD
         creater:
           type: string
           description: 作成者
           example: admin
 
-  # POSTリクエストで渡されるパラメータ      
+    # POSTリクエストで渡されるパラメータ
     UpdateDeviceFullDTO:
       type: object
       description: データ追加
@@ -695,11 +1485,11 @@ components:
         monitorId:
           type: integer
           description: モニター番号
-          example: 1          
+          example: 1
         monitorName:
           type: string
           description: モニター名
-          example: HYRON-151127 PC-DC-004JD   
+          example: HYRON-151127 PC-DC-004JD
 
         updater:
           type: string
@@ -718,17 +1508,17 @@ components:
               value:
                 code: 200
                 message: "成功"
-                
+
             deleteSuccess:
               value:
                 code: 200
                 message: "削除成功"
-                
+
             createSuccess:
               value:
                 code: 200
                 message: "作成成功"
-                
+
     SuccessWithDetail:
       description: 設備詳細情報の取得に成功
       content:
@@ -841,29 +1631,20 @@ components:
                     size: null
     
     Unauthorized:
-      description: 認証失敗
+      description: JWT が無効または期限切れです
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
-          examples:
-            default:
-              value:
-                code: 401
-                message: "認証失敗、再度ログインしてください"
-                data: null
-                total: null
-                page: null
-                size: null
-            tokenExpired:
-              value:
-                code: 401
-                message: "トークンが期限切れです"
-                data: null
-                total: null
-                page: null
-                size: null
-                
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 40100
+            message: "トークンが無効または期限切れです"
+            data: null
+            total: null
+            page: null
+            size: null
+
+
     
     NotFound:
       description: リソースが見つかりません
@@ -896,8 +1677,20 @@ components:
                 total: null
                 page: null
                 size: null
-                
 
+    InternalError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 50000
+            message: "サーバーが混雑しています。しばらくしてから再度お試しください"
+            data: null
+            total: null
+            page: null
+            size: null
     InternalServerError:
       description: サーバー内部エラー
       content:
