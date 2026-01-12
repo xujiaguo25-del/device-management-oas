@@ -174,14 +174,7 @@ paths:
         - 共通API
       security:
         - bearerAuth: []
-      parameters:
-        - name: dictTypeCode
-          in: query
-          required: true
-          schema:
-            type: string
-          description: 辞書タイプコードでフィルタリング
-          example: "USB_STATUS"
+
       responses:
         '200':
           description: 辞書項目の取得に成功しました
@@ -192,15 +185,8 @@ paths:
               examples:
                 successExample:
                   $ref: '#/components/examples/DictSuccessExample'
-        '400':
-          description: パラメータ不正
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                paramErrorExample:
-                  $ref: '#/components/examples/DictParamErrorExample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           description: サーバー内部エラー
           content:
@@ -1020,22 +1006,22 @@ components:
         code: 200
         message: "成功"
         data:
-          - dictId: 1
-            dictItemName: "使用可"
-            sort: 1
-          - dictId: 2
-            dictItemName: "使用不可"
-            sort: 2
-        total: null
-        page: null
-        size: null
-
-    DictParamErrorExample:
-      summary: パラメータ不正例
-      value:
-        code: 40001
-        message: "dictTypeCodeは文字列で指定してください"
-        data: null
+          - typeCode: "USB_STATUS"
+            items:
+              - dictId: 1
+                dictItemName: "使用可"
+                sort: 1
+              - dictId: 2
+                dictItemName: "使用不可"
+                sort: 2
+          - typeCode: "USER_TYPE"
+            items:
+              - dictId: 1
+                dictItemName: "管理者"
+                sort: 1
+              - dictId: 2
+                dictItemName: "一般ユーザー"
+                sort: 2
         total: null
         page: null
         size: null
@@ -1267,6 +1253,7 @@ components:
             total: null
             page: null
             size: null
+ 
 
     # 辞書アイテム
     DictItem:
@@ -1287,6 +1274,28 @@ components:
           description: ソート番号（昇順でソート済）
           example: 1
 
+    # 辞書タイプグループ構造（typeCode + 対応するアイテムリスト）
+    DictTypeGroup:
+      type: object
+      description: 辞書タイプグループ、タイプコードと該当タイプの全ての辞書アイテムを含む
+      properties:
+        typeCode:
+          type: string
+          description: 辞書タイプコード
+          example: "USB_STATUS"
+        items:
+          type: array
+          description: 該当辞書タイプの全てのアイテムリスト
+          items:
+            $ref: '#/components/schemas/DictItem'
+          example:
+            - dictId: 1
+              dictItemName: "使用可"
+              sort: 1
+            - dictId: 2
+              dictItemName: "使用不可"
+              sort: 2
+
     # 辞書レスポンス（dataが配列型）
     DictSuccessResponse:
       allOf:
@@ -1296,17 +1305,27 @@ components:
             data:
               type: array
               items:
-                $ref: '#/components/schemas/DictItem'
+                $ref: '#/components/schemas/DictTypeGroup'
           example:
             code: 200
             message: "成功"
             data:
-              - dictId: 1
-                dictItemName: "使用可"
-                sort: 1
-              - dictId: 2
-                dictItemName: "使用不可"
-                sort: 2
+              - typeCode: "USB_STATUS"
+                items:
+                  - dictId: 1
+                    dictItemName: "使用可"
+                    sort: 1
+                  - dictId: 2
+                    dictItemName: "使用不可"
+                    sort: 2
+              - typeCode: "USER_TYPE"
+                items:
+                  - dictId: 1
+                    dictItemName: "管理者"
+                    sort: 1
+                  - dictId: 2
+                    dictItemName: "一般ユーザー"
+                    sort: 2
             total: null
             page: null
             size: null
