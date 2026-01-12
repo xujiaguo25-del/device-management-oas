@@ -174,14 +174,7 @@ paths:
         - 共通API
       security:
         - bearerAuth: []
-      parameters:
-        - name: dictTypeCode
-          in: query
-          required: true
-          schema:
-            type: string
-          description: 辞書タイプコードでフィルタリング
-          example: "USB_STATUS"
+
       responses:
         '200':
           description: 辞書項目の取得に成功しました
@@ -192,15 +185,8 @@ paths:
               examples:
                 successExample:
                   $ref: '#/components/examples/DictSuccessExample'
-        '400':
-          description: パラメータ不正
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                paramErrorExample:
-                  $ref: '#/components/examples/DictParamErrorExample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           description: サーバー内部エラー
           content:
@@ -557,6 +543,455 @@ paths:
                 data: {}
       security: []
 
+# =======================Permission
+  /permissions:
+    get:
+      tags:
+        - 権限管理
+      summary: ページングによるデバイス権限情報の検索
+      description: 検索条件に基づいてデバイス権限情報をページングで取得
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: 1ページあたりの記録数
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 20
+        - name: deviceId
+          in: query
+          description: デバイスID
+          required: false
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: ユーザーID
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: 検索成功
+                  total:
+                    type: integer
+                    description: 総記録数
+                    example: 150
+                  page:
+                    type: integer
+                    description: 現在のページ番号
+                    example: 1
+                  size:
+                    type: integer
+                    description: 1ページあたりの記録数
+                    example: 10
+                  data:
+                    type: array
+                    description: デバイス権限情報リスト
+                    items:
+                      type: object
+                      properties:
+                        permissionId:
+                          type: string
+                          description: 権限ID
+                          example: "1"
+                        deviceId:
+                          type: string
+                          description: デバイスID
+                        computerName:
+                          type: string
+                          description: コンピュータ名
+                          example: "DESKTOP-1234"
+                        ipAddress:
+                          type: array
+                          items:
+                            type: string
+                          description: IPアドレス
+                        userId:
+                          type: string
+                          description: ユーザーID
+                          example: "JS0020"
+                        name:
+                          type: string
+                          description: ユーザー名
+                        deptId:
+                          type: string
+                          description: 部署ID
+                        loginUsername:
+                          type: string
+                          description: ログインユーザー名
+                        domainStatus:
+                          type: integer
+                          format: int64
+                          description: ドメイン状態
+                          example: 1
+                        domainGroup:
+                          type: string
+                          description: ドメイングループ
+                        noDomainReason:
+                          type: string
+                          description: ドメイン未設定理由
+                        smartitStatus:
+                          type: integer
+                          format: int64
+                          description: SmartIT状態
+                          example: 2
+                        noSmartitReason:
+                          type: string
+                          description: SmartIT未設定理由
+                        usbStatus:
+                          type: integer
+                          format: int64
+                          description: USB状態
+                          example: 1
+                        usbReason:
+                          type: string
+                          description: USB権限理由
+                          example: "项目需要"
+                        usbExpireDate:
+                          type: string
+                          format: date
+                          description: USB権限有効期限
+                          example: "2024-12-31"
+                        antivirusStatus:
+                          type: integer
+                          format: int64
+                          description: ウイルス対策ソフト状態
+                          example: 1
+                        noSymantecReason:
+                          type: string
+                          description: Symantec未設定理由
+                        remark:
+                          type: string
+                          description: 備考
+                          example: "テストデバイス"
+    post:
+      tags:
+        - 権限管理
+      summary: 権限作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissionDTO'
+
+      responses:
+        '200':
+          description: 権限作成成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponseBase'
+                  - properties:
+                      code:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: "権限作成成功"
+                      data:
+                           $ref: '#/components/schemas/DevicePermissionDTO'
+
+  /permissions/{permissionId}:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限詳細取得
+      description: 権限IDに基づき権限詳細情報を取得
+      operationId: getPermissionDetail
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          description: 権限ID (文字列)
+          schema:
+            type: string
+            example: "PERM001"
+      responses:
+        "200":
+          description: 権限詳細取得成功
+          content:
+            application/json:
+              schema:
+               allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: "権限詳細取得成功"
+                      data:
+                        $ref: "#/components/schemas/DevicePermissionDetailDTO"
+        "404":
+          description: 権限が存在しません
+          content:
+            application/json:
+              schema:
+                allOf:
+                 - $ref: "#/components/schemas/ApiResponseBase"
+                 - properties:
+                      code:
+                        type: integer
+                        example: 404
+                      message:
+                        type: string
+                        example: "権限が存在しません"
+    put:
+      tags:
+        - 権限管理
+      summary: 権限情報更新
+      description: 権限情報を更新（フィールド単位）
+      operationId: updatePermissionByFields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePermissionUpdateDTO'
+      # parameters:
+      #   - name: permissionId
+      #     in: path
+      #     required: true
+      #     schema:
+      #       type: string
+      #       example: "PERM001"
+      #   - name: smartitStatusId
+      #     in: query
+      #     required: false
+      #     description: SmartITステータスID
+      #     schema:
+      #       type: string
+      #   - name: noSmartitReason
+      #     in: query
+      #     required: false
+      #     description: SmartIT未インストール理由
+      #     schema:
+      #       type: string
+      #   - name: usbStatusId
+      #     in: query
+      #     required: false
+      #     description: USBステータスID
+      #     schema:
+      #       type: string
+      #   - name: usbReason
+      #     in: query
+      #     required: false
+      #     description: USB使用許可理由
+      #     schema:
+      #       type: string
+      #   - name: usbExpireDate
+      #     in: query
+      #     required: false
+      #     description: USB使用有効期限
+      #     schema:
+      #       type: string
+      #       format: date
+      #       example: "2025-12-31"
+      #   - name: antivirusStatusId
+      #     in: query
+      #     required: false
+      #     description: アンチウイルスステータスID
+      #     schema:
+      #       type: string
+      #   - name: noSymantecReason
+      #     in: query
+      #     required: false
+      #     description: Symantec未導入理由
+      #     schema:
+      #       type: string
+      #   - name: domainStatusId
+      #     in: query
+      #     required: false
+      #     description: ドメインステータスID
+      #     schema:
+      #       type: string
+      #   - name: domainGroup
+      #     in: query
+      #     required: false
+      #     description: ドメイン内グループ名
+      #     schema:
+      #       type: string
+      #   - name: noDomainReason
+      #     in: query
+      #     required: false
+      #     description: ドメイン未参加理由
+      #     schema:
+      #       type: string
+      #   - name: remark
+          # in: query
+          # required: false
+          # description: 備考
+          # schema:
+          #   type: string
+      responses:
+        "200":
+          description: 権限更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                 - $ref: "#/components/schemas/ApiResponseBase"
+                 - properties:
+                      code:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: "権限更新成功"
+        "400":
+          description: 無効なリクエストデータ
+          content:
+            application/json:
+              schema:
+               allOf:
+                - $ref: "#/components/schemas/ApiResponseBase"
+                - properties:
+                    code:
+                      type: integer
+                      example: 400
+                    message:
+                      type: string
+                      example: "無効なリクエストデータ"
+
+        "404":
+          description: 権限が存在しません
+          content:
+            application/json:
+             schema:
+               allOf:
+                - $ref: "#/components/schemas/ApiResponseBase"
+                - properties:
+                    code:
+                      type: integer
+                      example: 404
+                    message:
+                      type: string
+                      example: "権限が存在しません"
+
+    delete:
+        summary: デバイス使用権限の削除
+        description: 権限と関連関係の検証後、指定された権限を削除します
+        tags:
+        - 権限管理
+        parameters:
+          - name: permissionId
+            in: path
+            required: true
+            schema:
+              type: integer
+              format: int64
+              example: 1001
+        responses:
+          '200':
+            description: 削除成功
+            content:
+              application/json:
+               schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: "削除成功"
+          '403':
+            description: 削除権限なし
+            content:
+              application/json:
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code:
+                        type: integer
+                        example: 403
+                      message:
+                        type: string
+                        example: "削除権限なし"
+          '404':
+            description: 権限が存在しない
+            content:
+              application/json:
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code:
+                        type: integer
+                        example: 404
+                      message:
+                        type: string
+                        example: "権限が存在しない"
+          '400':
+            description: 権限がリソースに関連づけられている
+            content:
+              application/json:
+                schema:
+                 allOf:
+                  - $ref: "#/components/schemas/ApiResponseBase"
+                  - properties:
+                      code:
+                        type: integer
+                        example: 400
+                      message:
+                        type: string
+                        example: "権限がリソースに関連づけられている"
+
+  /permissions/export:
+    get:
+      tags:
+        - 権限管理
+      summary: 権限一覧エクスポート
+      # parameters:
+      #   - name: page
+      #     in: query
+      #     description: ページ番号
+      #     required: false
+      #     schema:
+      #       type: integer
+      #   - name: size
+      #     in: query
+      #     description: 1ページあたりの件数
+      #     required: false
+      #     schema:
+      #       type: integer
+      responses:
+        '200':
+          description: Excelファイル
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+# =======================Permission
+
   /devices:
     get:
       tags:
@@ -757,22 +1192,22 @@ components:
         code: 200
         message: "成功"
         data:
-          - dictId: 1
-            dictItemName: "使用可"
-            sort: 1
-          - dictId: 2
-            dictItemName: "使用不可"
-            sort: 2
-        total: null
-        page: null
-        size: null
-
-    DictParamErrorExample:
-      summary: パラメータ不正例
-      value:
-        code: 40001
-        message: "dictTypeCodeは文字列で指定してください"
-        data: null
+          - typeCode: "USB_STATUS"
+            items:
+              - dictId: 1
+                dictItemName: "使用可"
+                sort: 1
+              - dictId: 2
+                dictItemName: "使用不可"
+                sort: 2
+          - typeCode: "USER_TYPE"
+            items:
+              - dictId: 1
+                dictItemName: "管理者"
+                sort: 1
+              - dictId: 2
+                dictItemName: "一般ユーザー"
+                sort: 2
         total: null
         page: null
         size: null
@@ -1021,6 +1456,7 @@ components:
             page: null
             size: null
 
+
     # 辞書アイテム
     DictItem:
       type: object
@@ -1040,6 +1476,28 @@ components:
           description: ソート番号（昇順でソート済）
           example: 1
 
+    # 辞書タイプグループ構造（typeCode + 対応するアイテムリスト）
+    DictTypeGroup:
+      type: object
+      description: 辞書タイプグループ、タイプコードと該当タイプの全ての辞書アイテムを含む
+      properties:
+        typeCode:
+          type: string
+          description: 辞書タイプコード
+          example: "USB_STATUS"
+        items:
+          type: array
+          description: 該当辞書タイプの全てのアイテムリスト
+          items:
+            $ref: '#/components/schemas/DictItem'
+          example:
+            - dictId: 1
+              dictItemName: "使用可"
+              sort: 1
+            - dictId: 2
+              dictItemName: "使用不可"
+              sort: 2
+
     # 辞書レスポンス（dataが配列型）
     DictSuccessResponse:
       allOf:
@@ -1049,20 +1507,32 @@ components:
             data:
               type: array
               items:
-                $ref: '#/components/schemas/DictItem'
+                $ref: '#/components/schemas/DictTypeGroup'
           example:
             code: 200
             message: "成功"
             data:
-              - dictId: 1
-                dictItemName: "使用可"
-                sort: 1
-              - dictId: 2
-                dictItemName: "使用不可"
-                sort: 2
+              - typeCode: "USB_STATUS"
+                items:
+                  - dictId: 1
+                    dictItemName: "使用可"
+                    sort: 1
+                  - dictId: 2
+                    dictItemName: "使用不可"
+                    sort: 2
+              - typeCode: "USER_TYPE"
+                items:
+                  - dictId: 1
+                    dictItemName: "管理者"
+                    sort: 1
+                  - dictId: 2
+                    dictItemName: "一般ユーザー"
+                    sort: 2
             total: null
             page: null
             size: null
+
+
 
     # ユーザー情報
     UserInfo:
@@ -1419,6 +1889,226 @@ components:
           description: 作成者
           example: admin
 
+        # =======================Permission
+    ApiResponseBase:
+          type: object
+          properties:
+            code:
+              type: integer
+              description: ステータスコード
+              example: 200
+            message:
+              type: string
+              description: メッセージ
+              example: "操作成功"
+            data:
+              type: object
+              description: 応答データ
+              nullable: true
+              # example: null
+          required:
+            - code
+            - message
+
+    # # エラー応答
+    # Error:
+    #   allOf:
+    #     - $ref: '#/components/schemas/ApiResponseBase'
+    #     - type: object
+    #       properties:
+    #         timestamp:
+    #           type: string
+    #           format: date-time
+    #           description:  エラー発生時刻
+
+    # DTOスキーマ
+    DevicePermissionDetailDTO:
+      type: object
+      properties:
+        permissionId:
+          type: string
+          description: 権限番号
+        deviceId:
+          type: string
+          description: 機器番号
+        computerName:
+          type: string
+          description: コンピュータ名
+        deviceModel:
+          type: string
+          description: ホストモデル
+        project:
+          type: string
+          description: 所属プロジェクト
+        devRoom:
+          type: string
+          description: 所属開発室
+        userId:
+          type: string
+          description: ユーザID
+        userName:
+          type: string
+          description: ユーザ名
+        deptId:
+          type: string
+          description: 部署ID
+        domainStatus:
+          type: string
+          description: ドメイン状態
+        domainGroup:
+          type: string
+          description: ドメイン内グループ名
+        noDomainReason:
+          type: string
+          description: ドメイン未参加理由
+        smartitStatus:
+          type: string
+          description: SmartIT状態
+        noSmartitReason:
+          type: string
+          description: SmartIT未インストール理由
+        usbStatus:
+          type: string
+          description: USB状態
+        usbReason:
+          type: string
+          description: USB使用許可理由
+        usbExpireDate:
+          type: string
+          format: date
+          description: USB使用有効期限
+        antivirusStatus:
+          type: string
+          description: アンチウイルス状態
+        noSymantecReason:
+          type: string
+          description: Symantec未導入理由
+        remark:
+          type: string
+          description: 備考
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+        creater:
+          type: string
+          description: 作成者
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+        updater:
+          type: string
+          description: 更新者
+
+    #permissionIdはサービス内で生成されるuuidです
+    DevicePermissionDTO:
+          type: object
+          properties:
+            # permissionId:
+            #   type: string
+            #   example: ""
+            deviceId:
+              type: string
+              example: "123123"
+            domainStatus:
+              type: string
+              example: "39"
+            domainGroup:
+              type: string
+              example: "hyronjs"
+            noDomainReason:
+              type: string
+              example: "設備使用権限管理システムへの登録が必要です。"
+            smartitStatus:
+              type: string
+              example: "41"
+            noSmartitReason:
+              type: string
+              example: "SmartITへの登録が必要です。"
+            usbStatus:
+              type: string
+              example: "44"
+            usbReason:
+              type: string
+              example: "USB接続が必要です。"
+            usbExpireDate:
+              type: string
+              example: "2022-12-31"
+            antivirusStatus:
+              type: string
+              example: "47"
+            noSymantecReason:
+              type: string
+              example: "Symantec Antivirusのインストールが必要です。"
+            remark:
+              type: string
+              example: "備考"
+            # createTime:
+            #   type: string
+            #   example: ""
+            # creater:
+            #   type: string
+            #   example: ""
+            # updateTime:
+            #   type: string
+            #   example: ""
+            # updater:
+            #   type: string
+            #   example: ""
+          required:
+            - deviceId
+            - domainStatus
+            - smartitStatus
+            - usbStatus
+            - antivirusStatus
+
+    DevicePermissionUpdateDTO:
+          type: object
+          properties:
+            # permissionId:
+            #   type: string
+            #   example: ""
+            domainStatus:
+              type: string
+              example: "39"
+            domainGroup:
+              type: string
+              example: "hyronjs"
+            noDomainReason:
+              type: string
+              example: "設備使用権限管理システムへの登録が必要です。"
+            smartitStatus:
+              type: string
+              example: "41"
+            noSmartitReason:
+              type: string
+              example: "SmartITへの登録が必要です。"
+            usbStatus:
+              type: string
+              example: "44"
+            usbReason:
+              type: string
+              example: "USB接続が必要です。"
+            usbExpireDate:
+              type: string
+              example: "2022-12-31"
+            antivirusStatus:
+              type: string
+              example: "47"
+            noSymantecReason:
+              type: string
+              example: "Symantec Antivirusのインストールが必要です。"
+            remark:
+              type: string
+              example: "備考"
+          required:
+            - domainStatus
+            - smartitStatus
+            - usbStatus
+            - antivirusStatus
+    # =======================Permission
+
     # POSTリクエストで渡されるパラメータ
     UpdateDeviceFullDTO:
       type: object
@@ -1495,6 +2185,7 @@ components:
           type: string
           description: 作成者
           example: admin
+
 
   responses:
     Success:
