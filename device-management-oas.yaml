@@ -992,6 +992,194 @@ paths:
                 format: binary
 # =======================Permission
 
+
+# =========================device
+  /devices:
+    get:
+      tags:
+        - devices
+      summary: 設備リスト照会
+      description: ページング・フィルタリングに対応した設備リスト照会インターフェース
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+        - name: size
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            example: 10
+        - name: userId
+          in: query
+          description: ユーザーID（フィルタ条件）
+          required: false
+          schema:
+            type: string
+            example: JS0014
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePageResponse'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeviceSuccessWithPagination'
+        '400':
+          $ref: '#/components/responses/DeviceBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+
+    post:
+      tags:
+        - devices
+      summary: 設備を新規追加
+      description: 新しい設備情報を追加します
+      operationId: insertDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsertDeviceFullDTO'
+
+      responses:
+        '200':
+          $ref: '#/components/responses/DeviceInsertSuccess'
+        '400':
+          $ref: '#/components/responses/DeviceBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+
+
+  /devices/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: 設備ID
+        required: true
+        schema:
+          type: string
+          example: HYRON-221129 PC-DC-089
+      - name: userId
+        in: query
+        description: ユーザーID（フィルタ条件）
+        required: false
+        schema:
+          type: string
+          example: JS0014
+
+    get:
+      tags:
+        - devices
+      summary: 設備詳細照会
+      description: 設備IDに基づき設備詳細情報を照会
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeviceSuccessWithDetail'
+        '400':
+          $ref: '#/components/responses/DeviceBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+
+
+    put:
+      tags:
+        - devices
+      summary: 設備情報を編集
+      description: 設備情報を修正します
+      operationId: updateDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeviceFullDTO'
+
+      responses:
+        '200':
+          $ref: '#/components/responses/DeviceUpdateSuccess'
+        '400':
+          $ref: '#/components/responses/DeviceBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+
+    delete:
+      tags:
+        - devices
+      summary: 設備を削除
+      description: 設備IDに基づいて指定された設備の記録を削除する
+      operationId: deleteDevice
+
+      responses:
+        '200':
+          $ref: '#/components/responses/DeviceSuccess'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: 設備が存在しません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                deviceNotFound:
+                  value:
+                    code: 404
+                    message: "設備が存在しません"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+
+  /devices/export:
+    get:
+      tags:
+        - devices
+      summary: 設備情報をエクスポート
+      description: すべての設備情報をExcelファイルにエクスポートする
+      operationId: exportDevices
+      responses:
+        '200':
+          description: 設備リストのエクスポートに成功しました
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/DeviceInternalServerError'
+# =========================device
 components:
   securitySchemes:
     bearerAuth:
@@ -1567,6 +1755,438 @@ components:
           - usbStatus
           - antivirusStatus
 # =======================Permission
+# =======================device
+    # ユーザー情報
+    UserInfo:
+      type: object
+      description: ユーザー情報
+      properties:
+        userId:
+          type: string
+          description: ユーザーID
+          example: JS0105
+        deptId:
+          type: string
+          description: 部署ID
+          example: DA04
+        userName:
+          type: string
+          description: ユーザー名
+          example: 潘小琴
+        userType:
+          $ref: '#/components/schemas/DictItem'
+      required:
+        - userId
+        - userName
+
+    # 設備オブジェクト
+    Device:
+      type: object
+      description: 機器オブジェクト
+      properties:
+        deviceId:
+          type: string
+          description: 機器番号（プライマリキー）
+          example: HYRON-221129 PC-DC-089
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5000
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: DA04-LINF-PC
+        loginUsername:
+          type: string
+          description: ログインユーザ名
+          example: panxq-mac
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        userId:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        userInfo:
+          $ref: '#/components/schemas/UserInfo'
+        selfConfirm:
+          $ref: '#/components/schemas/DictItem'
+        os:
+          $ref: '#/components/schemas/DictItem'
+        memory:
+          $ref: '#/components/schemas/DictItem'
+        ssd:
+          $ref: '#/components/schemas/DictItem'
+        hdd:
+          $ref: '#/components/schemas/DictItem'
+        monitors:
+          type: array
+          description: モニター情報リスト
+          items:
+            $ref: '#/components/schemas/MonitorInfo'
+        deviceIps:
+          type: array
+          description: IP情報リスト
+          items:
+            $ref: '#/components/schemas/DeviceIp'
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-06T06:55:28Z"
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-06T06:55:28Z"
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+      required:
+        - deviceId
+        - userId
+        - selfConfirm
+        - os
+        - memory
+
+    # 設備IP情報エンティティ
+    DeviceIp:
+      type: object
+      description: 設備のIP情報
+      properties:
+        ipAddress:
+          type: string
+          format: ipv4  # 或 ipv6
+          pattern: '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+          description: IPv4アドレス
+          example: "192.168.1.1"
+
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-06T06:55:28Z"
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-06T06:55:28Z"
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+      required:
+        - deviceId
+        - ipAddress
+
+    # 設備モニター情報エンティティ
+    MonitorInfo:
+      type: object
+      description: モニター情報
+      properties:
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-241118 Minitor-131
+        createTime:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-06T06:55:28Z"
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-06T06:55:28Z"
+        updater:
+          type: string
+          description: 更新者
+          example: admin
+      required:
+        - deviceId
+        - monitorName
+
+    # ページネーションレスポンス
+    DevicePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Device'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+              description: ページ番号
+              example: 1
+            pageSize:
+              type: integer
+              description: ページサイズ
+              example: 10
+            sort:
+              type: object
+              properties:
+                empty:
+                  type: boolean
+                  description: 空かどうか
+                  example: false
+                sorted:
+                  type: boolean
+                  description: ソート済みかどうか
+                  example: true
+                unsorted:
+                  type: boolean
+                  description: 未ソートかどうか
+                  example: false
+              required:
+                - empty
+                - sorted
+                - unsorted
+            offset:
+              type: integer
+              description: オフセット
+              example: 0
+            unpaged:
+              type: boolean
+              description: ページング無効かどうか
+              example: false
+            paged:
+              type: boolean
+              description: ページング有効かどうか
+              example: true
+        last:
+          type: boolean
+          description: 最終ページかどうか
+          example: true
+        totalPages:
+          type: integer
+          description: 総ページ数
+          example: 1
+        totalElements:
+          type: integer
+          description: 総要素数
+          example: 3
+        first:
+          type: boolean
+          description: 最初のページかどうか
+          example: true
+        size:
+          type: integer
+          description: ページサイズ
+          example: 10
+        number:
+          type: integer
+          description: 現在のページ番号
+          example: 1
+        sort:
+          type: object
+          properties:
+            empty:
+              type: boolean
+              description: 空かどうか
+              example: false
+            sorted:
+              type: boolean
+              description: ソート済みかどうか
+              example: true
+            unsorted:
+              type: boolean
+              description: 未ソートかどうか
+              example: false
+          required:
+            - empty
+            - sorted
+            - unsorted
+        numberOfElements:
+          type: integer
+          description: 現在のページの要素数
+          example: 3
+        empty:
+          type: boolean
+          description: 空かどうか
+          example: false
+
+    # PUTリクエストで渡されるパラメータ
+    InsertDeviceFullDTO:
+      type: object
+      description: データ追加
+      properties:
+        name:
+          type: string
+          description: ユーザーの氏名
+          example: 林飞
+        deptId:
+          type: string
+          description: 部署番号
+          example: DA04
+
+        deviceId:
+          type: string
+          description: 機器番号
+          example: HYRON-211217 PC-DC-058
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5090
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: HYRON-JS-LINFEI
+        LoginUserName:
+          type: string
+          description: ログインユーザ名
+          example: linfei
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        userId:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        selfConfirmId:
+          type: integer
+          description: 本人確認ID
+          example: 1
+        osId:
+          type: integer
+          description: OSID
+          example: 1
+        memoryId:
+          type: integer
+          description: メモリID
+          example: 1
+        ssdId:
+          type: integer
+          description: SSDID
+          example: 1
+        hddId:
+          type: integer
+          description: HDDID
+          example: 2
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.203.139
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-151127 PC-DC-004JD
+        creater:
+          type: string
+          description: 作成者
+          example: admin
+
+    UpdateDeviceFullDTO:
+      type: object
+      description: データ追加
+      properties:
+        deviceModel:
+          type: string
+          description: ホストモデル
+          example: dell-5090
+        computerName:
+          type: string
+          description: コンピュータ名
+          example: HYRON-JS-LINFEI
+        LoginUserName:
+          type: string
+          description: ログインユーザ名
+          example: linfei
+        project:
+          type: string
+          description: 所属プロジェクト
+          example: DA05支援
+        devRoom:
+          type: string
+          description: 所属開発室
+          example: M10
+        userId:
+          type: string
+          description: 従業員番号（所属ユーザ、外部キー）
+          example: JS0014
+        remark:
+          type: string
+          description: 備考
+          example: D1005開発室
+        selfConfirmId:
+          type: integer
+          description: 本人確認ID
+          example: 1
+        osId:
+          type: integer
+          description: OSID
+          example: 1
+        memoryId:
+          type: integer
+          description: メモリID
+          example: 1
+        ssdId:
+          type: integer
+          description: SSDID
+          example: 1
+        hddId:
+          type: integer
+          description: HDDID
+          example: 2
+
+        ipId:
+          type: integer
+          description: IP番号
+          example: 1
+        ipAddress:
+          type: string
+          description: IPアドレス
+          example: 192.168.203.139
+
+        monitorId:
+          type: integer
+          description: モニター番号
+          example: 1
+        monitorName:
+          type: string
+          description: モニター名
+          example: HYRON-151127 PC-DC-004JD
+
+        updater:
+          type: string
+          description: 作成者
+          example: admin
+
+  # =======================Permission
+
   responses:
     Unauthorized:
       description: JWT が無効または期限切れです
@@ -1595,3 +2215,191 @@ components:
             total: null
             page: null
             size: null
+
+    DeviceSuccess:
+      description: 操作成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 200
+                message: "成功"
+
+            deleteSuccess:
+              value:
+                code: 200
+                message: "削除成功"
+
+            createSuccess:
+              value:
+                code: 200
+                message: "作成成功"
+
+    DeviceSuccessWithDetail:
+      description: 設備詳細情報の取得に成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 200
+              message:
+                type: string
+                example: "設備詳細情報の取得に成功"
+              data:
+                type: object
+                properties:
+                  deviceInfo:
+                    $ref: '#/components/schemas/Device'
+
+
+    DeviceSuccessWithPagination:
+      description: 設備リストの取得に成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 200
+              message:
+                type: string
+                example: "設備リストの取得に成功"
+              data:
+                $ref: '#/components/schemas/DevicePageResponse'
+
+    DeviceInsertSuccess:
+      description: 挿入成功
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 挿入成功
+                    example: 200
+                  message:
+                    type: string
+                    description: 挿入成功
+                    example: "挿入成功"
+                  data:
+                    $ref: '#/components/schemas/InsertDeviceFullDTO'
+
+    DeviceUpdateSuccess:
+      description: 更新成功
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 更新成功
+                    example: 200
+                  message:
+                    type: string
+                    description: 更新成功
+                    example: "更新成功"
+                  data:
+                    $ref: '#/components/schemas/UpdateDeviceFullDTO'
+
+    DeviceBadRequest:
+      description: リクエストパラメータエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            default:
+              value:
+                code: 400
+                message: "パラメータ検証エラー"
+                error:
+                  - field: "deviceId"
+                    message: "設備IDは必須です"
+                    code: "INVALID_PARAMETER"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+            pageParamError:
+              value:
+                code: 400
+                message: "ページングパラメータエラー"
+                error:
+                  - field: "page"
+                    message: "ページ番号は正の整数である必要があります"
+                    code: "INVALID_PAGE_NUMBER"
+                    data: null
+                    total: null
+                    page: null
+                    size: null
+
+    
+    DeviceNotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 404
+                message: "リソースが見つかりません"
+                data: null
+                total: null
+                page: null
+                size: null
+            deviceNotFound:
+              value:
+                code: 404
+                message: "設備が存在しません"
+                data: null
+                total: null
+                page: null
+                size: null
+            userNotFound:
+              value:
+                code: 404
+                message: "ユーザーが存在しません"
+                data: null
+                total: null
+                page: null
+                size: null
+
+
+    DeviceInternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          examples:
+            default:
+              value:
+                code: 500
+                message: "サーバー内部エラー、後ほど再試行してください"
+                data: null
+                total: null
+                page: null
+                size: null
+            databaseError:
+              value:
+                code: 500
+                message: "データベース接続エラー"
+                data: null
+                total: null
+                page: null
+                size: null
