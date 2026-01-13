@@ -301,14 +301,11 @@ paths:
             schema:
               $ref: '#/components/schemas/SampleCheckDTO'
             example:
-              samplingId: record001
               userId: EMP00123
               deviceId: DEV2024001
               name: 山田太郎
               reportId: SEC20240115001
               updateDate: '2024-01-15'
-              createTime: '2024-01-10 09:00:00'
-              updateTime: '2024-01-15 10:00:00'
               installedSoftware: true
               disposalMeasures: 許可されていないソフトウェアをアンインストールし、システムを再起動しました
               screenSaverPwd: true
@@ -1229,7 +1226,6 @@ components:
       title: SampleCheckDTO
       type: object
       required:
-      - samplingId
       - userId
       - deviceId
       - name
