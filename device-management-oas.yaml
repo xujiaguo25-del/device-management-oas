@@ -10,7 +10,7 @@ paths:
     post:
       tags:
         - 認証API
-      summary: ユーザーログイン
+      summary: ユーザログイン
       description: ユーザID（user_id）とパスワードでシステムにログインし、JWTトークンを取得
       requestBody:
         required: true
@@ -1768,7 +1768,7 @@ components:
         userName:
           type: string
           description: ユーザー名
-          example: 潘小琴
+          example: 山田太郎
         userType:
           $ref: '#/components/schemas/DictItem'
       required:
@@ -2033,8 +2033,8 @@ components:
       properties:
         name:
           type: string
-          description: ユーザーの氏名
-          example: 林飞
+          description: ユーザの氏名
+          example: 山田太郎
         deptId:
           type: string
           description: 部署番号
@@ -2052,7 +2052,7 @@ components:
           type: string
           description: コンピュータ名
           example: HYRON-JS-LINFEI
-        LoginUserName:
+        loginUsername:
           type: string
           description: ログインユーザ名
           example: linfei
@@ -2117,7 +2117,7 @@ components:
           type: string
           description: コンピュータ名
           example: HYRON-JS-LINFEI
-        LoginUserName:
+        loginUsername:
           type: string
           description: ログインユーザ名
           example: linfei
@@ -2178,7 +2178,7 @@ components:
 
         updater:
           type: string
-          description: 作成者
+          description: 更新者
           example: admin
 
   # =======================Permission
